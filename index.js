@@ -74,11 +74,13 @@ app.post('/webhook', async (req, res) => {
 
     // 📬 HTML 메시지 조립
     const message = `${title}\n\n` +
-                    `📌 종목: <code>${symbol}</code>\n` +
+                    `📌 종목: ${symbol}\n` +
                     `⏱️ 타임프레임: ${timeframe}\n` +
-                    `💲 가격: <code>${price}</code>\n` +
-                    `🕒 포착시간:\n +
-                    ${formattedTimeBlock}`;
+                    `💲 가격: ${price}\n` +
+                    `🕒 포착시간:\n` +
+                    `       ${formattedDate}\n` +
+                    `       ${formattedTime}`;
+
 
     // 텔레그램 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
