@@ -1,40 +1,63 @@
-// index.js
+// index.js - 다중 조건 텔레그램 알림 템플릿 (완성 버전)
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const config = require('./config');
 
 const app = express();
 app.use(bodyParser.json());
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
 app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
     console.log('📩 받은 TradingView Alert:', alert);
 
-    // 시간 변환 (UTC → KST)
+    // 날짜 처리
     const utcDate = new Date(alert.time);
     const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
     const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-    
-    const type = alert.type || '📢 알림 도착!';
-    const price = parseFloat(alert.price).toFixed(2); // 소수점 2자리
-    const symbol = alert.symbol || 'Unknown';
-    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
 
-    // 메시지 포맷 분기
+    // 파싱
+    const type = alert.type || '📢 알림';
+    const symbol = alert.symbol || 'Unknown';
+    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A'; //소수점 2자리
+
+    // 메시지 분기 처리
     let message = '';
+
     if (type.includes('진입 준비')) {
-      message = `${type}\n\n📌 종목: ${symbol}`;
+      message = `🔔 *${type}*
+
+📌 종목: ${symbol}`;
+    } else if (type.includes('청산')) {
+      message = `💰 *${type}*
+
+📌 종목: ${symbol}
+💲 종가: ${price}
+📆 시간: ${formattedTime}`;
+    } else if (type.includes('매수') || type.includes('매도')) {
+      message = `🚀 *${type}*
+
+📌 종목: ${symbol}
+💰 가격: ${price}
+🕒 시간: ${formattedTime}`;
     } else {
-      message = `${type}\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 시간: ${formattedTime}`;
+      message = `📢 *${type}*
+
+📌 종목: ${symbol}
+💰 가격: ${price}
+🕒 시간: ${formattedTime}`;
     }
 
-    await axios.post(url, {
-      chat_id: config.TELEGRAM_CHAT_ID,
+    // 텔레그램 전송
+    await axios.post(TELEGRAM_API_URL, {
+      chat_id: TELEGRAM_CHAT_ID,
       text: message,
-      parse_mode: 'Markdown', // *강조* 효과 가능
+      parse_mode: 'Markdown',
     });
 
     res.status(200).send('✅ 텔레그램 전송 성공');
@@ -44,7 +67,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// 상태 확인용
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
 });
