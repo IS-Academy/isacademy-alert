@@ -21,10 +21,16 @@ app.post('/webhook', async (req, res) => {
     // 📆 시간 포맷
     const alertTime = alert.time ? new Date(alert.time) : new Date();
     const formattedDate = alertTime.toLocaleDateString('ko-KR', {
-      year: '2-digit', month: '2-digit', day: '2-digit', weekday: 'short'
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short'
     });
     const formattedClock = alertTime.toLocaleTimeString('ko-KR', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
     });
 
     // 🧩 제목 구성
@@ -53,12 +59,12 @@ app.post('/webhook', async (req, res) => {
 
     // 📬 메시지 조립 (HTML)
     let message = `${emoji} <b>${title}</b>\n\n`;
-    message += `📌 종목: <code>${symbol}</code>\n`;
+    message += `📌 종목: <b>${symbol}</b>\n`;
     message += `⏱️ 타임프레임: ${timeframe}`;
 
     if (isAlertWithFullInfo) {
-      message += `\n💲 가격: <code>${price}</code>`;
-      message += `\n🕒 포착시간:\n<code>${formattedDate}</code>\n<code>${formattedClock}</code>`;
+      message += `\n💲 가격: <b>${price}</b>`;
+      message += `\n🕒 포착시간:\n${formattedDate}\n${formattedClock}`;
     }
 
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
