@@ -24,7 +24,6 @@ app.post('/webhook', async (req, res) => {
     const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
     const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
-
     // 메시지 구성
     let emoji = '';
     let title = '';
