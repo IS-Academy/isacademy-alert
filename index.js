@@ -17,7 +17,19 @@ app.post('/webhook', async (req, res) => {
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    const formattedTime = alert.time || '시간 없음';  // ✅ 변환하지 않음
+    const formattedTime = alert.time
+  ? new Date(alert.time).toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: '2-digit',        // ✅ 두 자리 연도
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true            // ✅ 오전/오후 사용
+    }).replace(/\. /g, '.').replace(/\./g, '.')
+  : '시간 없음';
+
 
     // 메시지 구성
     let emoji = '';
