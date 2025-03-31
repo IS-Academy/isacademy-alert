@@ -67,7 +67,7 @@ app.post('/webhook', async (req, res) => {
       'is_Big_Support', 'is_Big_Resistance',
       'exitLong', 'exitShort'
     ];
-    const isFullInfo = fullInfoTypes.some(keyword => type.includes(keyword));
+    const isAlertWithFullInfo = fullInfoTypes.includes(type);  // ⛔️ includes → includes()
 
     // 메시지 조립
     let message = `${title}
