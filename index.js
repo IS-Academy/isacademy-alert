@@ -15,10 +15,10 @@ app.post('/webhook', async (req, res) => {
     // 기본 값 설정
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
-    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    const code = alert.code || '🚫 없음';
-    const reason = alert.reason || '📌 조건 미지정';
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
+    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
+//    const code = alert.code || '🚫 없음';
+//    const reason = alert.reason || '📌 조건 미지정';
 
     // 시간 변환 (UTC → KST)
     const utcDate = new Date(alert.time);
@@ -64,8 +64,8 @@ app.post('/webhook', async (req, res) => {
            `⏱️ *타임프레임*: ${timeframe}\n` +
            `💲 *가격*: ${price}\n` +
            `🕒 *포착시간*: ${formattedTime}\n` +
-           //`🧾 *알림 코드*: ${code}\n` +
-           //`🧠 *진입 이유*: ${reason}`;
+//           `🧾 *알림 코드*: ${code}\n` +
+//           `🧠 *진입 이유*: ${reason}`;
 
     const message = `*${title}*\n\n${body}`;
 
