@@ -61,7 +61,7 @@ const isAlertWithFullInfo = [
 ].some(keyword => type.includes(keyword));
 
 if (isAlertWithFullInfo) {
-  message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${' '.repeat(7)}${formattedTime}</code>`;
+  message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${' '.repeat(5)}${formattedTime}</code>`;
 }
 
 
