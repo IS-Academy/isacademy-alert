@@ -21,17 +21,15 @@ app.post('/webhook', async (req, res) => {
   ? new Date(alert.time).toLocaleString('ko-KR', {
       timeZone: 'Asia/Seoul',
       year: '2-digit',       // ✅ 연도: 25
-      month: '2-digit',
-      day: '2-digit',
+      month: '2-digit',      // ➤ '03'
+      day: '2-digit',        // ➤ '31'
       weekday: 'short',      // ✅ 요일: (월), (화) 등
-      hour: '2-digit',
+      hour: '2-digit',       // ➤ '오전 08'
       minute: '2-digit',
       second: '2-digit',
       hour12: true           // ✅ 오전/오후
-    }).replace(/\. /g, '.').replace(/\./g, '.')
+    })
   : '시간 없음';
-
-
 
     // 메시지 구성
     let emoji = '';
