@@ -29,7 +29,7 @@ app.post('/webhook', async (req, res) => {
     // 메시지 분기 처리
     let message = '';
 
-    if (type.includes('진입 준비')) {
+    if (type.includes('진입 대기')) {
       message = `🔔 *${type}*
 
 📌 종목: ${symbol}`;
