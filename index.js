@@ -35,10 +35,10 @@ app.post('/webhook', async (req, res) => {
 
     // 🧩 제목 구성
     let emoji = '', title = '';
-    if (type === 'Ready_Support') emoji = '🩵', title = '롱 진입 준비';
-    else if (type === 'Ready_Resistance') emoji = '❤️', title = '숏 진입 준비';
-    else if (type === 'Ready_is_Big_Support') emoji = '🚀', title = '강한 롱 진입 준비';
-    else if (type === 'Ready_is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입 준비';
+    if (type === 'Ready_Support') emoji = '🩵', title = '롱 진입 대기';
+    else if (type === 'Ready_Resistance') emoji = '❤️', title = '숏 진입 대기';
+    else if (type === 'Ready_is_Big_Support') emoji = '🚀', title = '강한 롱 진입 대기';
+    else if (type === 'Ready_is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입 대기';
     else if (type === 'show_Support') emoji = '🩵', title = '롱 진입';
     else if (type === 'show_Resistance') emoji = '❤️', title = '숏 진입';
     else if (type === 'is_Big_Support') emoji = '🚀', title = '강한 롱 진입';
