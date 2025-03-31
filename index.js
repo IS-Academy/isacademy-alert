@@ -48,7 +48,14 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
 
 /* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message, type) {
-  const excludeTypesForMing = [];
+  if (!config.MINGMING_ENABLED) {
+    console.log('⏸️ 밍밍 전송 비활성화됨 (MINGMING_ENABLED=false)');
+    return;
+  }
+
+  const excludeTypesForMing = [
+    // 나중에 제외하고 싶은 알림 타입 넣을 수 있음
+  ];
 
   if (!excludeTypesForMing.includes(type)) {
     try {
@@ -60,7 +67,7 @@ async function sendToMingBot(message, type) {
       });
       console.log('📤 밍밍 봇에게도 전송 완료');
     } catch (err) {
-      console.error('❌ 밍밍 전송 실패:', err.response?.data || err.message);
+      console.log('⚠️ 밍밍 전송 실패 (무시됨):', err.response?.data?.description || err.message);
     }
   } else {
     console.log('🚫 밍밍 제외 알림 타입으로 전송 생략');
