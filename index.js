@@ -67,12 +67,23 @@ app.post('/webhook', async (req, res) => {
       message += `\n🕒 포착시간:\n${formattedDate}\n${formattedClock}`;
     }
 
+    // 최실장 코드
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
     await axios.post(url, {
       chat_id: config.TELEGRAM_CHAT_ID,
       text: message,
       parse_mode: 'HTML'
     });
+
+    // 밍밍 코드
+if (message.includes('[MING]')) {
+    const urlMing = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
+    await axios.post(urlMing, {
+      chat_id: config.TELEGRAM_CHAT_ID_A,
+      text: message,
+      parse_mode: 'HTML'
+    });
+}
 
     res.status(200).send('✅ 텔레그램 전송 성공');
   } catch (err) {
