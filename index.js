@@ -7,36 +7,29 @@ const config = require('./config');
 const app = express();
 app.use(bodyParser.json());
 
-// 웹훅 수신
 app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
     console.log('📩 받은 TradingView Alert:', alert);
 
-    // 한국 시간 변환
-    const utcDate = new Date(alert.time);
-    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
-    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-
     const type = alert.type || '📢 알림 도착!';
     const symbol = alert.symbol || 'Unknown';
-    const price = alert.price ? Number(alert.price).toFixed(2) : 'N/A';
+    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
 
+    // 시간 변환 (UTC → KST)
+    let formattedTime = '시간 없음';
+    if (alert.time) {
+      const utcDate = new Date(alert.time);
+      const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
+      formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    }
 
-    // 기본 메시지 템플릿
-    let message = `${type}\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 시간: ${formattedTime}`;
-
-    // 예: 특정 알림 타입에 따라 커스텀
-    if (type.includes('강한 매도')) {
-      message = `🛸 *강한 매도 신호!*\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 ${formattedTime}`;
-    } else if (type.includes('강한 매수')) {
-      message = `🚀 *강한 매수 신호!*\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 ${formattedTime}`;
-    } else if (type.includes('매도 조건')) {
-      message = `❤️ 매도 조건 발생\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 ${formattedTime}`;
-    } else if (type.includes('매수 조건')) {
-      message = `🩵 매수 조건 발생\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 ${formattedTime}`;
-    } else if (type.includes('청산')) {
-      message = `💲 포지션 청산\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 ${formattedTime}`;
+    // 메시지 포맷 분기
+    let message = '';
+    if (type.includes('진입 준비')) {
+      message = `${type}\n\n📌 종목: ${symbol}`;
+    } else {
+      message = `${type}\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 시간: ${formattedTime}`;
     }
 
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
