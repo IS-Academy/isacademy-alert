@@ -20,7 +20,8 @@ app.post('/webhook', async (req, res) => {
 
     const type = alert.type || '📢 알림 도착!';
     const symbol = alert.symbol || 'Unknown';
-    const price = alert.price || 'N/A';
+    const price = alert.price ? Number(alert.price).toFixed(2) : 'N/A';
+
 
     // 기본 메시지 템플릿
     let message = `${type}\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 시간: ${formattedTime}`;
