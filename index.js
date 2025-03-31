@@ -20,15 +20,17 @@ app.post('/webhook', async (req, res) => {
     const formattedTime = alert.time
   ? new Date(alert.time).toLocaleString('ko-KR', {
       timeZone: 'Asia/Seoul',
-      year: '2-digit',        // ✅ 두 자리 연도
+      year: '2-digit',       // ✅ 연도: 25
       month: '2-digit',
       day: '2-digit',
+      weekday: 'short',      // ✅ 요일: (월), (화) 등
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: true            // ✅ 오전/오후 사용
+      hour12: true           // ✅ 오전/오후
     }).replace(/\. /g, '.').replace(/\./g, '.')
   : '시간 없음';
+
 
 
     // 메시지 구성
