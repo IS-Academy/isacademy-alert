@@ -64,8 +64,8 @@ app.post('/webhook', async (req, res) => {
            `⏱️ *타임프레임*: ${timeframe}\n` +
            `💲 *가격*: ${price}\n` +
            `🕒 *포착시간*: ${formattedTime}\n` +
-           `🧾 *알림 코드*: ${code}\n` +
-           `🧠 *진입 이유*: ${reason}`;
+           //`🧾 *알림 코드*: ${code}\n` +
+           //`🧠 *진입 이유*: ${reason}`;
 
     const message = `*${title}*\n\n${body}`;
 
