@@ -1,4 +1,4 @@
-// index.js - HTML 스타일 + 타임프레임 + 이모지 + 진입 종류별 메시지
+// index.js - 이모지 강조 + 복사버튼 없는 깔끔한 텔레그램 메시지 템플릿
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -18,76 +18,51 @@ app.post('/webhook', async (req, res) => {
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
 
-    // ✅ 포착시간: 날짜와 시간 분리하여 예쁘게 정렬
-    let formattedTimeBlock = '시간 없음';
-    if (alert.time) {
-      const dateObj = new Date(alert.time);
-      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-      const year = String(dateObj.getFullYear()).slice(2); // '25'
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const weekday = weekdays[dateObj.getDay()];
+    // 🕒 시간 변환 (UTC → 한국시간, 날짜+시간 분리)
+    const dateObj = new Date(alert.time);
+    const dateKR = new Date(dateObj.getTime() + 9 * 60 * 60 * 1000);
+    const formattedDate = dateKR.toLocaleDateString('ko-KR', {
+      year: '2-digit', month: '2-digit', day: '2-digit', weekday: 'short'
+    });
+    const formattedTime = dateKR.toLocaleTimeString('ko-KR', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+    });
 
-      let hours = dateObj.getHours();
-      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-      const seconds = String(dateObj.getSeconds()).padStart(2, '0');
-      const isPM = hours >= 12;
-      const ampm = isPM ? '오후' : '오전';
-      hours = hours % 12 || 12;
-      const timeStr = `${ampm} ${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
-
-      formattedTimeBlock = `<pre>${year}. ${month}. ${day}. (${weekday})\n  ${timeStr}</pre>`;
-    }
-
-    // 메시지 구성
+    // 🎯 분기 메시지 제목
     let emoji = '';
     let title = '';
+    if (type.includes('Ready_Support'))        { emoji = '🩵'; title = `${emoji} 롱 진입 대기`; }
+    else if (type.includes('Ready_Resistance')) { emoji = '❤️'; title = `${emoji} 숏 진입 대기`; }
+    else if (type.includes('Ready_is_Big_Support')) { emoji = '🚀'; title = `${emoji} 강한 롱 진입 대기`; }
+    else if (type.includes('Ready_is_Big_Resistance')) { emoji = '🛸'; title = `${emoji} 강한 숏 진입 대기`; }
+    else if (type.includes('show_Support'))     { emoji = '🩵'; title = `${emoji} 롱 진입`; }
+    else if (type.includes('show_Resistance'))  { emoji = '❤️'; title = `${emoji} 숏 진입`; }
+    else if (type.includes('is_Big_Support'))   { emoji = '🚀'; title = `${emoji} 강한 롱 진입`; }
+    else if (type.includes('is_Big_Resistance')){ emoji = '🛸'; title = `${emoji} 강한 숏 진입`; }
+    else if (type.includes('Ready_exitLong'))   { emoji = '💲'; title = `${emoji} 롱 청산 대기`; }
+    else if (type.includes('Ready_exitShort'))  { emoji = '💲'; title = `${emoji} 숏 청산 대기`; }
+    else if (type.includes('exitLong'))         { emoji = '💰'; title = `${emoji} 롱 청산`; }
+    else if (type.includes('exitShort'))        { emoji = '💰'; title = `${emoji} 숏 청산`; }
+    else                                        { emoji = '🔔'; title = `${emoji} ${type}`; }
 
-    // 🎯 메시지 분기
-    if (type.includes('Ready_Support')) {
-      emoji = '🩵'; title = `${emoji} 롱 진입 대기`;
-    } else if (type.includes('Ready_Resistance')) {
-      emoji = '❤️'; title = `${emoji} 숏 진입 대기`;
-    } else if (type.includes('Ready_is_Big_Support')) {
-      emoji = '🚀'; title = `${emoji} 강한 롱 진입 대기`;
-    } else if (type.includes('Ready_is_Big_Resistance')) {
-      emoji = '🛸'; title = `${emoji} 강한 숏 진입 대기`;
-    } else if (type.includes('show_Support')) {
-      emoji = '🩵'; title = `${emoji} 롱 진입`;
-    } else if (type.includes('show_Resistance')) {
-      emoji = '❤️'; title = `${emoji} 숏 진입`;
-    } else if (type.includes('is_Big_Support')) {
-      emoji = '🚀'; title = `${emoji} 강한 롱 진입`;
-    } else if (type.includes('is_Big_Resistance')) {
-      emoji = '🛸'; title = `${emoji} 강한 숏 진입`;
-    } else if (type.includes('Ready_exitLong')) {
-      emoji = '💲'; title = `${emoji} 롱 청산 대기`;
-    } else if (type.includes('Ready_exitShort')) {
-      emoji = '💲'; title = `${emoji} 숏 청산 대기`;
-    } else if (type.includes('exitLong')) {
-      emoji = '💰'; title = `${emoji} 롱 청산`;
-    } else if (type.includes('exitShort')) {
-      emoji = '💰'; title = `${emoji} 숏 청산`;
-    } else {
-      emoji = '🔔'; title = `${emoji} ${type}`;
-    }
+    // 📬 HTML 없이 순수 텍스트 메시지 조립 (복사버튼 없음)
+    const message = `${title}
+\n` +
+                    `📌 종목: ${symbol}
+` +
+                    `⏱️ 타임프레임: ${timeframe}
+` +
+                    `💲 가격: ${price}
+` +
+                    `🕒 포착시간:\n       ${formattedDate}
+       ${formattedTime}`;
 
-    // 📬 HTML 메시지 조립
-    const message = `${title}\n\n` +
-                    `📌 종목: ${symbol}\n` +
-                    `⏱️ 타임프레임: ${timeframe}\n` +
-                    `💲 가격: ${price}\n` +
-                    `🕒 포착시간:\n` +
-                    `       ${formattedDate}\n` +
-                    `       ${formattedTime}`;
-
-
-    // 텔레그램 전송
+    // 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
     await axios.post(url, {
       chat_id: config.TELEGRAM_CHAT_ID,
       text: message,
-      parse_mode: 'HTML'
+      parse_mode: 'HTML' // HTML 파싱은 켜두되 <code> 없음
     });
 
     res.status(200).send('✅ 텔레그램 전송 성공');
