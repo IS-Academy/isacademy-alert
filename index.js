@@ -21,9 +21,9 @@ app.post('/webhook', async (req, res) => {
 //    const reason = alert.reason || '📌 조건 미지정';
 
     // 시간 변환 (UTC → KST)
-    const utcDate = new Date(alert.time);
-    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
-    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+//    const utcDate = new Date(alert.time);
+//    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
+//    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
     // 메시지 구성 요소
     let emoji = '';
