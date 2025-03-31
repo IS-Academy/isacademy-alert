@@ -10,6 +10,6 @@ module.exports = {
   TELEGRAM_BOT_TOKEN_A: process.env.TELEGRAM_BOT_TOKEN_A,
   TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
 
-  // 밍밍 활성화 여부
-  MINGMING_ENABLED: process.env.MINGMING_ENABLED === 'true'
+  // 밍밍 전송 스위치 (하드코딩 방식)
+  MINGMING_ENABLED: true // ← 여기 true/false 바꾸면 바로 적용됨!
 };
