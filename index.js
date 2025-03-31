@@ -20,8 +20,8 @@ app.post('/webhook', async (req, res) => {
 
     // ✅ 시간 변환 (UTC → KST)
     const utcDate = new Date(alert.time);
-    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
-    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+//    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
+//    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
 
     // 메시지 구성
     let emoji = '';
@@ -57,10 +57,10 @@ app.post('/webhook', async (req, res) => {
     }
 
     // 📬 HTML 메시지 조립
-    const message = `<b>${title}</b>\n\n` +
-                    `📌 <b>종목:</b> <code>${symbol}</code>\n` +
+    const message = `${title}\n\n` +
+                    `📌 종목: <code>${symbol}</code>\n` +
                     `⏱️ 타임프레임: ${timeframe}\n` +
-                    `💲 <b>가격:</b> <code>${price}</code>\n` +
+                    `💲 가격: <code>${price}</code>\n` +
                     `🕒 포착시간: ${formattedTime}`;
 
     // 텔레그램 전송
