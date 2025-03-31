@@ -77,7 +77,8 @@ app.post('/webhook', async (req, res) => {
                     `📌 종목: <code>${symbol}</code>\n` +
                     `⏱️ 타임프레임: ${timeframe}\n` +
                     `💲 가격: <code>${price}</code>\n` +
-                    `🕒 포착시간:\n${formattedTimeBlock}`;
+                    `🕒 포착시간:\n +
+                    ${formattedTimeBlock}`;
 
     // 텔레그램 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
