@@ -8,5 +8,8 @@ module.exports = {
 
   // 밍밍 봇
   TELEGRAM_BOT_TOKEN_A: process.env.TELEGRAM_BOT_TOKEN_A,
-  TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,  
+  TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
+
+  // 밍밍 활성화 여부
+  MINGMING_ENABLED: process.env.MINGMING_ENABLED === 'true'
 };
