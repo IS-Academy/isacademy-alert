@@ -12,17 +12,16 @@ app.post('/webhook', async (req, res) => {
     const alert = req.body;
     console.log('📩 받은 TradingView Alert:', alert);
 
+    // 시간 변환 (UTC → KST)
+    const utcDate = new Date(alert.time);
+    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
+    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    
     const type = alert.type || '📢 알림 도착!';
+    const price = parseFloat(alert.price).toFixed(2); // 소수점 2자리
     const symbol = alert.symbol || 'Unknown';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-
-    // 시간 변환 (UTC → KST)
-    let formattedTime = '시간 없음';
-    if (alert.time) {
-      const utcDate = new Date(alert.time);
-      const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
-      formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-    }
+    const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
 
     // 메시지 포맷 분기
     let message = '';
@@ -31,8 +30,6 @@ app.post('/webhook', async (req, res) => {
     } else {
       message = `${type}\n\n📌 종목: ${symbol}\n💰 가격: ${price}\n🕒 시간: ${formattedTime}`;
     }
-
-    const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
 
     await axios.post(url, {
       chat_id: config.TELEGRAM_CHAT_ID,
