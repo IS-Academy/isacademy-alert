@@ -22,10 +22,16 @@ app.post('/webhook', async (req, res) => {
     const dateObj = new Date(alert.time);
     const dateKR = new Date(dateObj.getTime() + 9 * 60 * 60 * 1000);
     const formattedDate = dateKR.toLocaleDateString('ko-KR', {
-      year: '2-digit', month: '2-digit', day: '2-digit', weekday: 'short'
+      year: '2-digit', 
+      month: '2-digit', 
+      day: '2-digit', 
+      weekday: 'short'
     });
     const formattedTime = dateKR.toLocaleTimeString('ko-KR', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit', 
+      hour12: true
     });
 
     // 🎯 분기 메시지 제목
@@ -45,17 +51,19 @@ app.post('/webhook', async (req, res) => {
     else if (type.includes('exitShort'))        { emoji = '💰'; title = `${emoji} 숏 청산`; }
     else                                        { emoji = '🔔'; title = `${emoji} ${type}`; }
 
-    // 📬 HTML 없이 순수 텍스트 메시지 조립 (복사버튼 없음)
-    const message = `${title}
-\n` +
-                    `📌 종목: ${symbol}
-` +
-                    `⏱️ 타임프레임: ${timeframe}
-` +
-                    `💲 가격: ${price}
-` +
-                    `🕒 포착시간:\n       ${formattedDate}
-       ${formattedTime}`;
+// 📬 HTML 메시지 조립
+let message = `${title}\n\n📌 종목: <code>${symbol}</code>\n⏱️ 타임프레임: ${timeframe}`;
+
+const isAlertWithFullInfo = [
+  'show_Support', 'show_Resistance',
+  'is_Big_Support', 'is_Big_Resistance',
+  'exitLong', 'exitShort'
+].some(keyword => type.includes(keyword));
+
+if (isAlertWithFullInfo) {
+  message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${' '.repeat(7)}${formattedTime}</code>`;
+}
+
 
     // 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
