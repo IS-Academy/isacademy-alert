@@ -17,11 +17,7 @@ app.post('/webhook', async (req, res) => {
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-
-    // ✅ 시간 변환 (UTC → KST)
-    const utcDate = new Date(alert.time);
-//    const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
-//    const formattedTime = kstDate.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+    const formattedTime = alert.time || '시간 없음';  // ✅ 변환하지 않음
 
     // 메시지 구성
     let emoji = '';
