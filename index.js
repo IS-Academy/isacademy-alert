@@ -48,18 +48,20 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
 
 /* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message, type) {
-  const excludeTypesForMing = [
-    // 예: 'exitLong', 'exitShort' 등 나중에 제외할 항목
-  ];
+  const excludeTypesForMing = [];
 
   if (!excludeTypesForMing.includes(type)) {
-    const urlMing = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
-    await axios.post(urlMing, {
-      chat_id: config.TELEGRAM_CHAT_ID_A,
-      text: message,
-      parse_mode: 'HTML'
-    });
-    console.log('📤 밍밍 봇에게도 전송 완료');
+    try {
+      const urlMing = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
+      await axios.post(urlMing, {
+        chat_id: config.TELEGRAM_CHAT_ID_A,
+        text: message,
+        parse_mode: 'HTML'
+      });
+      console.log('📤 밍밍 봇에게도 전송 완료');
+    } catch (err) {
+      console.error('❌ 밍밍 전송 실패:', err.response?.data || err.message);
+    }
   } else {
     console.log('🚫 밍밍 제외 알림 타입으로 전송 생략');
   }
