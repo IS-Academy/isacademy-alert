@@ -48,9 +48,9 @@ app.post('/webhook', async (req, res) => {
     } else if (type.includes('is_Big_Resistance')) {
       emoji = '🛸'; title = `${emoji} 강한 숏 진입`;
     } else if (type.includes('Ready_exitLong')) {
-      emoji = '📤'; title = `${emoji} 롱 청산 대기`;
+      emoji = '💲'; title = `${emoji} 롱 청산 대기`;
     } else if (type.includes('Ready_exitShort')) {
-      emoji = '📤'; title = `${emoji} 숏 청산 대기`;
+      emoji = '💲'; title = `${emoji} 숏 청산 대기`;
     } else if (type.includes('exitLong')) {
       emoji = '💰'; title = `${emoji} 롱 청산`;
     } else if (type.includes('exitShort')) {
