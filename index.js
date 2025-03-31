@@ -1,4 +1,4 @@
-// index.js - HTML 스타일 메시지 + 진입/청산 구분별 정보 출력
+// index.js - HTML 스타일 + 진입/청산 종류별 메시지 분기 최종 버전
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -18,25 +18,29 @@ app.post('/webhook', async (req, res) => {
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
 
-    // 날짜와 시간 포맷 분리 (KST)
-    const date = new Date(alert.time);
-    const formattedDate = date.toLocaleDateString('ko-KR', {
+    // 포착 시간 포맷
+    const rawDate = alert.time ? new Date(alert.time) : new Date();
+    const formattedDate = rawDate.toLocaleDateString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       year: '2-digit', month: '2-digit', day: '2-digit', weekday: 'short'
     });
-    const formattedTime = date.toLocaleTimeString('ko-KR', {
+    const formattedTime = rawDate.toLocaleTimeString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
     });
 
-    // 메시지 제목 분기
-    let emoji = '', title = '';
+    // 알림 분기용 이모지 + 타이틀
+    let emoji = '';
+    let title = '';
+
     if (type.includes('Ready_Support')) {
-      emoji = '🩵'; title = `${emoji} 롱 진입 대기`;
+      emoji = '🩵'; title = `${emoji} 롱 진입 준비`;
     } else if (type.includes('Ready_Resistance')) {
-      emoji = '❤️'; title = `${emoji} 숏 진입 대기`;
+      emoji = '❤️'; title = `${emoji} 숏 진입 준비`;
     } else if (type.includes('Ready_is_Big_Support')) {
-      emoji = '🚀'; title = `${emoji} 강한 롱 진입 대기`;
+      emoji = '🚀'; title = `${emoji} 강한 롱 진입 준비`;
     } else if (type.includes('Ready_is_Big_Resistance')) {
-      emoji = '🛸'; title = `${emoji} 강한 숏 진입 대기`;
+      emoji = '🛸'; title = `${emoji} 강한 숏 진입 준비`;
     } else if (type.includes('show_Support')) {
       emoji = '🩵'; title = `${emoji} 롱 진입`;
     } else if (type.includes('show_Resistance')) {
@@ -46,9 +50,9 @@ app.post('/webhook', async (req, res) => {
     } else if (type.includes('is_Big_Resistance')) {
       emoji = '🛸'; title = `${emoji} 강한 숏 진입`;
     } else if (type.includes('Ready_exitLong')) {
-      emoji = '💲'; title = `${emoji} 롱 청산 대기`;
+      emoji = '💲'; title = `${emoji} 롱 청산 준비`;
     } else if (type.includes('Ready_exitShort')) {
-      emoji = '💲'; title = `${emoji} 숏 청산 대기`;
+      emoji = '💲'; title = `${emoji} 숏 청산 준비`;
     } else if (type.includes('exitLong')) {
       emoji = '💰'; title = `${emoji} 롱 청산`;
     } else if (type.includes('exitShort')) {
@@ -57,20 +61,22 @@ app.post('/webhook', async (req, res) => {
       emoji = '🔔'; title = `${emoji} ${type}`;
     }
 
-    // 본문 메시지 구성
-    let message = `${title}
-\n📌 종목: <code>${symbol}</code>\n⏱️ 타임프레임: ${timeframe}`;
-
-    // 이 조건에만 가격과 포착시간 추가
-    const fullInfoConditions = [
+    // 가격/시간 표시 여부 결정
+    const fullInfoTypes = [
       'show_Support', 'show_Resistance',
       'is_Big_Support', 'is_Big_Resistance',
       'exitLong', 'exitShort'
     ];
+    const isFullInfo = fullInfoTypes.some(keyword => type.includes(keyword));
 
-    const includeFullInfo = fullInfoConditions.some(keyword => type.includes(keyword));
-    if (includeFullInfo) {
-      message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${' '.repeat(5)}${formattedTime}</code>`;
+    // 메시지 조립
+    let message = `${title}
+
+📌 종목: <code>${symbol}</code>
+⏱️ 타임프레임: ${timeframe}`;
+
+    if (isFullInfo) {
+      message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${formattedTime}</code>`;
     }
 
     // 텔레그램 전송
