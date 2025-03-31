@@ -1,4 +1,4 @@
-// index.js - HTML 스타일 + 진입/청산 종류별 메시지 분기 최종 버전
+// index.js - HTML 스타일 메시지 + 정확한 신호 구분
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -15,71 +15,52 @@ app.post('/webhook', async (req, res) => {
     // 기본값 추출
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
-    const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
+    const timeframe = alert.timeframe || '⏳ 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
 
-    // 포착 시간 포맷
-    const rawDate = alert.time ? new Date(alert.time) : new Date();
-    const formattedDate = rawDate.toLocaleDateString('ko-KR', {
-      timeZone: 'Asia/Seoul',
+    // 📆 시간 포맷
+    const alertTime = alert.time ? new Date(alert.time) : new Date();
+    const formattedDate = alertTime.toLocaleDateString('ko-KR', {
       year: '2-digit', month: '2-digit', day: '2-digit', weekday: 'short'
     });
-    const formattedTime = rawDate.toLocaleTimeString('ko-KR', {
-      timeZone: 'Asia/Seoul',
+    const formattedClock = alertTime.toLocaleTimeString('ko-KR', {
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
     });
 
-    // 알림 분기용 이모지 + 타이틀
-    let emoji = '';
-    let title = '';
+    // 🧩 제목 구성
+    let emoji = '', title = '';
+    if (type === 'Ready_Support') emoji = '🩵', title = '롱 진입 준비';
+    else if (type === 'Ready_Resistance') emoji = '❤️', title = '숏 진입 준비';
+    else if (type === 'Ready_is_Big_Support') emoji = '🚀', title = '강한 롱 진입 준비';
+    else if (type === 'Ready_is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입 준비';
+    else if (type === 'show_Support') emoji = '🩵', title = '롱 진입';
+    else if (type === 'show_Resistance') emoji = '❤️', title = '숏 진입';
+    else if (type === 'is_Big_Support') emoji = '🚀', title = '강한 롱 진입';
+    else if (type === 'is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입';
+    else if (type === 'Ready_exitLong') emoji = '💲', title = '롱 청산 준비';
+    else if (type === 'Ready_exitShort') emoji = '💲', title = '숏 청산 준비';
+    else if (type === 'exitLong') emoji = '💰', title = '롱 청산';
+    else if (type === 'exitShort') emoji = '💰', title = '숏 청산';
+    else emoji = '🔔', title = type;
 
-    if (type.includes('Ready_Support')) {
-      emoji = '🩵'; title = `${emoji} 롱 진입 준비`;
-    } else if (type.includes('Ready_Resistance')) {
-      emoji = '❤️'; title = `${emoji} 숏 진입 준비`;
-    } else if (type.includes('Ready_is_Big_Support')) {
-      emoji = '🚀'; title = `${emoji} 강한 롱 진입 준비`;
-    } else if (type.includes('Ready_is_Big_Resistance')) {
-      emoji = '🛸'; title = `${emoji} 강한 숏 진입 준비`;
-    } else if (type.includes('show_Support')) {
-      emoji = '🩵'; title = `${emoji} 롱 진입`;
-    } else if (type.includes('show_Resistance')) {
-      emoji = '❤️'; title = `${emoji} 숏 진입`;
-    } else if (type.includes('is_Big_Support')) {
-      emoji = '🚀'; title = `${emoji} 강한 롱 진입`;
-    } else if (type.includes('is_Big_Resistance')) {
-      emoji = '🛸'; title = `${emoji} 강한 숏 진입`;
-    } else if (type.includes('Ready_exitLong')) {
-      emoji = '💲'; title = `${emoji} 롱 청산 준비`;
-    } else if (type.includes('Ready_exitShort')) {
-      emoji = '💲'; title = `${emoji} 숏 청산 준비`;
-    } else if (type.includes('exitLong')) {
-      emoji = '💰'; title = `${emoji} 롱 청산`;
-    } else if (type.includes('exitShort')) {
-      emoji = '💰'; title = `${emoji} 숏 청산`;
-    } else {
-      emoji = '🔔'; title = `${emoji} ${type}`;
-    }
-
-    // 가격/시간 표시 여부 결정
+    // 💡 어떤 신호에 전체 정보(가격, 시간)를 보여줄지 정확히 구분
     const fullInfoTypes = [
       'show_Support', 'show_Resistance',
       'is_Big_Support', 'is_Big_Resistance',
       'exitLong', 'exitShort'
     ];
-    const isAlertWithFullInfo = fullInfoTypes.includes(type);  // ⛔️ includes → includes()
+    const isAlertWithFullInfo = fullInfoTypes.includes(type);
 
-    // 메시지 조립
-    let message = `${title}
+    // 📬 메시지 조립 (HTML)
+    let message = `${emoji} <b>${title}</b>\n\n`;
+    message += `📌 종목: <code>${symbol}</code>\n`;
+    message += `⏱️ 타임프레임: ${timeframe}`;
 
-📌 종목: <code>${symbol}</code>
-⏱️ 타임프레임: ${timeframe}`;
-
-    if (isFullInfo) {
-      message += `\n💲 가격: <code>${price}</code>\n🕒 포착시간:\n<code>${formattedDate}\n${formattedTime}</code>`;
+    if (isAlertWithFullInfo) {
+      message += `\n💲 가격: <code>${price}</code>`;
+      message += `\n🕒 포착시간:\n<code>${formattedDate}</code>\n<code>${formattedClock}</code>`;
     }
 
-    // 텔레그램 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
     await axios.post(url, {
       chat_id: config.TELEGRAM_CHAT_ID,
@@ -94,7 +75,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// 상태 확인용
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
 });
