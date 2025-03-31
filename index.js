@@ -17,19 +17,27 @@ app.post('/webhook', async (req, res) => {
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 타임프레임 없음';
     const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    const formattedTime = alert.time
-  ? new Date(alert.time).toLocaleString('ko-KR', {
-      timeZone: 'Asia/Seoul',
-      year: '2-digit',       // ✅ 연도: 25
-      month: '2-digit',      // ➤ '03'
-      day: '2-digit',        // ➤ '31'
-      weekday: 'short',      // ✅ 요일: (월), (화) 등
-      hour: '2-digit',       // ➤ '오전 08'
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true           // ✅ 오전/오후
-    })
-  : '시간 없음';
+
+    // ✅ 포착시간: 날짜와 시간 분리하여 예쁘게 정렬
+    let formattedTimeBlock = '시간 없음';
+    if (alert.time) {
+      const dateObj = new Date(alert.time);
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const year = String(dateObj.getFullYear()).slice(2); // '25'
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const weekday = weekdays[dateObj.getDay()];
+
+      let hours = dateObj.getHours();
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+      const isPM = hours >= 12;
+      const ampm = isPM ? '오후' : '오전';
+      hours = hours % 12 || 12;
+      const timeStr = `${ampm} ${String(hours).padStart(2, '0')}:${minutes}:${seconds}`;
+
+      formattedTimeBlock = `<pre>${year}. ${month}. ${day}. (${weekday})\n  ${timeStr}</pre>`;
+    }
 
     // 메시지 구성
     let emoji = '';
@@ -69,7 +77,7 @@ app.post('/webhook', async (req, res) => {
                     `📌 종목: <code>${symbol}</code>\n` +
                     `⏱️ 타임프레임: ${timeframe}\n` +
                     `💲 가격: <code>${price}</code>\n` +
-                    `🕒 포착시간: ${formattedTime}`;
+                    `🕒 포착시간:\n${formattedTimeBlock}`;
 
     // 텔레그램 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
