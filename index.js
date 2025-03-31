@@ -1,4 +1,4 @@
-// index.js - HTML 스타일 메시지 + 정확한 신호 구분
+// index.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -7,18 +7,81 @@ const config = require('./config');
 const app = express();
 app.use(bodyParser.json());
 
+/* ✅ 템플릿 함수: 메시지 생성만 담당 */
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
+  const signalMap = {
+    Ready_Support: { emoji: '🩵', title: '롱 진입 대기' },
+    Ready_Resistance: { emoji: '❤️', title: '숏 진입 대기' },
+    Ready_is_Big_Support: { emoji: '🚀', title: '강한 롱 진입 대기' },
+    Ready_is_Big_Resistance: { emoji: '🛸', title: '강한 숏 진입 대기' },
+    show_Support: { emoji: '🩵', title: '롱 진입' },
+    show_Resistance: { emoji: '❤️', title: '숏 진입' },
+    is_Big_Support: { emoji: '🚀', title: '강한 롱 진입' },
+    is_Big_Resistance: { emoji: '🛸', title: '강한 숏 진입' },
+    Ready_exitLong: { emoji: '💲', title: '롱 청산 준비' },
+    Ready_exitShort: { emoji: '💲', title: '숏 청산 준비' },
+    exitLong: { emoji: '💰', title: '롱 청산' },
+    exitShort: { emoji: '💰', title: '숏 청산' }
+  };
+
+  const { emoji = '🔔', title = type } = signalMap[type] || {};
+
+  const fullInfoTypes = [
+    'show_Support', 'show_Resistance',
+    'is_Big_Support', 'is_Big_Resistance',
+    'exitLong', 'exitShort'
+  ];
+
+  let message = `${emoji} <b>${title}</b>\n\n`;
+  message += `📌 종목: <b>${symbol}</b>\n`;
+  message += `⏱️ 타임프레임: ${timeframe}`;
+
+  if (fullInfoTypes.includes(type)) {
+    if (price !== 'N/A') {
+      message += `\n💲 가격: <b>${price}</b>`;
+    }
+    message += `\n🕒 포착시간:\n${date}\n${clock}`;
+  }
+
+  return message;
+}
+
+/* ✅ 밍밍 봇 전송 함수 */
+async function sendToMingBot(message, type) {
+  const excludeTypesForMing = [
+    // 예: 'exitLong', 'exitShort' 등 나중에 제외할 항목
+  ];
+
+  if (!excludeTypesForMing.includes(type)) {
+    const urlMing = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
+    await axios.post(urlMing, {
+      chat_id: config.TELEGRAM_CHAT_ID_A,
+      text: message,
+      parse_mode: 'HTML'
+    });
+    console.log('📤 밍밍 봇에게도 전송 완료');
+  } else {
+    console.log('🚫 밍밍 제외 알림 타입으로 전송 생략');
+  }
+}
+
+/* ✅ 메인 핸들러 */
 app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
     console.log('📩 받은 TradingView Alert:', alert);
 
-    // 기본값 추출
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 없음';
-    const price = alert.price ? parseFloat(alert.price).toFixed(2) : 'N/A';
 
-    // 📆 시간 포맷
+    // 가격 파싱
+    let price = 'N/A';
+    if (!isNaN(parseFloat(alert.price))) {
+      price = parseFloat(alert.price).toFixed(2);
+    }
+
+    // 시간 포맷
     const alertTime = alert.time ? new Date(alert.time) : new Date();
     const formattedDate = alertTime.toLocaleDateString('ko-KR', {
       year: '2-digit',
@@ -33,57 +96,27 @@ app.post('/webhook', async (req, res) => {
       hour12: true
     });
 
-    // 🧩 제목 구성
-    let emoji = '', title = '';
-    if (type === 'Ready_Support') emoji = '🩵', title = '롱 진입 대기';
-    else if (type === 'Ready_Resistance') emoji = '❤️', title = '숏 진입 대기';
-    else if (type === 'Ready_is_Big_Support') emoji = '🚀', title = '강한 롱 진입 대기';
-    else if (type === 'Ready_is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입 대기';
-    else if (type === 'show_Support') emoji = '🩵', title = '롱 진입';
-    else if (type === 'show_Resistance') emoji = '❤️', title = '숏 진입';
-    else if (type === 'is_Big_Support') emoji = '🚀', title = '강한 롱 진입';
-    else if (type === 'is_Big_Resistance') emoji = '🛸', title = '강한 숏 진입';
-    else if (type === 'Ready_exitLong') emoji = '💲', title = '롱 청산 준비';
-    else if (type === 'Ready_exitShort') emoji = '💲', title = '숏 청산 준비';
-    else if (type === 'exitLong') emoji = '💰', title = '롱 청산';
-    else if (type === 'exitShort') emoji = '💰', title = '숏 청산';
-    else emoji = '🔔', title = type;
+    // 메시지 생성
+    const message = generateAlertMessage({
+      type,
+      symbol,
+      timeframe,
+      price,
+      date: formattedDate,
+      clock: formattedClock
+    });
 
-    // 💡 어떤 신호에 전체 정보(가격, 시간)를 보여줄지 정확히 구분
-    const fullInfoTypes = [
-      'show_Support', 'show_Resistance',
-      'is_Big_Support', 'is_Big_Resistance',
-      'exitLong', 'exitShort'
-    ];
-    const isAlertWithFullInfo = fullInfoTypes.includes(type);
-
-    // 📬 메시지 조립 (HTML)
-    let message = `${emoji} <b>${title}</b>\n\n`;
-    message += `📌 종목: <b>${symbol}</b>\n`;
-    message += `⏱️ 타임프레임: ${timeframe}`;
-
-    if (isAlertWithFullInfo) {
-      message += `\n💲 가격: <b>${price}</b>`;
-      message += `\n🕒 포착시간:\n${formattedDate}\n${formattedClock}`;
-    }
-
-    // 최실장 코드
+    // 최실장 봇 전송
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
     await axios.post(url, {
       chat_id: config.TELEGRAM_CHAT_ID,
       text: message,
       parse_mode: 'HTML'
     });
+    console.log('✅ 최실장 봇에게 전송 완료');
 
-    // 밍밍 코드
-if (message.includes('[MING]')) {
-    const urlMing = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
-    await axios.post(urlMing, {
-      chat_id: config.TELEGRAM_CHAT_ID_A,
-      text: message,
-      parse_mode: 'HTML'
-    });
-}
+    // 밍밍 봇 전송
+    await sendToMingBot(message, type);
 
     res.status(200).send('✅ 텔레그램 전송 성공');
   } catch (err) {
