@@ -39,6 +39,26 @@ async function sendTextToTelegram(text) {
   });
 }
 
+// ✅ 텔레그램 명령어 등록 (우측 하단 메뉴에 표시)
+async function setTelegramCommands() {
+  const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setMyCommands`;
+  const commands = [
+    { command: '도움말', description: '사용 가능한 명령어 보기' },
+    { command: '최실장켜', description: '최실장 봇 전송 ON' },
+    { command: '최실장꺼', description: '최실장 봇 전송 OFF' },
+    { command: '최실장상태', description: '최실장 상태 보기' },
+    { command: '밍밍켜', description: '밍밍 봇 전송 ON' },
+    { command: '밍밍꺼', description: '밍밍 봇 전송 OFF' },
+    { command: '밍밍상태', description: '밍밍 상태 보기' }
+  ];
+  try {
+    await axios.post(url, { commands });
+    console.log('✅ 텔레그램 명령어 등록 완료');
+  } catch (err) {
+    console.error('❌ 텔레그램 명령어 등록 실패:', err.message);
+  }
+}
+
 /* ✅ 템플릿 함수: 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
   const signalMap = {
@@ -182,9 +202,18 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ✅ 상태 확인용(기본 라우트)
+app.get('/', (req, res) => {
+  res.send('✅ IS Academy Webhook 서버 작동 중');
+});
+
+// ✅ 서버 실행 & 초기 설정 및 포트 자동 감지 (Render용)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
+
 // ✅ 웹훅 자동 등록
-(async () => {
-  const serverUrl = process.env.SERVER_URL;
+const serverUrl = process.env.SERVER_URL;
   if (serverUrl) {
     try {
       const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${serverUrl}/webhook`;
@@ -196,15 +225,6 @@ app.post('/webhook', async (req, res) => {
   } else {
     console.warn('⚠️ SERVER_URL 환경변수가 설정되어 있지 않습니다.');
   }
-})();
 
-// ✅ 상태 확인용(기본 라우트)
-app.get('/', (req, res) => {
-  res.send('✅ IS Academy Webhook 서버 작동 중');
-});
-
-// ✅ 포트 자동 감지 (Render용)
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
+  await setTelegramCommands(); // ✅ 명령어 등록 실행
 });
