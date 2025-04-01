@@ -30,14 +30,83 @@ function saveBotState(state) {
 let { choiEnabled, mingEnabled } = loadBotState();
 
 // ✅ 관리자에게 메시지 전송
-async function sendTextToTelegram(text) {
+async function sendTextToTelegram(text, keyboard) {
   const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
   await axios.post(url, {
     chat_id: config.ADMIN_CHAT_ID,
     text,
-    parse_mode: 'HTML'
+    parse_mode: 'HTML',
+    reply_markup: keyboard
   });
 }
+
+// 인라인 키보드 패널 생성
+function getInlineKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '▶️ 최실장 켜기', callback_data: 'choi_on' },
+        { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }
+      ],
+      [
+        { text: '▶️ 밍밍 켜기', callback_data: 'ming_on' },
+        { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }
+      ],
+      [
+        { text: '📡 상태 확인', callback_data: 'status' }
+      ]
+    ]
+  };
+}
+
+// 키보드 연결을 통한 명령 처리
+app.post('/webhook', async (req, res) => {
+  const update = req.body;
+  try {
+    // 인라인 키보드 눌러지는 경우
+    if (update.callback_query) {
+      const cmd = update.callback_query.data;
+      const id = update.callback_query.message.chat.id;
+
+      if (id.toString() !== config.ADMIN_CHAT_ID) return res.sendStatus(200);
+
+      switch (cmd) {
+        case 'choi_on':
+          choiEnabled = true;
+          break;
+        case 'choi_off':
+          choiEnabled = false;
+          break;
+        case 'ming_on':
+          mingEnabled = true;
+          break;
+        case 'ming_off':
+          mingEnabled = false;
+          break;
+      }
+      saveBotState({ choiEnabled, mingEnabled });
+      const statusMsg = `✅ 현재 상태:\n최실장: ${choiEnabled ? 'ON' : 'OFF'}\n밍밍: ${mingEnabled ? 'ON' : 'OFF'}`;
+      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+        chat_id: id,
+        message_id: update.callback_query.message.message_id,
+        text: statusMsg,
+        parse_mode: 'HTML',
+        reply_markup: getInlineKeyboard()
+      });
+      return res.sendStatus(200);
+    }
+
+    // 명령어 (/start)에 연결되면 키보드 표시
+    if (update.message && update.message.text === '/start') {
+      await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard());
+      return res.send('✅ start 처리됨');
+    }
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('❌ 처리 중 오류:', err.message);
+    res.sendStatus(500);
+  }
+});
 
 // ✅ 텔레그램 명령어 등록 (우측 하단 메뉴에 표시)
 async function registerTelegramCommands() {
@@ -233,7 +302,7 @@ app.listen(PORT, async () => {
 const serverUrl = process.env.SERVER_URL;
   if (serverUrl) {
     try {
-      const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${serverUrl}/webhook`;
+      const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${process.env.SERVER_URL}/webhook`;
       const response = await axios.get(webhookUrl);
       console.log('✅ Webhook 등록 결과:', response.data);
     } catch (err) {
