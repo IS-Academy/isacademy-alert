@@ -108,7 +108,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
 }
 
 /* ✅ 밍밍 봇 전송 함수 */
-async function sendToMingBot(message, type) {
+async function sendToMingBot(message) {
   if (!mingEnabled) return;
   try {
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
@@ -265,7 +265,6 @@ app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
 
 // ✅ 웹훅 자동 등록
-const serverUrl = process.env.SERVER_URL;
   if (process.env.SERVER_URL) {
     try {
       const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${process.env.SERVER_URL}/webhook`;
