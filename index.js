@@ -214,20 +214,25 @@ app.post('/webhook', async (req, res) => {
 
     // 시간 포맷
     const alertTime = alert.time ? new Date(alert.time) : new Date();
-    const formattedDate = alertTime.toLocaleDateString('ko-KR', {
-      year: '2-digit',
-      month: '2-digit',
-      day: '2-digit',
-      weekday: 'short'
-      timeZone: 'Asia/Seoul'   // ✅ 한국 시간
-    });
-    const formattedClock = alertTime.toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-      timeZone: 'Asia/Seoul'   // ✅ 한국 시간
-    });
+
+const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
+  year: '2-digit',
+  month: '2-digit',
+  day: '2-digit',
+  weekday: 'short',
+  timeZone: 'Asia/Seoul'  // ✅ 한국 시간
+});
+
+const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: true,
+  timeZone: 'Asia/Seoul'  // ✅ 한국 시간
+});
+
+const formattedDate = dateFormatter.format(alertTime);
+const formattedClock = timeFormatter.format(alertTime);
     
     // 메시지 생성
     const message = generateAlertMessage({
