@@ -219,12 +219,14 @@ app.post('/webhook', async (req, res) => {
       month: '2-digit',
       day: '2-digit',
       weekday: 'short'
+      timeZone: 'Asia/Seoul'   // ✅ 한국 시간
     });
     const formattedClock = alertTime.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: true
+      timeZone: 'Asia/Seoul'   // ✅ 한국 시간
     });
     
     // 메시지 생성
