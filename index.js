@@ -40,22 +40,26 @@ async function sendTextToTelegram(text) {
 }
 
 // ✅ 텔레그램 명령어 등록 (우측 하단 메뉴에 표시)
-async function setTelegramCommands() {
-  const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setMyCommands`;
+async function registerTelegramCommands() {
   const commands = [
-    { command: '도움말', description: '사용 가능한 명령어 보기' },
-    { command: '최실장켜', description: '최실장 봇 전송 ON' },
-    { command: '최실장꺼', description: '최실장 봇 전송 OFF' },
-    { command: '최실장상태', description: '최실장 상태 보기' },
-    { command: '밍밍켜', description: '밍밍 봇 전송 ON' },
-    { command: '밍밍꺼', description: '밍밍 봇 전송 OFF' },
-    { command: '밍밍상태', description: '밍밍 상태 보기' }
+    { command: 'help', description: '사용 가능한 명령어 목록 안내' },
+    { command: 'choi_on', description: '최실장 봇 전송 시작' },
+    { command: 'choi_off', description: '최실장 봇 전송 중단' },
+    { command: 'choi_status', description: '최실장 봇 상태 확인' },
+    { command: 'ming_on', description: '밍밍 봇 전송 시작' },
+    { command: 'ming_off', description: '밍밍 봇 전송 중단' },
+    { command: 'ming_status', description: '밍밍 봇 상태 확인' }
   ];
+
   try {
-    await axios.post(url, { commands });
-    console.log('✅ 텔레그램 명령어 등록 완료');
+    const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setMyCommands`;
+    const res = await axios.post(url, {
+      commands,
+      scope: { type: 'default' }
+    });
+    console.log('✅ 텔레그램 명령어 등록 완료:', res.data);
   } catch (err) {
-    console.error('❌ 텔레그램 명령어 등록 실패:', err.message);
+    console.error('❌ 텔레그램 명령어 등록 실패:', err.response?.data || err.message);
   }
 }
 
@@ -226,5 +230,5 @@ const serverUrl = process.env.SERVER_URL;
     console.warn('⚠️ SERVER_URL 환경변수가 설정되어 있지 않습니다.');
   }
 
-  await setTelegramCommands(); // ✅ 명령어 등록 실행
+  await registerTelegramCommands(); // ✅ 명령어 등록 실행
 });
