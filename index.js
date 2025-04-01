@@ -2,16 +2,34 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const fs = require('fs');
 const config = require('./config');
 
 const app = express();
 app.use(bodyParser.json());
 
-// ✅ 상태 변수 (메모리 기반 ON/OFF 스위치)
-let choiEnabled = true;
-let mingEnabled = true;
+// ✅ 상태 파일 경로
+const STATE_FILE = './bot_state.json';
 
-// ✅ 관리자 명령어용 텍스트 전송 함수
+// ✅ 상태 불러오기 (초기값 포함)
+function loadBotState() {
+  try {
+    const raw = fs.readFileSync(STATE_FILE);
+    return JSON.parse(raw);
+  } catch (err) {
+    return { choiEnabled: true, mingEnabled: config.MINGMING_ENABLED };
+  }
+}
+
+// ✅ 상태 저장
+function saveBotState(state) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+// ✅ 상태 변수 로드
+let { choiEnabled, mingEnabled } = loadBotState();
+
+// ✅ 관리자에게 메시지 전송
 async function sendTextToTelegram(text) {
   const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
   await axios.post(url, {
@@ -51,11 +69,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
 
 /* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message, type) {
-  if (!mingEnabled) {
-    console.log('⏸️ 밍밍 비활성화됨');
-    return;
-  }
-
+  if (!mingEnabled) return;
   try {
     const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`;
     await axios.post(url, {
@@ -63,14 +77,12 @@ async function sendToMingBot(message, type) {
       text: message,
       parse_mode: 'HTML'
     });
-    console.log('📤 밍밍 전송 성공');
   } catch (err) {
-    console.error('❌ 밍밍 실패:', err.response?.data || err.message);
     await sendTextToTelegram(`❌ 밍밍 전송 실패\n\n${err.response?.data?.description || err.message}`);
   }
 }
 
-/* ✅ 메인 핸들러 */
+/* ✅ 메인 핸들러(Webhook) */
 app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
@@ -79,27 +91,37 @@ app.post('/webhook', async (req, res) => {
     if (alert.message && alert.message.text) {
       const command = alert.message.text.trim();
       const fromId = alert.message.chat.id;
-
       if (fromId.toString() === config.ADMIN_CHAT_ID) {
         switch (command) {
+          case '/도움말':
+            await sendTextToTelegram(
+              `🛠 사용 가능한 명령어:
+/최실장켜 /최실장꺼 /최실장상태
+/밍밍켜 /밍밍꺼 /밍밍상태`
+            );
+            break;
           case '/최실장켜':
             choiEnabled = true;
-            await sendTextToTelegram('✅ 최실장 전송 활성화됨');
+            saveBotState({ choiEnabled, mingEnabled });
+            await sendTextToTelegram('✅ 최실장 전송 활성화');
             break;
           case '/최실장꺼':
             choiEnabled = false;
-            await sendTextToTelegram('⛔ 최실장 전송 비활성화됨');
+            saveBotState({ choiEnabled, mingEnabled });
+            await sendTextToTelegram('⛔ 최실장 전송 중단');
             break;
           case '/최실장상태':
             await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`);
             break;
           case '/밍밍켜':
             mingEnabled = true;
-            await sendTextToTelegram('✅ 밍밍 전송 활성화됨');
+            saveBotState({ choiEnabled, mingEnabled });
+            await sendTextToTelegram('✅ 밍밍 전송 활성화');
             break;
           case '/밍밍꺼':
             mingEnabled = false;
-            await sendTextToTelegram('⛔ 밍밍 전송 비활성화됨');
+            saveBotState({ choiEnabled, mingEnabled });
+            await sendTextToTelegram('⛔ 밍밍 전송 중단');
             break;
           case '/밍밍상태':
             await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`);
@@ -109,7 +131,7 @@ app.post('/webhook', async (req, res) => {
       }
     }
 
-    // ✅ 일반 alert 메시지 처리
+    // ✅ 일반 Alert 메시지 처리
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 없음';
@@ -134,7 +156,7 @@ app.post('/webhook', async (req, res) => {
       second: '2-digit',
       hour12: true
     });
-
+    
     // 메시지 생성
     const message = generateAlertMessage({
       type,
@@ -145,6 +167,7 @@ app.post('/webhook', async (req, res) => {
       clock: formattedClock
     });
 
+
     // 최실장 봇 전송
     if (choiEnabled) {
       const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -153,9 +176,6 @@ app.post('/webhook', async (req, res) => {
         text: message,
         parse_mode: 'HTML'
       });
-      console.log('✅ 최실장 전송 완료');
-    } else {
-      console.log('⏸️ 최실장 전송 OFF 상태');
     }
 
     // 밍밍 봇 전송
