@@ -82,12 +82,7 @@ async function sendToMingBot(message, type) {
   }
 }
 
-/* ✅ 메인 핸들러(Webhook) */
-app.post('/webhook', async (req, res) => {
-  try {
-    const alert = req.body;
-
-    // ✅ 관리자 명령어 및 Webhook 핸들러
+/* ✅ 관리자 명령어 및 메인 핸들러(Webhook) */
 app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
@@ -99,9 +94,7 @@ app.post('/webhook', async (req, res) => {
       if (fromId.toString() === config.ADMIN_CHAT_ID) {
         switch (command) {
           case '/도움말':
-            await sendTextToTelegram(
-              `🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태`
-            );
+            await sendTextToTelegram(`🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태`);
             break;
           case '/최실장켜':
             choiEnabled = true;
@@ -182,7 +175,6 @@ app.post('/webhook', async (req, res) => {
 
     // 밍밍 봇 전송
     await sendToMingBot(message, type);
-
     res.status(200).send('✅ 텔레그램 전송 성공');
   } catch (err) {
     console.error('❌ 텔레그램 전송 실패:', err.message);
@@ -190,14 +182,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// ✅ Webhook 등록 전용 fallback 핸들러 (예외 대응)
-app.all('/webhook', (req, res, next) => {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
-  }
-  next();
-});
-    
 // ✅ 웹훅 자동 등록
 (async () => {
   const serverUrl = process.env.SERVER_URL;
@@ -214,8 +198,7 @@ app.all('/webhook', (req, res, next) => {
   }
 })();
 
-
-// ✅ 상태 확인용
+// ✅ 상태 확인용(기본 라우트)
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
 });
@@ -225,4 +208,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
 });
-
