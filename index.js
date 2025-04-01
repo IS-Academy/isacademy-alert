@@ -26,12 +26,12 @@ function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// ✅ 상태 변수 로드
+// ✅ 상태 변수 초기화
 let { choiEnabled, mingEnabled } = loadBotState();
 
 // ✅ 관리자에게 메시지 전송
 async function sendTextToTelegram(text) {
-  const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
   await axios.post(url, {
     chat_id: config.ADMIN_CHAT_ID,
     text,
@@ -87,6 +87,11 @@ app.post('/webhook', async (req, res) => {
   try {
     const alert = req.body;
 
+    // ✅ 관리자 명령어 및 Webhook 핸들러
+app.post('/webhook', async (req, res) => {
+  try {
+    const alert = req.body;
+
     // ✅ 명령어 처리
     if (alert.message && alert.message.text) {
       const command = alert.message.text.trim();
@@ -95,9 +100,7 @@ app.post('/webhook', async (req, res) => {
         switch (command) {
           case '/도움말':
             await sendTextToTelegram(
-              `🛠 사용 가능한 명령어:
-/최실장켜 /최실장꺼 /최실장상태
-/밍밍켜 /밍밍꺼 /밍밍상태`
+              `🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태`
             );
             break;
           case '/최실장켜':
@@ -187,6 +190,14 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ✅ Webhook 등록 전용 fallback 핸들러 (예외 대응)
+app.all('/webhook', (req, res, next) => {
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
+  next();
+});
+    
 // ✅ 웹훅 자동 등록
 (async () => {
   const serverUrl = process.env.SERVER_URL;
@@ -203,10 +214,13 @@ app.post('/webhook', async (req, res) => {
   }
 })();
 
+
+// ✅ 상태 확인용
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
 });
 
+// ✅ 포트 자동 감지 (Render용)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
