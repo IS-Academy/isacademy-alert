@@ -118,32 +118,45 @@ app.post('/webhook', async (req, res) => {
       if (fromId.toString() === config.ADMIN_CHAT_ID) {
         switch (command) {
           case '/도움말':
+          case '/help':
             await sendTextToTelegram(`🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태`);
             break;
+            
           case '/최실장켜':
+          case '/choi_on':
             choiEnabled = true;
             saveBotState({ choiEnabled, mingEnabled });
             await sendTextToTelegram('✅ 최실장 전송 활성화');
             break;
+            
           case '/최실장꺼':
+          case '/choi_off':
             choiEnabled = false;
             saveBotState({ choiEnabled, mingEnabled });
             await sendTextToTelegram('⛔ 최실장 전송 중단');
             break;
+            
           case '/최실장상태':
+          case '/choi_status':
             await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`);
             break;
+            
           case '/밍밍켜':
+          case '/ming_on':
             mingEnabled = true;
             saveBotState({ choiEnabled, mingEnabled });
             await sendTextToTelegram('✅ 밍밍 전송 활성화');
             break;
+            
           case '/밍밍꺼':
+          case '/ming_off':
             mingEnabled = false;
             saveBotState({ choiEnabled, mingEnabled });
             await sendTextToTelegram('⛔ 밍밍 전송 중단');
             break;
+            
           case '/밍밍상태':
+          case '/ming_status':
             await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`);
             break;
         }
