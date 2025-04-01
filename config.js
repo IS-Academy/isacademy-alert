@@ -11,5 +11,5 @@ module.exports = {
   TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
 
   // 밍밍 전송 스위치 (하드코딩 방식)
-  MINGMING_ENABLED: true // ← 여기 true/false 바꾸면 바로 적용됨!
+  MINGMING_ENABLED: false // ← 여기 true/false 바꾸면 바로 적용됨!✅ (true = "시작" / false = "정지")
 };
