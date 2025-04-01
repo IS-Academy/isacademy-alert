@@ -10,6 +10,7 @@ module.exports = {
   TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
 
   // 관리자 봇
+  ADMIN_BOT_TOKEN: process.env.ADMIN_BOT_TOKEN,
   ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID,
 
   // 밍밍 전송 스위치 (하드코딩 방식)
