@@ -10,6 +10,9 @@ module.exports = {
   TELEGRAM_BOT_TOKEN_A: process.env.TELEGRAM_BOT_TOKEN_A,
   TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
 
+  //관리자 봇
+  ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID
+
   // 밍밍 전송 스위치 (하드코딩 방식)
   MINGMING_ENABLED: false // ← 여기 true/false 바꾸면 바로 적용됨!✅ (true = "시작" / false = "정지")
 };
