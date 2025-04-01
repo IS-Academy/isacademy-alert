@@ -213,7 +213,7 @@ app.post('/webhook', async (req, res) => {
     }
 
     // 시간 포맷
-    const alertTime = alert.time ? new Date(alert.time) : new Date();
+    const alertTime = new Date();  // 항상 서버 기준 실시간 시각 사용
 
 const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
   year: '2-digit',
