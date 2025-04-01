@@ -187,6 +187,22 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ✅ 웹훅 자동 등록
+(async () => {
+  const serverUrl = process.env.SERVER_URL;
+  if (serverUrl) {
+    try {
+      const webhookUrl = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/setWebhook?url=${serverUrl}/webhook`;
+      const response = await axios.get(webhookUrl);
+      console.log('✅ Webhook 등록 결과:', response.data);
+    } catch (err) {
+      console.error('❌ Webhook 등록 실패:', err.message);
+    }
+  } else {
+    console.warn('⚠️ SERVER_URL 환경변수가 설정되어 있지 않습니다.');
+  }
+})();
+
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
 });
