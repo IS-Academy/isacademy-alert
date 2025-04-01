@@ -192,7 +192,7 @@ app.post('/webhook', async (req, res) => {
   const serverUrl = process.env.SERVER_URL;
   if (serverUrl) {
     try {
-      const webhookUrl = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/setWebhook?url=${serverUrl}/webhook`;
+      const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${serverUrl}/webhook`;
       const response = await axios.get(webhookUrl);
       console.log('✅ Webhook 등록 결과:', response.data);
     } catch (err) {
