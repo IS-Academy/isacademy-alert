@@ -201,6 +201,7 @@ app.post('/webhook', async (req, res) => {
     }
 
     // ✅ 일반 Alert 메시지 처리
+    const alert = req.body;
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 없음';
