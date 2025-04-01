@@ -167,7 +167,6 @@ app.post('/webhook', async (req, res) => {
       clock: formattedClock
     });
 
-
     // 최실장 봇 전송
     if (choiEnabled) {
       const url = `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`;
