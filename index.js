@@ -42,13 +42,13 @@ async function sendTextToTelegram(text) {
 // ✅ 텔레그램 명령어 등록 (우측 하단 메뉴에 표시)
 async function registerTelegramCommands() {
   const commands = [
-    { command: 'help', description: '사용 가능한 명령어 목록 안내' },
-    { command: 'choi_on', description: '최실장 봇 전송 시작' },
-    { command: 'choi_off', description: '최실장 봇 전송 중단' },
-    { command: 'choi_status', description: '최실장 봇 상태 확인' },
-    { command: 'ming_on', description: '밍밍 봇 전송 시작' },
-    { command: 'ming_off', description: '밍밍 봇 전송 중단' },
-    { command: 'ming_status', description: '밍밍 봇 상태 확인' }
+    { command: 'help', description: '📝 도움말' },
+    { command: 'choi_on', description: '▶️ 최실장 켜기' },
+    { command: 'choi_off', description: '⏹️ 최실장 끄기' },
+    { command: 'choi_status', description: '📡 최실장 상태 확인' },
+    { command: 'ming_on', description: '▶️ 밍밍 켜기' },
+    { command: 'ming_off', description: '⏹️ 밍밍 끄기' },
+    { command: 'ming_status', description: '📡 밍밍 상태 확인' }
   ];
 
   try {
