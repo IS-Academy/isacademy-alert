@@ -190,7 +190,7 @@ app.post('/webhook', async (req, res) => {
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 없음';
-    const tsNum = Number(alert.ts); // Pine Script에서 보낸 UNIX timestamp
+    const ts = alert.ts; // ✅ Pine Script에서 보낸 UNIX timestamp
 
     // 가격 파싱
     let price = 'N/A';
@@ -202,7 +202,8 @@ app.post('/webhook', async (req, res) => {
 let formattedDate = '날짜 없음';
 let formattedClock = '시간 없음';
 
-try {  
+try {
+  const tsNum = Number(ts);
   if (Number.isInteger(tsNum) && tsNum > 0) {
     const seoulTime = moment.unix(tsNum).tz('Asia/Seoul');
     formattedDate = seoulTime.format('YY. MM. DD. (dd)');
