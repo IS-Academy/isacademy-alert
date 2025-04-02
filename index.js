@@ -1,4 +1,4 @@
-// index.js
+// index.js (수정된 전체 버전)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -44,7 +44,7 @@ try {
   console.log('✅ 사용자 언어 설정 로드 완료');
 } catch (err) {
   console.warn('⚠️ langConfig.json 파일을 불러올 수 없습니다. 기본값(ko) 사용됨');
-  userLangMap = {}; // fallback
+  userLangMap = {};
 }
 
 // ✅ 상태 파일 경로
@@ -123,23 +123,21 @@ async function registerTelegramCommands() {
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
   const signalMap = {
-    Ready_Support:       { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
-    Ready_Resistance:    { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
-    Ready_is_Big_Support:{ emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
-    Ready_is_Big_Resistance:{ emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空' },
-    show_Support:        { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
-    show_Resistance:     { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
-    is_Big_Support:      { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
-    is_Big_Resistance:   { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
-    Ready_exitLong:      { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
-    Ready_exitShort:     { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
-    exitLong:            { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
-    exitShort:           { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
+    Ready_Support: { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
+    Ready_Resistance: { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
+    Ready_is_Big_Support: { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
+    Ready_is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空' },
+    show_Support: { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
+    show_Resistance: { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
+    is_Big_Support: { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
+    is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
+    Ready_exitLong: { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
+    Ready_exitShort: { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
+    exitLong: { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
+    exitShort: { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
   };
-
   const signal = signalMap[type] || { emoji: '🔔' };
   const title = signal[validLang] || type;
-
   let message = `${signal.emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
   const fullInfoTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
   if (fullInfoTypes.includes(type)) {
@@ -148,7 +146,6 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   }
   return message;
 }
-
 
 /* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message) {
@@ -168,93 +165,105 @@ async function sendToMingBot(message) {
 /* ✅ 관리자 명령어 및 메인 핸들러(Webhook) */
 app.post('/webhook', async (req, res) => {
   const update = req.body;
-
-  // ✅ 인라인 버튼 클릭 처리
-  if (update.callback_query) {
-    const cmd = update.callback_query.data;
-    const id = update.callback_query.message.chat.id;
-    if (id.toString() !== config.ADMIN_CHAT_ID) return res.sendStatus(200);
-
-    switch (cmd) {
-      case 'choi_on': choiEnabled = true; break;
-      case 'choi_off': choiEnabled = false; break;
-      case 'ming_on': mingEnabled = true; break;
-      case 'ming_off': mingEnabled = false; break;
+  try {
+    // ✅ 인라인 버튼 처리
+    if (update.callback_query) {
+      const cmd = update.callback_query.data;
+      const id = update.callback_query.message.chat.id;
+      if (id.toString() !== config.ADMIN_CHAT_ID) return res.sendStatus(200);
+      switch (cmd) {
+        case 'choi_on': choiEnabled = true; break;
+        case 'choi_off': choiEnabled = false; break;
+        case 'ming_on': mingEnabled = true; break;
+        case 'ming_off': mingEnabled = false; break;
+      }
+      saveBotState({ choiEnabled, mingEnabled });
+      const statusMsg = `✅ 현재 상태:\n최실장: ${choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`;
+      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+        chat_id: id,
+        message_id: update.callback_query.message.message_id,
+        text: statusMsg,
+        parse_mode: 'HTML',
+        reply_markup: getInlineKeyboard()
+      });
+      return res.sendStatus(200);
     }
 
-    saveBotState({ choiEnabled, mingEnabled });
-    const statusMsg = `✅ 현재 상태:\n최실장: ${choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`;
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-      chat_id: id,
-      message_id: update.callback_query.message.message_id,
-      text: statusMsg,
-      parse_mode: 'HTML',
-      reply_markup: getInlineKeyboard()
-    });
-    return res.sendStatus(200);
-  }
-
-  // ✅ 명령어 처리
-  if (update.message && update.message.text) {
-    const command = update.message.text.trim();
-    const fromId = update.message.chat.id;
-
-    if (command.startsWith('/setlang')) {
-      const input = command.split(' ')[1];
-      const success = langManager.setUserLang(fromId, input);
-      const lang = getUserLang(fromId);
-      const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
-      await sendTextToTelegram(msg);
-      return res.status(200).send('✅ 처리됨');
-    }
-
-    if (command.startsWith('/settz')) {
-      const tz = command.split(' ')[1];
-      const success = langManager.setUserTimezone(fromId, tz);
-      const lang = getUserLang(fromId);
-      const msg = success ? langMessages.setTzSuccess[lang](tz) : langMessages.setTzFail[lang];
-      await sendTextToTelegram(msg);
-      return res.status(200).send('✅ 처리됨');
+    // ✅ 명령어 처리
+    if (update.message && update.message.text) {
+      const command = update.message.text.trim();
+      const fromId = update.message.chat.id;
+      
+      if (command.startsWith('/setlang')) {
+        const input = command.split(' ')[1];
+        const success = langManager.setUserLang(fromId, input);
+        const lang = getUserLang(fromId);
+        const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
+        await sendTextToTelegram(msg);
+        return res.status(200).send('✅ 처리됨');
+      }
+      
+      if (command.startsWith('/settz')) {
+        const tz = command.split(' ')[1];
+        const success = langManager.setUserTimezone(fromId, tz);
+        const lang = getUserLang(fromId);
+        const msg = success ? langMessages.setTzSuccess[lang](tz) : langMessages.setTzFail[lang];
+        await sendTextToTelegram(msg);
+        return res.status(200).send('✅ 처리됨');
     }
 
     if (fromId.toString() === config.ADMIN_CHAT_ID) {
       switch (command) {
         case '/start':
-          await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard()); break;
+          await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard());
+          break;
         case '/도움말':
         case '/help':
-          await sendTextToTelegram('🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태'); break;
+          await sendTextToTelegram('🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태');
+          break;
         case '/최실장켜':
         case '/choi_on':
-          choiEnabled = true; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('✅ 최실장 전송 활성화'); break;
+          choiEnabled = true;
+          saveBotState({ choiEnabled, mingEnabled });
+          await sendTextToTelegram('✅ 최실장 전송 활성화');
+          break;
         case '/최실장꺼':
         case '/choi_off':
-          choiEnabled = false; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('⛔ 최실장 전송 중단'); break;
+          choiEnabled = false;
+          saveBotState({ choiEnabled, mingEnabled });
+          await sendTextToTelegram('⛔ 최실장 전송 중단');
+          break;
         case '/최실장상태':
         case '/choi_status':
-          await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`); break;
+          await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`);
+          break;
         case '/밍밍켜':
         case '/ming_on':
-          mingEnabled = true; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('✅ 밍밍 전송 활성화'); break;
+          mingEnabled = true;
+          saveBotState({ choiEnabled, mingEnabled });
+          await sendTextToTelegram('✅ 밍밍 전송 활성화');
+          break;
         case '/밍밍꺼':
         case '/ming_off':
-          mingEnabled = false; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('⛔ 밍밍 전송 중단'); break;
+          mingEnabled = false;
+          saveBotState({ choiEnabled, mingEnabled });
+          await sendTextToTelegram('⛔ 밍밍 전송 중단');
+          break;
         case '/밍밍상태':
         case '/ming_status':
-          await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`); break;
+          await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`);
+          break;
       }
       return res.status(200).send('✅ 명령어 처리됨');
     }
   }
-});
-  
+
+  // ✅ Alert 메시지 처리
   try {
-    // ✅ 일반 Alert 메시지 처리
     const alert = req.body;
 
     // 1. 타임스탬프 안전 파싱
-    const tsRaw = alert.ts;
-    const ts = Number(tsRaw);
+    const ts = Number(alert.ts);
     const isValidTs = Number.isFinite(ts) && ts > 0;
 
     // 2. 기본값 포함한 항목 파싱
@@ -281,7 +290,7 @@ app.post('/webhook', async (req, res) => {
     // 디버깅 로그
     console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
 
-    // 7. 최실장  전송
+    // 7. 최실장 봇 전송
     if (choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         chat_id: config.TELEGRAM_CHAT_ID,
@@ -293,13 +302,12 @@ app.post('/webhook', async (req, res) => {
     // 8. 밍밍 봇 전송
     await sendToMingBot(message);
     res.status(200).send('✅ 텔레그램 전송 성공');
-
   } catch (err) {
     console.error('❌ 텔레그램 전송 실패:', err.message);
     res.status(500).send('서버 오류');
   }
 });
-    
+
 // ✅ 상태 확인용(기본 라우트)
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중');
@@ -310,7 +318,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
 
-// ✅ 웹훅 자동 등록
+  // ✅ 웹훅 자동 등록
   if (process.env.SERVER_URL) {
     try {
       const webhookUrl = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setWebhook?url=${process.env.SERVER_URL}/webhook`;
@@ -322,6 +330,5 @@ app.listen(PORT, async () => {
   } else {
     console.warn('⚠️ SERVER_URL 환경변수가 설정되어 있지 않습니다.');
   }
-
   await registerTelegramCommands(); // ✅ 명령어 등록 실행
 });
