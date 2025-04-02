@@ -21,7 +21,7 @@ function getTimeString(timezone = 'Asia/Seoul') {
 }
 
 function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
-  const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn' };
+  const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
   const locale = LANGUAGE_MAP[lang] || 'ko';
   moment.locale(locale);
   const time = moment.unix(ts).tz(timezone);
