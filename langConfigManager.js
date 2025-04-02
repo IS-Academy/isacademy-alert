@@ -5,14 +5,14 @@ const path = './langConfig.json';
 let userLangMap = {};
 
 // ✅ 초기 로드
-function loadLangConfig() {
+function getUserConfig(chatId) {
   try {
-    const raw = fs.readFileSync(path, 'utf-8');
-    userLangMap = JSON.parse(raw);
-    console.log('✅ 언어 설정 로드 완료');
+    const raw = fs.readFileSync('./langConfig.json', 'utf-8');
+    const config = JSON.parse(raw);
+    return config[chatId] || {};
   } catch (err) {
-    console.warn('⚠️ 언어 설정 로드 실패. 기본값 사용');
-    userLangMap = {};
+    console.warn('⚠️ 언어 설정 로딩 실패:', err.message);
+    return {};
   }
 }
 
