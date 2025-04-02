@@ -3,18 +3,39 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const fs = require('fs');
-const config = require('./config');
 const moment = require('moment-timezone');
+const config = require('./config');
+const langManager = require('./langConfigManager');
+const langMessages = require('./langMessages');
 
 const app = express();
 app.use(bodyParser.json());
 
 // ✅ 언어 설정 (언어 코드별 locale 매핑)
-const LANGUAGE_MAP = {
-  ko: 'ko',
-  en: 'en',
-  zh: 'zh-cn'
-};
+const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn' };
+
+// ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
+function getUserLang(chatId) {
+  const user = langManager.getUserConfig(chatId);
+  const lang = user?.lang;
+  return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
+}
+function getUserTimezone(chatId) {
+  const user = langManager.getUserConfig(chatId);
+  return user?.tz || 'Asia/Seoul';
+}
+
+function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
+  const locale = LANGUAGE_MAP[lang] || 'ko';
+  moment.locale(locale);
+  const time = moment.unix(ts).tz(timezone);
+  return {
+    date: time.format('YY. MM. DD. (ddd)'),
+    clock: time.format('A hh:mm:ss')
+      .replace('AM', locale === 'ko' ? '오전' : 'AM')
+      .replace('PM', locale === 'ko' ? '오후' : 'PM')
+  };
+}
 
 // ✅ 사용자 언어 설정 외부 JSON에서 로드
 let userLangMap = {};
@@ -106,27 +127,6 @@ const userLangMap = {
   // 예시) '987654321': 'en'
 };
 
-// ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
-function getUserLang(chatId) {
-  const lang = userLangMap[String(chatId)];
-  return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko'; // fallback 포함
-}
-
-
-function formatTimestamp(ts, lang = 'ko') {
-  const locale = ['ko', 'en', 'zh'].includes(lang) ? LANGUAGE_MAP[lang] : 'ko'; // ✅ fallback
-  moment.locale(locale);
-
-  const time = moment.unix(ts).tz('Asia/Seoul');
-
-  return {
-    date: time.format('YY. MM. DD. (ddd)'),
-    clock: time.format('A hh:mm:ss')
-      .replace('AM', locale === 'ko' ? '오전' : 'AM')
-      .replace('PM', locale === 'ko' ? '오후' : 'PM')
-  };
-}
-
 /* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
@@ -154,7 +154,6 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     if (price !== 'N/A') message += `\n💲 가격: <b>${price}</b>`;
     message += `\n🕒 포착시간:\n${date}\n${clock}`;
   }
-
   return message;
 }
 
@@ -206,6 +205,24 @@ app.post('/webhook', async (req, res) => {
     if (update.message && update.message.text) {
       const command = update.message.text.trim();
       const fromId = update.message.chat.id;
+      if (command.startsWith('/setlang')) {
+        const input = command.split(' ')[1];
+        const success = langManager.setUserLang(fromId, input);
+        const lang = getUserLang(fromId);
+        const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
+        await sendTextToTelegram(msg);
+        return res.status(200).send('✅ 처리됨');
+      }
+
+      if (command.startsWith('/settz')) {
+        const tz = command.split(' ')[1];
+        const success = langManager.setUserTimezone(fromId, tz);
+        const lang = getUserLang(fromId);
+        const msg = success ? langMessages.setTzSuccess[lang](tz) : langMessages.setTzFail[lang];
+        await sendTextToTelegram(msg);
+        return res.status(200).send('✅ 처리됨');
+      }
+      
       if (fromId.toString() === config.ADMIN_CHAT_ID) {
         switch (command) {
           case '/start':
@@ -243,37 +260,16 @@ app.post('/webhook', async (req, res) => {
     const timeframe = alert.timeframe || '⏳';
     const type = alert.type || '📢';
     const price = !isNaN(parseFloat(alert.price)) ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    const lang = alert.lang || 'ko';
-
-    // 가격 파싱    
-    if (!isNaN(parseFloat(alert.price))) {
-      price = parseFloat(alert.price).toFixed(2);
-    }
-
-try {
-  const tsNum = Number(ts);
-  if (Number.isInteger(tsNum) && tsNum > 0) {
-    const seoulTime = moment.unix(tsNum).tz('Asia/Seoul');
-    formattedDate = seoulTime.format('YY. MM. DD. (ddddd)');
-    formattedClock = seoulTime.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
-  } else {
-    console.warn('⚠️ 알림에 유효한 ts 없음, 현재 시간 사용');
-    const now = moment().tz('Asia/Seoul');
-    formattedDate = seoulTime.format('YY. MM. DD. (ddddd)');
-    formattedClock = now.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
-  }
-} catch (err) {
-  console.error('🕒 시간 포맷 오류:', err.message);
-}
-
+    
 // 메시지 생성
 const chatId = choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
 const lang = getUserLang(chatId);
-const { date, clock } = formatTimestamp(ts, lang);
+const tz = getUserTimezone(chatId);
+const { date, clock } = formatTimestamp(ts, lang, tz);
 const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
 
 // log 메시지 출력 (디버깅용)
-console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date: formattedDate, clock: formattedClock, lang });
+console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
 
     // 최실장 봇 전송
     if (choiEnabled) {
@@ -318,10 +314,3 @@ app.listen(PORT, async () => {
 
   await registerTelegramCommands(); // ✅ 명령어 등록 실행
 });
-
-
-const chatId = config.TELEGRAM_CHAT_ID;  // 또는 알림의 대상 채팅 ID
-const lang = getUserLang(chatId);
-const { date, clock } = formatTimestamp(ts, lang);
-const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
-
