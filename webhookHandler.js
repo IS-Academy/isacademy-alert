@@ -6,17 +6,18 @@ const langManager = require('./langConfigManager');
 const langMessages = require('./langMessages');
 const {
   generateAlertMessage,
-  sendTextToTelegram,
   sendToMingBot,
-  saveBotState,
-  getInlineKeyboard,
-  editTelegramMessage
+  sendTextToTelegram,
+  editTelegramMessage,
+  saveBotState
 } = require('./utils');
+
+const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
 
 // ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
   const lang = langManager.getUserConfig(chatId)?.lang;
-  return ['ko', 'en', 'zh', 'ja'].includes(lang) ? lang : 'ko';
+  return Object.keys(LANGUAGE_MAP).includes(lang) ? lang : 'ko';
 }
 
 function getUserTimezone(chatId) {
@@ -28,15 +29,14 @@ function getTimeString(timezone = 'Asia/Seoul') {
 }
 
 function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
-  const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
   const locale = LANGUAGE_MAP[lang] || 'ko';
   moment.locale(locale);
   const time = moment.unix(ts).tz(timezone);
   return {
     date: time.format('YY. MM. DD. (ddd)'),
     clock: time.format('A hh:mm:ss')
-      .replace('AM', locale === 'ko' ? '오전' : locale === 'ja' ? '午前' : 'AM')
-      .replace('PM', locale === 'ko' ? '오후' : locale === 'ja' ? '午後' : 'PM')
+      .replace('AM', locale === 'ko' ? '오전' : 'AM')
+      .replace('PM', locale === 'ko' ? '오후' : 'PM')
   };
 }
 
