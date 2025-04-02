@@ -1,4 +1,4 @@
-// index.js
+// index.js (수정된 전체 버전)
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -11,8 +11,10 @@ const langMessages = require('./langMessages');
 const app = express();
 app.use(bodyParser.json());
 
+// ✅ 언어 설정 (언어 코드별 locale 매핑)
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn' };
 
+// ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
   const lang = langManager.getUserConfig(chatId)?.lang;
   return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
@@ -34,7 +36,21 @@ function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
   };
 }
 
+// ✅ 사용자 언어 설정 외부 JSON에서 로드
+let userLangMap = {};
+try {
+  const langRaw = fs.readFileSync('./langConfig.json', 'utf-8');
+  userLangMap = JSON.parse(langRaw);
+  console.log('✅ 사용자 언어 설정 로드 완료');
+} catch (err) {
+  console.warn('⚠️ langConfig.json 파일을 불러올 수 없습니다. 기본값(ko) 사용됨');
+  userLangMap = {};
+}
+
+// ✅ 상태 파일 경로
 const STATE_FILE = './bot_state.json';
+
+// ✅ 상태 불러오기 (초기값 포함)
 function loadBotState() {
   try {
     const raw = fs.readFileSync(STATE_FILE);
@@ -43,11 +59,16 @@ function loadBotState() {
     return { choiEnabled: true, mingEnabled: config.MINGMING_ENABLED === true || config.MINGMING_ENABLED === 'true' };
   }
 }
+
+// ✅ 상태 저장
 function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
+
+// ✅ 상태 변수 초기화
 let { choiEnabled, mingEnabled } = loadBotState();
 
+// ✅ 관리자에게 메시지 전송
 async function sendTextToTelegram(text, keyboard) {
   const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
   await axios.post(url, {
@@ -58,6 +79,7 @@ async function sendTextToTelegram(text, keyboard) {
   });
 }
 
+// ✅ 인라인 키보드 UI
 function getInlineKeyboard() {
   return {
     inline_keyboard: [
@@ -76,6 +98,7 @@ function getInlineKeyboard() {
   };
 }
 
+// ✅ Telegram 명령어 등록
 async function registerTelegramCommands() {
   const commands = [
     { command: 'help', description: '📝 도움말' },
@@ -86,6 +109,7 @@ async function registerTelegramCommands() {
     { command: 'ming_off', description: '⏹️ 밍밍 끄기' },
     { command: 'ming_status', description: '📡 밍밍 상태 확인' }
   ];
+
   try {
     const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/setMyCommands`;
     const res = await axios.post(url, { commands, scope: { type: 'default' } });
@@ -95,6 +119,7 @@ async function registerTelegramCommands() {
   }
 }
 
+/* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
   const signalMap = {
@@ -122,6 +147,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   return message;
 }
 
+/* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message) {
   if (!mingEnabled) return;
   try {
@@ -135,6 +161,7 @@ async function sendToMingBot(message) {
     await sendTextToTelegram(`❌ 밍밍 전송 실패\n\n${err.response?.data?.description || err.message}`);
   }
 }
+
 
 app.post('/webhook', async (req, res) => {
   const update = req.body;
