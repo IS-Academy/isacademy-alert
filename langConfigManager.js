@@ -27,7 +27,7 @@ function getUserConfig(chatId) {
 
 // ✅ 사용자 언어 가져오기
 function setUserLang(chatId, lang) {
-  if (!['ko', 'en', 'zh'].includes(lang)) return false;
+  if (!['ko', 'en', 'zh', 'ja'].includes(lang)) return false;
   langConfig[chatId] = langConfig[chatId] || {};
   langConfig[chatId].lang = lang;
   saveLangConfig(langConfig);
