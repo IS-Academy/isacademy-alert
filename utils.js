@@ -66,12 +66,16 @@ async function sendTextToTelegram(text, keyboard) {
 // ✅ 메시지 수정
 async function editTelegramMessage(chatId, messageId, text, keyboard) {
   try {
+    const replyMarkup = keyboard?.inline_keyboard
+      ? { inline_keyboard: keyboard.inline_keyboard }
+      : { inline_keyboard: [] }; // 빈 키보드로 처리
+
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
       parse_mode: 'HTML',
-      reply_markup: keyboard
+      reply_markup: replyMarkup
     });
   } catch (err) {
     const isNotModified = err.response?.data?.description?.includes("message is not modified");
@@ -99,18 +103,18 @@ async function sendToMingBot(message) {
 // ✅ Alert 메시지 생성
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const signalMap = {
-    Ready_Support:           { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
-    Ready_Resistance:        { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
-    Ready_is_Big_Support:    { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
-    Ready_is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空' },
-    show_Support:            { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
-    show_Resistance:         { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
-    is_Big_Support:          { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
-    is_Big_Resistance:       { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
-    Ready_exitLong:          { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
-    Ready_exitShort:         { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
-    exitLong:                { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
-    exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
+    Ready_Support:           { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多', ja: 'ロングエントリー準備' },
+    Ready_Resistance:        { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空', ja: 'ショートエントリー準備' },
+    Ready_is_Big_Support:    { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多', ja: '強力ロング準備' },
+    Ready_is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空', ja: '強力ショート準備' },
+    show_Support:            { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场', ja: 'ロングエントリー' },
+    show_Resistance:         { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场', ja: 'ショートエントリー' },
+    is_Big_Support:          { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多', ja: '強力ロング' },
+    is_Big_Resistance:       { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空', ja: '強力ショート' },
+    Ready_exitLong:          { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓', ja: 'ロング決済準備' },
+    Ready_exitShort:         { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓', ja: 'ショート決済準備' },
+    exitLong:                { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓', ja: 'ロング決済' },
+    exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓', ja: 'ショート決済' }
   };
   const signal = signalMap[type] || { emoji: '🔔' };
   const title = signal[lang] || type;
