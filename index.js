@@ -120,13 +120,6 @@ async function registerTelegramCommands() {
   }
 }
 
-// 예시: 사용자 ID별 언어 설정 맵 (실제 운영 시 DB나 외부 설정파일로 관리 권장)
-const userLangMap = {
-  [config.TELEGRAM_CHAT_ID]: 'ko',
-  [config.TELEGRAM_CHAT_ID_A]: 'zh',
-  // 예시) '987654321': 'en'
-};
-
 /* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
