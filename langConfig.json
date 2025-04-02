@@ -1,5 +1,4 @@
 {
-  "123456": "en",
-  "789012": "zh",
-  "345678": "ko"
+  "123456789": { "lang": "en", "tz": "America/New_York" },
+  "987654321": { "lang": "zh", "tz": "Asia/Shanghai" }
 }
