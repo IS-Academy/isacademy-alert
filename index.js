@@ -300,12 +300,12 @@ app.post('/webhook', async (req, res) => {
     }
 
     // 8. 밍밍 봇 전송
-    await sendToMingBot(message);
-    res.status(200).send('✅ 텔레그램 전송 성공');
-  } catch (err) {
-    console.error('❌ 텔레그램 전송 실패:', err.message);
-    res.status(500).send('서버 오류');
-  }
+      await sendToMingBot(message);
+      res.status(200).send('✅ 텔레그램 전송 성공');
+    } catch (err) {
+      console.error('❌ 텔레그램 전송 실패:', err.message);
+      res.status(500).send('서버 오류');
+    }
 });
 
 // ✅ 상태 확인용(기본 라우트)
