@@ -123,18 +123,18 @@ async function registerTelegramCommands() {
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
   const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
   const signalMap = {
-    Ready_Support: { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
-    Ready_Resistance: { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
-    Ready_is_Big_Support: { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
+    Ready_Support:           { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
+    Ready_Resistance:        { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
+    Ready_is_Big_Support:    { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
     Ready_is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空' },
-    show_Support: { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
-    show_Resistance: { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
-    is_Big_Support: { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
-    is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
-    Ready_exitLong: { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
-    Ready_exitShort: { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
-    exitLong: { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
-    exitShort: { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
+    show_Support:            { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
+    show_Resistance:         { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
+    is_Big_Support:          { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
+    is_Big_Resistance:       { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
+    Ready_exitLong:          { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
+    Ready_exitShort:         { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
+    exitLong:                { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
+    exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
   };
   const signal = signalMap[type] || { emoji: '🔔' };
   const title = signal[validLang] || type;
