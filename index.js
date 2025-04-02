@@ -69,14 +69,20 @@ function saveBotState(state) {
 let { choiEnabled, mingEnabled } = loadBotState();
 
 // ✅ 관리자에게 메시지 전송
-async function sendTextToTelegram(text, keyboard) {
-  const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
-  await axios.post(url, {
-    chat_id: config.ADMIN_CHAT_ID,
-    text,
+try {
+  await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+    chat_id: id,
+    message_id: update.callback_query.message.message_id,
+    text: statusMsg,
     parse_mode: 'HTML',
-    reply_markup: keyboard
+    reply_markup: getInlineKeyboard()
   });
+} catch (err) {
+  // 👇 메시지가 동일할 때 나는 에러는 무시
+  const isNotModified = err.response?.data?.description?.includes("message is not modified");
+  if (!isNotModified) {
+    console.error('❌ 메시지 수정 실패:', err.response?.data || err.message);
+  }
 }
 
 // ✅ 인라인 키보드 UI
