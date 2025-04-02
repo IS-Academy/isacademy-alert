@@ -1,22 +1,23 @@
+// langMessages.js
 module.exports = {
   setLangSuccess: {
-    ko: (lang) => `✅ 언어가 '${lang}'로 설정되었습니다.`,
-    en: (lang) => `✅ Language has been set to '${lang}'.`,
-    zh: (lang) => `✅ 语言已设置为 '${lang}'。`
+    ko: (code) => `✅ 언어가 <b>${code}</b>(으)로 설정되었습니다.`,
+    en: (code) => `✅ Language set to <b>${code}</b>.`,
+    zh: (code) => `✅ 言語已設置為 <b>${code}</b>`
   },
   setLangFail: {
-    ko: '❌ 지원하지 않는 언어입니다. (ko/en/zh)',
-    en: '❌ Unsupported language. Use ko/en/zh.',
-    zh: '❌ 不支持的语言。请使用 ko/en/zh。'
+    ko: '❌ 지원하지 않는 언어입니다. (ko, en, zh 중 선택)',
+    en: '❌ Unsupported language. Choose from ko, en, zh.',
+    zh: '❌ 不支援的語言。請選擇 ko, en, zh'
   },
   setTzSuccess: {
-    ko: (tz) => `✅ 시간대가 '${tz}'로 설정되었습니다.`,
-    en: (tz) => `✅ Timezone set to '${tz}'.`,
-    zh: (tz) => `✅ 时区已设置为 '${tz}'。`
+    ko: (tz) => `✅ 시간대가 <b>${tz}</b>로 설정되었습니다.`,
+    en: (tz) => `✅ Timezone set to <b>${tz}</b>.`,
+    zh: (tz) => `✅ 時區已設為 <b>${tz}</b>`
   },
   setTzFail: {
-    ko: '❌ 유효하지 않은 시간대입니다.',
-    en: '❌ Invalid timezone.',
-    zh: '❌ 无效的时区。'
+    ko: '❌ 시간대 설정에 실패했습니다.',
+    en: '❌ Failed to set timezone.',
+    zh: '❌ 無法設置時區'
   }
 };
