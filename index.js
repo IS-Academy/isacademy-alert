@@ -16,13 +16,12 @@ const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn' };
 
 // ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
-  const user = langManager.getUserConfig(chatId);
-  const lang = user?.lang;
+  const lang = langManager.getUserConfig(chatId)?.lang;
   return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
 }
+
 function getUserTimezone(chatId) {
-  const user = langManager.getUserConfig(chatId);
-  return user?.tz || 'Asia/Seoul';
+  return langManager.getUserConfig(chatId)?.tz || 'Asia/Seoul';
 }
 
 function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
@@ -170,6 +169,57 @@ async function sendToMingBot(message) {
 app.post('/webhook', async (req, res) => {
   const update = req.body;
   try {
+    // ✅ 일반 Alert 메시지 처리
+    const alert = req.body;
+
+    // 1. 타임스탬프 안전 파싱
+    const tsRaw = alert.ts;
+    const ts = Number(tsRaw);
+    const isValidTs = Number.isFinite(ts) && ts > 0;
+
+    // 2. 기본값 포함한 항목 파싱
+    const symbol = alert.symbol || 'Unknown';
+    const timeframe = alert.timeframe || '⏳';
+    const type = alert.type || '📢';
+
+    // 3. 가격 처리 (중복 제거)
+    const parsedPrice = parseFloat(alert.price);
+    const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
+
+    // 4. 사용자 언어/시간대
+    const chatId = choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+    const lang = getUserLang(chatId);
+    const tz = getUserTimezone(chatId);
+
+    // 5. 포착시간 포맷
+    const { date, clock } = isValidTs
+      ? formatTimestamp(ts, lang, tz)
+      : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
+
+    // 6. 메시지 생성
+    const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
+    // 디버깅 로그
+    console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
+
+    // 7. 최실장  전송
+    if (choiEnabled) {
+      await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        chat_id: config.TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'HTML'
+      });
+    }
+
+    // 8. 밍밍 봇 전송
+    await sendToMingBot(message);
+    res.status(200).send('✅ 텔레그램 전송 성공');
+
+  } catch (err) {
+    console.error('❌ 텔레그램 전송 실패:', err.message);
+    res.status(500).send('서버 오류');
+  }
+});
+    
     // 인라인 버튼 클릭 처리
     if (update.callback_query) {
       const cmd = update.callback_query.data;
@@ -245,42 +295,6 @@ app.post('/webhook', async (req, res) => {
         return res.status(200).send('✅ 명령어 처리됨');
       }
     }
-
-    // ✅ 일반 Alert 메시지 처리
-    const alert = req.body;
-    const ts = Number(alert.ts); // ✅ Pine Script에서 보낸 UNIX timestamp
-    const symbol = alert.symbol || 'Unknown';
-    const timeframe = alert.timeframe || '⏳';
-    const type = alert.type || '📢';
-    const price = !isNaN(parseFloat(alert.price)) ? parseFloat(alert.price).toFixed(2) : 'N/A';
-    
-// 메시지 생성
-const chatId = choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-const lang = getUserLang(chatId);
-const tz = getUserTimezone(chatId);
-const { date, clock } = formatTimestamp(ts, lang, tz);
-const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
-
-// log 메시지 출력 (디버깅용)
-console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
-
-    // 최실장 봇 전송
-    if (choiEnabled) {
-      await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        chat_id: config.TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML'
-      });
-    }
-
-    // 밍밍 봇 전송
-    await sendToMingBot(message);
-    res.status(200).send('✅ 텔레그램 전송 성공');
-  } catch (err) {
-    console.error('❌ 텔레그램 전송 실패:', err.message);
-    res.status(500).send('서버 오류');
-  }
-});
 
 // ✅ 상태 확인용(기본 라우트)
 app.get('/', (req, res) => {
