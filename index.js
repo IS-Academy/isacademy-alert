@@ -163,15 +163,19 @@ async function sendToMingBot(message) {
 }
 
 /* ✅ 관리자 명령어 및 메인 핸들러(Webhook) */
+// ✅ 관리자 인라인 버튼 클릭 시 상태 메시지 수정 + 무시용 try-catch 적용 + 응답 지연 개선용 타임스탬프 추가
+
 app.post('/webhook', async (req, res) => {
   const update = req.body;
 
-  // ✅ 인라인 버튼 처리
+  // ✅ 1. 인라인 버튼 클릭 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const id = update.callback_query.message.chat.id;
+    const msgId = update.callback_query.message.message_id;
     if (id.toString() !== config.ADMIN_CHAT_ID) return res.sendStatus(200);
 
+    // 상태 업데이트
     switch (cmd) {
       case 'choi_on': choiEnabled = true; break;
       case 'choi_off': choiEnabled = false; break;
@@ -179,23 +183,38 @@ app.post('/webhook', async (req, res) => {
       case 'ming_off': mingEnabled = false; break;
     }
     saveBotState({ choiEnabled, mingEnabled });
-    const statusMsg = `✅ 현재 상태:\n최실장: ${choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`;
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-      chat_id: id,
-      message_id: update.callback_query.message.message_id,
-      text: statusMsg,
-      parse_mode: 'HTML',
-      reply_markup: getInlineKeyboard()
-    });
-    return res.sendStatus(200);
+
+    // 타임스탬프 추가
+    const now = moment().tz('Asia/Seoul').format('HH:mm:ss');
+    const statusMsg = `✅ 현재 상태: (🕒 ${now})\n최실장: ${choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`;
+
+    // ✅ 응답 지연 방지를 위한 빠른 응답 처리
+    res.sendStatus(200); // 먼저 응답 보내고 후속 작업 처리
+
+    // 메시지 수정 시 동일 내용이면 무시
+    try {
+      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+        chat_id: id,
+        message_id: msgId,
+        text: statusMsg,
+        parse_mode: 'HTML',
+        reply_markup: getInlineKeyboard()
+      });
+    } catch (err) {
+      const isNotModified = err.response?.data?.description?.includes("message is not modified");
+      if (!isNotModified) {
+        console.error('❌ editMessageText 실패:', err.response?.data || err.message);
+      }
+    }
+    return;
   }
 
-  // ✅ 명령어 처리
+  // ✅ 2. 기타 메시지 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const fromId = update.message.chat.id;
 
-    if (command.startsWith('/setlang')) {
+  if (command.startsWith('/setlang')) {
       const input = command.split(' ')[1];
       const success = langManager.setUserLang(fromId, input);
       const lang = getUserLang(fromId);
@@ -235,7 +254,7 @@ app.post('/webhook', async (req, res) => {
     }
   }
 
-  // ✅ Alert 메시지 처리
+  // ✅ 3. 일반 Alert 메시지 처리
   try {
     const alert = req.body;
     // 1. 타임스탬프 안전 파싱
@@ -253,10 +272,13 @@ app.post('/webhook', async (req, res) => {
     const lang = getUserLang(chatId);
     const tz = getUserTimezone(chatId);
     // 5. 포착시간 포맷
-    const { date, clock } = isValidTs ? formatTimestamp(ts, lang, tz) : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
+    const { date, clock } = isValidTs
+      ? formatTimestamp(ts, lang, tz)
+      : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
     // 6. 메시지 생성
     const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
     console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
+
     // 7. 최실장 봇 전송
     if (choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -265,6 +287,7 @@ app.post('/webhook', async (req, res) => {
         parse_mode: 'HTML'
       });
     }
+
     // 8. 밍밍 봇 전송
     await sendToMingBot(message);
     res.status(200).send('✅ 텔레그램 전송 성공');
