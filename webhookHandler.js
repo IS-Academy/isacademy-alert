@@ -4,12 +4,19 @@ const moment = require('moment-timezone');
 const config = require('./config');
 const langManager = require('./langConfigManager');
 const langMessages = require('./langMessages');
-const { generateAlertMessage, sendTextToTelegram, sendToMingBot, saveBotState, getInlineKeyboard, editTelegramMessage } = require('./utils');
+const {
+  generateAlertMessage,
+  sendTextToTelegram,
+  sendToMingBot,
+  saveBotState,
+  getInlineKeyboard,
+  editTelegramMessage
+} = require('./utils');
 
 // ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
   const lang = langManager.getUserConfig(chatId)?.lang;
-  return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
+  return ['ko', 'en', 'zh', 'ja'].includes(lang) ? lang : 'ko';
 }
 
 function getUserTimezone(chatId) {
@@ -28,8 +35,8 @@ function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
   return {
     date: time.format('YY. MM. DD. (ddd)'),
     clock: time.format('A hh:mm:ss')
-      .replace('AM', locale === 'ko' ? '오전' : 'AM')
-      .replace('PM', locale === 'ko' ? '오후' : 'PM')
+      .replace('AM', locale === 'ko' ? '오전' : locale === 'ja' ? '午前' : 'AM')
+      .replace('PM', locale === 'ko' ? '오후' : locale === 'ja' ? '午後' : 'PM')
   };
 }
 
@@ -42,7 +49,37 @@ module.exports = async function webhookHandler(req, res) {
     const id = update.callback_query.message.chat.id;
     const tz = getUserTimezone(id);
     const timeStr = getTimeString(tz);
+
     res.sendStatus(200);
+
+    if (cmd === 'lang_choi' || cmd === 'lang_ming') {
+      const target = cmd === 'lang_choi' ? '최실장' : '밍밍';
+      const langButtons = {
+        inline_keyboard: [
+          [
+            { text: '🇰🇷 한국어', callback_data: `${cmd}_ko` },
+            { text: '🇺🇸 English', callback_data: `${cmd}_en` },
+            { text: '🇨🇳 中文', callback_data: `${cmd}_zh` },
+            { text: '🇯🇵 日本語', callback_data: `${cmd}_ja` }
+          ]
+        ]
+      };
+
+      await editTelegramMessage(id, update.callback_query.message.message_id,
+        `🌐 ${target} 봇의 언어를 선택하세요:`, langButtons);
+      return;
+    }
+
+    if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
+      const [_, bot, langCode] = cmd.split('_');
+      const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+      const success = langManager.setUserLang(targetId, langCode);
+      const reply = success
+        ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>(으)로 설정되었습니다.`
+        : `❌ 언어 설정에 실패했습니다.`;
+      await editTelegramMessage(id, update.callback_query.message.message_id, reply);
+      return;
+    }
 
     switch (cmd) {
       case 'choi_on': global.choiEnabled = true; break;
