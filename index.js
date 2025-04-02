@@ -80,6 +80,25 @@ async function registerTelegramCommands() {
   }
 }
 
+/* ✅ 트레이딩뷰 시간 변환 코드 */
+const moment = require('moment-timezone');
+
+// 시간 변환
+const ts = alert.ts; // Pine Script에서 보낸 timenow 값
+let formattedDate = 'N/A';
+let formattedClock = 'N/A';
+
+if (ts) {
+  const seoulTime = moment.unix(ts).tz('Asia/Seoul');
+  formattedDate = seoulTime.format('YY. MM. DD. (dd)');
+  formattedClock = seoulTime.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
+} else {
+  const now = moment().tz('Asia/Seoul');
+  formattedDate = now.format('YY. MM. DD. (dd)');
+  formattedClock = now.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
+}
+
+
 /* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
   const signalMap = {
