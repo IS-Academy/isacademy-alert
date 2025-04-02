@@ -5,6 +5,7 @@ const axios = require('axios');
 const fs = require('fs');
 const config = require('./config');
 const moment = require('moment-timezone');
+moment.locale('ko');  // ✅ 한국어로 설정
 
 const app = express();
 app.use(bodyParser.json());
@@ -206,12 +207,12 @@ try {
   const tsNum = Number(ts);
   if (Number.isInteger(tsNum) && tsNum > 0) {
     const seoulTime = moment.unix(tsNum).tz('Asia/Seoul');
-    formattedDate = seoulTime.format('YY. MM. DD. (dd)');
+    formattedDate = seoulTime.format('YY. MM. DD. (ddddd)');
     formattedClock = seoulTime.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
   } else {
     console.warn('⚠️ 알림에 유효한 ts 없음, 현재 시간 사용');
     const now = moment().tz('Asia/Seoul');
-    formattedDate = now.format('YY. MM. DD. (dd)');
+    formattedDate = seoulTime.format('YY. MM. DD. (ddddd)');
     formattedClock = now.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
   }
 } catch (err) {
