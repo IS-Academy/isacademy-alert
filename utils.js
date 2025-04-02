@@ -47,7 +47,7 @@ function getInlineKeyboard() {
   };
 }
 
-// ✅ 메시지 전송
+// ✅ 관리자에게 메시지 전송
 async function sendTextToTelegram(text, keyboard) {
   try {
     const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
