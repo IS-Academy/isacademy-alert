@@ -349,7 +349,6 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
-});
 
   // ✅ 웹훅 자동 등록
   if (process.env.SERVER_URL) {
@@ -363,6 +362,11 @@ app.listen(PORT, async () => {
   } else {
     console.warn('⚠️ SERVER_URL 환경변수가 설정되어 있지 않습니다.');
   }
-  await registerTelegramCommands(); // ✅ 명령어 등록 실행
-});
 
+  // ✅ 명령어 등록
+  try {
+    await registerTelegramCommands();
+  } catch (err) {
+    console.error('❌ 명령어 등록 중 오류:', err.message);
+  }
+});
