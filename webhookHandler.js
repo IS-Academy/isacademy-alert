@@ -1,4 +1,4 @@
-// src/webhookHandler.js
+// webhookHandler.js
 const axios = require('axios');
 const moment = require('moment-timezone');
 const config = require('./config');
@@ -74,10 +74,12 @@ module.exports = async function webhookHandler(req, res) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
       const success = langManager.setUserLang(targetId, langCode);
+      const emojiMap = { ko: '🇰🇷', en: '🇺🇸', zh: '🇨🇳', ja: '🇯🇵' };
       const reply = success
-        ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>(으)로 설정되었습니다.`
+        ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 ${emojiMap[langCode]} <b>${langCode}</b>(으)로 설정되었습니다.`
         : `❌ 언어 설정에 실패했습니다.`;
-      await editTelegramMessage(id, update.callback_query.message.message_id, reply);
+
+      await editTelegramMessage(id, update.callback_query.message.message_id, reply, { remove_keyboard: true });
       return;
     }
 
@@ -90,7 +92,13 @@ module.exports = async function webhookHandler(req, res) {
 
     saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
 
-    const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`;
+    const choiLang = getUserLang(config.TELEGRAM_CHAT_ID);
+    const mingLang = getUserLang(config.TELEGRAM_CHAT_ID_A);
+
+    const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n` +
+      `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${choiLang})\n` +
+      `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${mingLang})`;
+
     await editTelegramMessage(id, update.callback_query.message.message_id, statusMsg, getInlineKeyboard());
     return;
   }
