@@ -162,7 +162,7 @@ async function sendToMingBot(message) {
   }
 }
 
-
+/* ✅ 관리자 명령어 및 메인 핸들러(Webhook) */
 app.post('/webhook', async (req, res) => {
   const update = req.body;
 
