@@ -221,22 +221,22 @@ app.post('/webhook', async (req, res) => {
   }
 
     // 메시지 수정 시 동일 내용이면 무시
-    try {
-      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-        chat_id: id,
-        message_id: msgId,
-        text: statusMsg,
-        parse_mode: 'HTML',
-        reply_markup: getInlineKeyboard()
-      });
-    } catch (err) {
-      const isNotModified = err.response?.data?.description?.includes("message is not modified");
-      if (!isNotModified) {
-        console.error('❌ editMessageText 실패:', err.response?.data || err.message);
-      }
+async function editTelegramMessage(chatId, msgId, text, keyboard) {
+  try {
+    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+      chat_id: chatId,
+      message_id: msgId,
+      text,
+      parse_mode: 'HTML',
+      reply_markup: keyboard
+    });
+  } catch (err) {
+    const isNotModified = err.response?.data?.description?.includes("message is not modified");
+    if (!isNotModified) {
+      console.error('❌ editMessageText 실패:', err.response?.data || err.message);
     }
-    return;
   }
+}
 
   // ✅ 2. 기타 메시지 명령어 처리
   if (update.message && update.message.text) {
