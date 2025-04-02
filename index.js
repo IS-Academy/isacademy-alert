@@ -246,54 +246,72 @@ async function editTelegramMessage(chatId, msgId, text, keyboard) {
     const tz = getUserTimezone(fromId);
     const timeStr = getTimeString(tz);
 
-    res.sendStatus(200);
+  // ✅ 반드시 제일 먼저 응답!
+  res.sendStatus(200);
 
-    if (command.startsWith('/setlang')) {
-      const input = command.split(' ')[1];
-      const success = langManager.setUserLang(fromId, input);
-      const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
-      return await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
-    }
+  if (command.startsWith('/setlang')) {
+    const input = command.split(' ')[1];
+    const success = langManager.setUserLang(fromId, input);
+    const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
+    await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
+    return;
+  }
 
-    if (command.startsWith('/settz')) {
-      const tz = command.split(' ')[1];
-      const success = langManager.setUserTimezone(fromId, tz);
-      const msg = success ? langMessages.setTzSuccess[lang](tz) : langMessages.setTzFail[lang];
-      return await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
-    }
+  if (command.startsWith('/settz')) {
+    const tz = command.split(' ')[1];
+    const success = langManager.setUserTimezone(fromId, tz);
+    const msg = success ? langMessages.setTzSuccess[lang](tz) : langMessages.setTzFail[lang];
+    await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
+    return;
+  }
 
-    if (fromId.toString() === config.ADMIN_CHAT_ID) {
-      switch (command) {
-        case '/start':
-          return await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard());
-        case '/help':
-        case '/도움말':
-          return await sendTextToTelegram('🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태');
-        case '/choi_on':
-        case '/최실장켜':
-          choiEnabled = true; saveBotState({ choiEnabled, mingEnabled });
-          return await sendTextToTelegram(`✅ 최실장 전송 활성화 (🕒 ${timeStr})`);
-        case '/choi_off':
-        case '/최실장꺼':
-          choiEnabled = false; saveBotState({ choiEnabled, mingEnabled });
-          return await sendTextToTelegram(`⛔ 최실장 전송 중단 (🕒 ${timeStr})`);
-        case '/choi_status':
-        case '/최실장상태':
-          return await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'} (🕒 ${timeStr})`);
-        case '/ming_on':
-        case '/밍밍켜':
-          mingEnabled = true; saveBotState({ choiEnabled, mingEnabled });
-          return await sendTextToTelegram(`✅ 밍밍 전송 활성화 (🕒 ${timeStr})`);
-        case '/ming_off':
-        case '/밍밍꺼':
-          mingEnabled = false; saveBotState({ choiEnabled, mingEnabled });
-          return await sendTextToTelegram(`⛔ 밍밍 전송 중단 (🕒 ${timeStr})`);
-        case '/ming_status':
-        case '/밍밍상태':
-          return await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'} (🕒 ${timeStr})`);
-      }
+  if (fromId.toString() === config.ADMIN_CHAT_ID) {
+    switch (command) {
+      case '/start':
+        await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard());
+        return;
+      case '/help':
+      case '/도움말':
+        await sendTextToTelegram('🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태');
+        return;
+      case '/choi_on':
+      case '/최실장켜':
+        choiEnabled = true;
+        saveBotState({ choiEnabled, mingEnabled });
+        await sendTextToTelegram(`✅ 최실장 전송 활성화 (🕒 ${timeStr})`);
+        return;
+      case '/choi_off':
+      case '/최실장꺼':
+        choiEnabled = false;
+        saveBotState({ choiEnabled, mingEnabled });
+        await sendTextToTelegram(`⛔ 최실장 전송 중단 (🕒 ${timeStr})`);
+        return;
+      case '/choi_status':
+      case '/최실장상태':
+        await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'} (🕒 ${timeStr})`);
+        return;
+      case '/ming_on':
+      case '/밍밍켜':
+        mingEnabled = true;
+        saveBotState({ choiEnabled, mingEnabled });
+        await sendTextToTelegram(`✅ 밍밍 전송 활성화 (🕒 ${timeStr})`);
+        return;
+      case '/ming_off':
+      case '/밍밍꺼':
+        mingEnabled = false;
+        saveBotState({ choiEnabled, mingEnabled });
+        await sendTextToTelegram(`⛔ 밍밍 전송 중단 (🕒 ${timeStr})`);
+        return;
+      case '/ming_status':
+      case '/밍밍상태':
+        await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'} (🕒 ${timeStr})`);
+        return;
     }
   }
+
+  // 명령어가 매칭되지 않더라도 응답은 이미 보냈으므로 추가 응답 금지!
+  return;
+}
 
   res.sendStatus(200); // 기타 경우 빠른 종료
 
@@ -333,11 +351,15 @@ async function editTelegramMessage(chatId, msgId, text, keyboard) {
 
     // 8. 밍밍 봇 전송
     await sendToMingBot(message);
-    res.status(200).send('✅ 텔레그램 전송 성공');
-  } catch (err) {
-    console.error('❌ 텔레그램 전송 실패:', err.message);
-    res.status(500).send('서버 오류');
-  }
+      if (!res.headersSent) {
+        res.status(200).send('✅ 텔레그램 전송 성공');
+      }
+    } catch (err) {
+      console.error('❌ 텔레그램 전송 실패:', err.message);
+      if (!res.headersSent) {
+        res.status(500).send('서버 오류');
+      }
+    }
 });
 
 // ✅ 상태 확인용(기본 라우트)
