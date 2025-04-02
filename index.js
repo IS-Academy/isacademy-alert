@@ -347,7 +347,7 @@ app.get('/', (req, res) => {
 
 // ✅ 서버 실행 & 초기 설정 및 포트 자동 감지 (Render용)
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 중: 포트 ${PORT}`);
 });
 
