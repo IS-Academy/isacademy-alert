@@ -16,6 +16,17 @@ const LANGUAGE_MAP = {
   zh: 'zh-cn'
 };
 
+// ✅ 사용자 언어 설정 외부 JSON에서 로드
+let userLangMap = {};
+try {
+  const langRaw = fs.readFileSync('./langConfig.json', 'utf-8');
+  userLangMap = JSON.parse(langRaw);
+  console.log('✅ 사용자 언어 설정 로드 완료');
+} catch (err) {
+  console.warn('⚠️ langConfig.json 파일을 불러올 수 없습니다. 기본값(ko) 사용됨');
+  userLangMap = {}; // fallback
+}
+
 // ✅ 상태 파일 경로
 const STATE_FILE = './bot_state.json';
 
@@ -97,7 +108,8 @@ const userLangMap = {
 
 // ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
-  return ['ko', 'en', 'zh'].includes(userLangMap[chatId]) ? userLangMap[chatId] : 'ko';
+  const lang = userLangMap[String(chatId)];
+  return ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko'; // fallback 포함
 }
 
 
@@ -308,9 +320,8 @@ app.listen(PORT, async () => {
 });
 
 
-const chatId = config.TELEGRAM_CHAT_ID;  // 또는 alert.chat_id
+const chatId = config.TELEGRAM_CHAT_ID;  // 또는 알림의 대상 채팅 ID
 const lang = getUserLang(chatId);
 const { date, clock } = formatTimestamp(ts, lang);
-const message = generateAlertMessage({
-  type, symbol, timeframe, price, date, clock, lang
-});
+const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
+
