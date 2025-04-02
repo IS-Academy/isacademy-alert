@@ -261,35 +261,25 @@ app.post('/webhook', async (req, res) => {
   // ✅ Alert 메시지 처리
   try {
     const alert = req.body;
-
     // 1. 타임스탬프 안전 파싱
     const ts = Number(alert.ts);
     const isValidTs = Number.isFinite(ts) && ts > 0;
-
     // 2. 기본값 포함한 항목 파싱
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳';
     const type = alert.type || '📢';
-
     // 3. 가격 처리 (중복 제거)
     const parsedPrice = parseFloat(alert.price);
     const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
-
     // 4. 사용자 언어/시간대
     const chatId = choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
     const lang = getUserLang(chatId);
     const tz = getUserTimezone(chatId);
-
     // 5. 포착시간 포맷
-    const { date, clock } = isValidTs
-      ? formatTimestamp(ts, lang, tz)
-      : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
-
+    const { date, clock } = isValidTs ? formatTimestamp(ts, lang, tz) : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
     // 6. 메시지 생성
     const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
-    // 디버깅 로그
     console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
-
     // 7. 최실장 봇 전송
     if (choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -298,15 +288,14 @@ app.post('/webhook', async (req, res) => {
         parse_mode: 'HTML'
       });
     }
-
     // 8. 밍밍 봇 전송
-      await sendToMingBot(message);
-      res.status(200).send('✅ 텔레그램 전송 성공');
-    } catch (err) {
-      console.error('❌ 텔레그램 전송 실패:', err.message);
-      res.status(500).send('서버 오류');
-    }
-  });
+    await sendToMingBot(message);
+    res.status(200).send('✅ 텔레그램 전송 성공');
+  } catch (err) {
+    console.error('❌ 텔레그램 전송 실패:', err.message);
+    res.status(500).send('서버 오류');
+  }
+});
 
 // ✅ 상태 확인용(기본 라우트)
 app.get('/', (req, res) => {
