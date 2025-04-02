@@ -9,7 +9,8 @@ const {
   sendToMingBot,
   sendTextToTelegram,
   editTelegramMessage,
-  saveBotState
+  saveBotState,
+  getInlineKeyboard // ✅ utils에서 가져옴
 } = require('./utils');
 
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
@@ -46,15 +47,17 @@ module.exports = async function webhookHandler(req, res) {
   // 1. 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
-    const id = update.callback_query.message.chat.id;
-    const tz = getUserTimezone(id);
+    const chatId = update.callback_query.message.chat.id;
+    const messageId = update.callback_query.message.message_id;
+    const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
 
     res.sendStatus(200);
 
+    // ✅ 언어 선택 메뉴 요청
     if (cmd === 'lang_choi' || cmd === 'lang_ming') {
       const target = cmd === 'lang_choi' ? '최실장' : '밍밍';
-      const langButtons = {
+      const keyboard = {
         inline_keyboard: [
           [
             { text: '🇰🇷 한국어', callback_data: `${cmd}_ko` },
@@ -64,25 +67,25 @@ module.exports = async function webhookHandler(req, res) {
           ]
         ]
       };
-
-      await editTelegramMessage(id, update.callback_query.message.message_id,
-        `🌐 ${target} 봇의 언어를 선택하세요:`, langButtons);
+      await editTelegramMessage(chatId, messageId, `🌐 ${target} 봇의 언어를 선택하세요:`, keyboard);
       return;
     }
 
+    // ✅ 실제 언어 설정 처리
     if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+
       const success = langManager.setUserLang(targetId, langCode);
-      const emojiMap = { ko: '🇰🇷', en: '🇺🇸', zh: '🇨🇳', ja: '🇯🇵' };
       const reply = success
-        ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 ${emojiMap[langCode]} <b>${langCode}</b>(으)로 설정되었습니다.`
+        ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>로 설정되었습니다.`
         : `❌ 언어 설정에 실패했습니다.`;
 
-      await editTelegramMessage(id, update.callback_query.message.message_id, reply, { remove_keyboard: true });
+      await editTelegramMessage(chatId, messageId, reply); // 인라인 키보드 제거됨
       return;
     }
 
+    // ✅ ON/OFF 상태 변경 처리
     switch (cmd) {
       case 'choi_on': global.choiEnabled = true; break;
       case 'choi_off': global.choiEnabled = false; break;
@@ -90,17 +93,22 @@ module.exports = async function webhookHandler(req, res) {
       case 'ming_off': global.mingEnabled = false; break;
     }
 
-    saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+    if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(cmd)) {
+      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+      const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+      await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
+      return;
+    }
 
-    const choiLang = getUserLang(config.TELEGRAM_CHAT_ID);
-    const mingLang = getUserLang(config.TELEGRAM_CHAT_ID_A);
-
-    const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n` +
-      `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${choiLang})\n` +
-      `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${mingLang})`;
-
-    await editTelegramMessage(id, update.callback_query.message.message_id, statusMsg, getInlineKeyboard());
-    return;
+    if (cmd === 'status') {
+      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+      const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+      await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
+      return;
+    }
   }
 
   // 2. 명령어 처리
