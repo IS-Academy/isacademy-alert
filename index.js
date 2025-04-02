@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const fs = require('fs');
 const config = require('./config');
+const moment = require('moment-timezone');
 
 const app = express();
 app.use(bodyParser.json());
@@ -17,7 +18,7 @@ function loadBotState() {
     const raw = fs.readFileSync(STATE_FILE);
     return JSON.parse(raw);
   } catch (err) {
-    return { choiEnabled: true, mingEnabled: config.MINGMING_ENABLED };
+    return { choiEnabled: true, mingEnabled: config.MINGMING_ENABLED === true || config.MINGMING_ENABLED === 'true' };
   }
 }
 
@@ -79,25 +80,6 @@ async function registerTelegramCommands() {
     console.error('❌ 텔레그램 명령어 등록 실패:', err.response?.data || err.message);
   }
 }
-
-/* ✅ 트레이딩뷰 시간 변환 코드 */
-const moment = require('moment-timezone');
-
-// 시간 변환
-const ts = alert.ts; // Pine Script에서 보낸 timenow 값
-let formattedDate = 'N/A';
-let formattedClock = 'N/A';
-
-if (ts) {
-  const seoulTime = moment.unix(ts).tz('Asia/Seoul');
-  formattedDate = seoulTime.format('YY. MM. DD. (dd)');
-  formattedClock = seoulTime.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
-} else {
-  const now = moment().tz('Asia/Seoul');
-  formattedDate = now.format('YY. MM. DD. (dd)');
-  formattedClock = now.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
-}
-
 
 /* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
@@ -176,44 +158,28 @@ app.post('/webhook', async (req, res) => {
       if (fromId.toString() === config.ADMIN_CHAT_ID) {
         switch (command) {
           case '/start':
-            await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard());
-            break;
+            await sendTextToTelegram('🤖 IS 관리자봇에 오신 것을 환영합니다!', getInlineKeyboard()); break;
           case '/도움말':
           case '/help':
-            await sendTextToTelegram(`🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태`);
-            break;
+            await sendTextToTelegram('🛠 사용 가능한 명령어:\n/최실장켜 /최실장꺼 /최실장상태\n/밍밍켜 /밍밍꺼 /밍밍상태'); break;
           case '/최실장켜':
           case '/choi_on':
-            choiEnabled = true;
-            saveBotState({ choiEnabled, mingEnabled });
-            await sendTextToTelegram('✅ 최실장 전송 활성화');
-            break;
+            choiEnabled = true; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('✅ 최실장 전송 활성화'); break;
           case '/최실장꺼':
           case '/choi_off':
-            choiEnabled = false;
-            saveBotState({ choiEnabled, mingEnabled });
-            await sendTextToTelegram('⛔ 최실장 전송 중단');
-            break;
+            choiEnabled = false; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('⛔ 최실장 전송 중단'); break;
           case '/최실장상태':
           case '/choi_status':
-            await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`);
-            break;
+            await sendTextToTelegram(`📡 최실장 상태: ${choiEnabled ? '✅ ON' : '⛔ OFF'}`); break;
           case '/밍밍켜':
           case '/ming_on':
-            mingEnabled = true;
-            saveBotState({ choiEnabled, mingEnabled });
-            await sendTextToTelegram('✅ 밍밍 전송 활성화');
-            break;
+            mingEnabled = true; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('✅ 밍밍 전송 활성화'); break;
           case '/밍밍꺼':
           case '/ming_off':
-            mingEnabled = false;
-            saveBotState({ choiEnabled, mingEnabled });
-            await sendTextToTelegram('⛔ 밍밍 전송 중단');
-            break;
+            mingEnabled = false; saveBotState({ choiEnabled, mingEnabled }); await sendTextToTelegram('⛔ 밍밍 전송 중단'); break;
           case '/밍밍상태':
           case '/ming_status':
-            await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`);
-            break;
+            await sendTextToTelegram(`📡 밍밍 상태: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`); break;
         }
         return res.status(200).send('✅ 명령어 처리됨');
       }
@@ -224,6 +190,7 @@ app.post('/webhook', async (req, res) => {
     const type = alert.type || '📢 알림';
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳ 없음';
+    const tsNum = Number(alert.ts); // Pine Script에서 보낸 UNIX timestamp
 
     // 가격 파싱
     let price = 'N/A';
@@ -231,37 +198,29 @@ app.post('/webhook', async (req, res) => {
       price = parseFloat(alert.price).toFixed(2);
     }
 
-    // 시간 포맷
-    const alertTime = new Date();  // 항상 서버 기준 실시간 시각 사용
+    // 시간 포맷 처리
+let formattedDate = '날짜 없음';
+let formattedClock = '시간 없음';
 
-const dateFormatter = new Intl.DateTimeFormat('ko-KR', {
-  year: '2-digit',
-  month: '2-digit',
-  day: '2-digit',
-  weekday: 'short',
-  timeZone: 'Asia/Seoul'  // ✅ 한국 시간
-});
+try {  
+  if (Number.isInteger(tsNum) && tsNum > 0) {
+    const seoulTime = moment.unix(tsNum).tz('Asia/Seoul');
+    formattedDate = seoulTime.format('YY. MM. DD. (dd)');
+    formattedClock = seoulTime.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
+  } else {
+    console.warn('⚠️ 알림에 유효한 ts 없음, 현재 시간 사용');
+    const now = moment().tz('Asia/Seoul');
+    formattedDate = now.format('YY. MM. DD. (dd)');
+    formattedClock = now.format('A hh:mm:ss').replace('AM', '오전').replace('PM', '오후');
+  }
+} catch (err) {
+  console.error('🕒 시간 포맷 오류:', err.message);
+}
 
-const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-  hour12: true,
-  timeZone: 'Asia/Seoul'  // ✅ 한국 시간
-});
-
-const formattedDate = dateFormatter.format(alertTime);
-const formattedClock = timeFormatter.format(alertTime);
-    
-    // 메시지 생성
-    const message = generateAlertMessage({
-      type,
-      symbol,
-      timeframe,
-      price,
-      date: formattedDate,
-      clock: formattedClock
-    });
+// 메시지 생성
+const message = generateAlertMessage({ type, symbol, timeframe, price, date: formattedDate, clock: formattedClock });
+// log 메시지 출력 (디버깅용)
+console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date: formattedDate, clock: formattedClock });
 
     // 최실장 봇 전송
     if (choiEnabled) {
