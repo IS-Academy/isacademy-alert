@@ -5,10 +5,16 @@ const axios = require('axios');
 const fs = require('fs');
 const config = require('./config');
 const moment = require('moment-timezone');
-moment.locale('ko');  // ✅ 한국어로 설정
 
 const app = express();
 app.use(bodyParser.json());
+
+// ✅ 언어 설정 (언어 코드별 locale 매핑)
+const LANGUAGE_MAP = {
+  ko: 'ko',
+  en: 'en',
+  zh: 'zh-cn'
+};
 
 // ✅ 상태 파일 경로
 const STATE_FILE = './bot_state.json';
@@ -82,32 +88,64 @@ async function registerTelegramCommands() {
   }
 }
 
-/* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock }) {
-  const signalMap = {
-    Ready_Support: { emoji: '🩵', title: '롱 진입 대기' },
-    Ready_Resistance: { emoji: '❤️', title: '숏 진입 대기' },
-    Ready_is_Big_Support: { emoji: '🚀', title: '강한 롱 진입 대기' },
-    Ready_is_Big_Resistance: { emoji: '🛸', title: '강한 숏 진입 대기' },
-    show_Support: { emoji: '🩵', title: '롱 진입' },
-    show_Resistance: { emoji: '❤️', title: '숏 진입' },
-    is_Big_Support: { emoji: '🚀', title: '강한 롱 진입' },
-    is_Big_Resistance: { emoji: '🛸', title: '강한 숏 진입' },
-    Ready_exitLong: { emoji: '💲', title: '롱 청산 준비' },
-    Ready_exitShort: { emoji: '💲', title: '숏 청산 준비' },
-    exitLong: { emoji: '💰', title: '롱 청산' },
-    exitShort: { emoji: '💰', title: '숏 청산' }
-  };
-  const { emoji = '🔔', title = type } = signalMap[type] || {};
-  const fullInfoTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
+// 예시: 사용자 ID별 언어 설정 맵 (실제 운영 시 DB나 외부 설정파일로 관리 권장)
+const userLangMap = {
+  [config.TELEGRAM_CHAT_ID]: 'ko',
+  [config.TELEGRAM_CHAT_ID_A]: 'zh',
+  // 예시) '987654321': 'en'
+};
 
-  let message = `${emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
+// ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
+function getUserLang(chatId) {
+  return ['ko', 'en', 'zh'].includes(userLangMap[chatId]) ? userLangMap[chatId] : 'ko';
+}
+
+
+function formatTimestamp(ts, lang = 'ko') {
+  const locale = ['ko', 'en', 'zh'].includes(lang) ? LANGUAGE_MAP[lang] : 'ko'; // ✅ fallback
+  moment.locale(locale);
+
+  const time = moment.unix(ts).tz('Asia/Seoul');
+
+  return {
+    date: time.format('YY. MM. DD. (ddd)'),
+    clock: time.format('A hh:mm:ss')
+      .replace('AM', locale === 'ko' ? '오전' : 'AM')
+      .replace('PM', locale === 'ko' ? '오후' : 'PM')
+  };
+}
+
+/* ✅ 템플릿 함수: TradingView 메시지 생성만 담당 */
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
+  const validLang = ['ko', 'en', 'zh'].includes(lang) ? lang : 'ko';
+  const signalMap = {
+    Ready_Support:       { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多' },
+    Ready_Resistance:    { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空' },
+    Ready_is_Big_Support:{ emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多' },
+    Ready_is_Big_Resistance:{ emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空' },
+    show_Support:        { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场' },
+    show_Resistance:     { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场' },
+    is_Big_Support:      { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多' },
+    is_Big_Resistance:   { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空' },
+    Ready_exitLong:      { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓' },
+    Ready_exitShort:     { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓' },
+    exitLong:            { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓' },
+    exitShort:           { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓' }
+  };
+
+  const signal = signalMap[type] || { emoji: '🔔' };
+  const title = signal[validLang] || type;
+
+  let message = `${signal.emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
+  const fullInfoTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
   if (fullInfoTypes.includes(type)) {
     if (price !== 'N/A') message += `\n💲 가격: <b>${price}</b>`;
     message += `\n🕒 포착시간:\n${date}\n${clock}`;
   }
+
   return message;
 }
+
 
 /* ✅ 밍밍 봇 전송 함수 */
 async function sendToMingBot(message) {
@@ -188,20 +226,17 @@ app.post('/webhook', async (req, res) => {
 
     // ✅ 일반 Alert 메시지 처리
     const alert = req.body;
-    const type = alert.type || '📢 알림';
+    const ts = Number(alert.ts); // ✅ Pine Script에서 보낸 UNIX timestamp
     const symbol = alert.symbol || 'Unknown';
-    const timeframe = alert.timeframe || '⏳ 없음';
-    const ts = alert.ts; // ✅ Pine Script에서 보낸 UNIX timestamp
+    const timeframe = alert.timeframe || '⏳';
+    const type = alert.type || '📢';
+    const price = !isNaN(parseFloat(alert.price)) ? parseFloat(alert.price).toFixed(2) : 'N/A';
+    const lang = alert.lang || 'ko';
 
-    // 가격 파싱
-    let price = 'N/A';
+    // 가격 파싱    
     if (!isNaN(parseFloat(alert.price))) {
       price = parseFloat(alert.price).toFixed(2);
     }
-
-    // 시간 포맷 처리
-let formattedDate = '날짜 없음';
-let formattedClock = '시간 없음';
 
 try {
   const tsNum = Number(ts);
@@ -220,9 +255,13 @@ try {
 }
 
 // 메시지 생성
-const message = generateAlertMessage({ type, symbol, timeframe, price, date: formattedDate, clock: formattedClock });
+const chatId = choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+const lang = getUserLang(chatId);
+const { date, clock } = formatTimestamp(ts, lang);
+const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
+
 // log 메시지 출력 (디버깅용)
-console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date: formattedDate, clock: formattedClock });
+console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date: formattedDate, clock: formattedClock, lang });
 
     // 최실장 봇 전송
     if (choiEnabled) {
@@ -266,4 +305,12 @@ app.listen(PORT, async () => {
   }
 
   await registerTelegramCommands(); // ✅ 명령어 등록 실행
+});
+
+
+const chatId = config.TELEGRAM_CHAT_ID;  // 또는 alert.chat_id
+const lang = getUserLang(chatId);
+const { date, clock } = formatTimestamp(ts, lang);
+const message = generateAlertMessage({
+  type, symbol, timeframe, price, date, clock, lang
 });
