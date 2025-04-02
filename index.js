@@ -69,20 +69,14 @@ function saveBotState(state) {
 let { choiEnabled, mingEnabled } = loadBotState();
 
 // ✅ 관리자에게 메시지 전송
-try {
-  await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-    chat_id: id,
-    message_id: update.callback_query.message.message_id,
-    text: statusMsg,
+async function sendTextToTelegram(text, keyboard) {
+  const url = `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`;
+  await axios.post(url, {
+    chat_id: config.ADMIN_CHAT_ID,
+    text,
     parse_mode: 'HTML',
-    reply_markup: getInlineKeyboard()
+    reply_markup: keyboard
   });
-} catch (err) {
-  // 👇 메시지가 동일할 때 나는 에러는 무시
-  const isNotModified = err.response?.data?.description?.includes("message is not modified");
-  if (!isNotModified) {
-    console.error('❌ 메시지 수정 실패:', err.response?.data || err.message);
-  }
 }
 
 // ✅ 인라인 키보드 UI
@@ -186,15 +180,21 @@ app.post('/webhook', async (req, res) => {
     }
     saveBotState({ choiEnabled, mingEnabled });
     const statusMsg = `✅ 현재 상태:\n최실장: ${choiEnabled ? '✅ ON' : '⛔ OFF'}\n밍밍: ${mingEnabled ? '✅ ON' : '⛔ OFF'}`;
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-      chat_id: id,
-      message_id: update.callback_query.message.message_id,
-      text: statusMsg,
-      parse_mode: 'HTML',
-      reply_markup: getInlineKeyboard()
-    });
-    return res.sendStatus(200);
+    try {
+  await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
+    chat_id: id,
+    message_id: update.callback_query.message.message_id,
+    text: statusMsg,
+    parse_mode: 'HTML',
+    reply_markup: getInlineKeyboard()
+  });
+} catch (err) {
+  // 👇 메시지가 동일할 때 나는 에러는 무시
+  const isNotModified = err.response?.data?.description?.includes("message is not modified");
+  if (!isNotModified) {
+    console.error('❌ 메시지 수정 실패:', err.response?.data || err.message);
   }
+}
 
   // ✅ 명령어 처리
   if (update.message && update.message.text) {
