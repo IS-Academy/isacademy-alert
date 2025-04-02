@@ -1,12 +1,8 @@
-// index.js (수정된 전체 버전)
+// index.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const axios = require('axios');
-const fs = require('fs');
-const moment = require('moment-timezone');
-const config = require('./config');
-const langManager = require('./langConfigManager');
-const langMessages = require('./langMessages');
+const webhookHandler = require('./webhookHandler');
+const { loadBotState } = require('./utils');
 
 const app = express();
 app.use(bodyParser.json());
