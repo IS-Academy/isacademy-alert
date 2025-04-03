@@ -252,30 +252,6 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   return msg;
 }
 
-  const signal = signalMap[type] || { emoji: '🔔', ko: type };
-  const title = signal[lang] || signal.ko;
-
-  // 날짜/시간 언어별 포맷 처리
-  const now = new Date();
-  const dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(now); // 'Thu'
-  const label = labels[lang] || labels.ko;
-  const dayTranslated = label.days[dayKey] || dayKey;
-  const ampm = now.getHours() < 12 ? label.am : label.pm;
-  const hour12 = now.toLocaleTimeString('en-US', { hour: '2-digit', hour12: true }).replace(/[^AP]M/, '').includes('AM');
-
-  const clockFormatted = `${ampm} ${now.toTimeString().split(' ')[0]}`;
-  const dateFormatted = `${now.getFullYear().toString().slice(2)}. ${String(now.getMonth() + 1).padStart(2, '0')}. ${String(now.getDate()).padStart(2, '0')}. (${dayTranslated})`;
-
-  // 메시지 생성
-  let message = `${signal.emoji} <b>${title}</b>\n\n`;
-  message += `📌 ${label.symbol}: <b>${symbol}</b>\n`;
-  message += `⏱️ ${label.timeframe}: ${timeframe}\n`;
-  if (price !== 'N/A') message += `💲 ${label.price}: <b>${price}</b>\n`;
-  message += `🕒 ${label.captured}:\n${dateFormatted}\n${clockFormatted}`;
-
-  return message;
-}
-
 // ✅ 밍밍 봇 전송
 async function sendToMingBot(message) {
   if (!global.mingEnabled) return;
