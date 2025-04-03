@@ -1,21 +1,18 @@
 // dummyHandler.js
-const express = require('express');
-const router = express.Router();
-const { sendTextToTelegram } = require('./utils');
+const moment = require('moment-timezone');
+const { sendTextToTelegram, updateLastDummyTime } = require('./utils');
 
-let lastDummyTime = null;
+module.exports = async function dummyHandler(req, res) {
+  const now = moment().tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss');
 
-router.post('/dummy', async (req, res) => {
-  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
-  lastDummyTime = now;
-
+  // 콘솔 출력
   console.log('✅ [더미 수신] 시간:', now);
-  await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
-  res.status(200).send('더미 수신 완료');
-});
 
-function getLastDummyTime() {
-  return lastDummyTime || '❌ 기록 없음';
-}
+  // 수신 시간 저장
+  updateLastDummyTime(now);
 
-module.exports = { router, getLastDummyTime };
+  // 관리자에게 알림 전송 (원하면 생략 가능)
+  await sendTextToTelegram(`🛰️ 더미 웹훅 수신!\n🕒 <b>${now}</b>`);
+
+  res.status(200).send('✅ 더미 수신 처리 완료');
+};
