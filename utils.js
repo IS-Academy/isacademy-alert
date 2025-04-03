@@ -4,20 +4,10 @@ const fs = require('fs');
 const moment = require('moment-timezone');
 const config = require('./config');
 
-// ✅ 상태 저장 & 불러오기
-const STATE_FILE = './bot_state.json';
-
 let lastDummyTime = null;
 
-// ✅ 마지막 더미 수신 시간 업데이트
-function updateLastDummyTime(time) {
-  lastDummyTime = time;
-}
-
-// ✅ 마지막 더미 수신 시간 불러오기
-function getLastDummyTime() {
-  return lastDummyTime || '❌ 기록 없음';
-}
+// ✅ 상태 저장 & 불러오기
+const STATE_FILE = './bot_state.json';
 
 // ✅ 상태 불러오기
 function loadBotState() {
@@ -318,6 +308,16 @@ function getLastDummyTime() {
   } catch (e) {
     return '❌ 기록 없음';
   }
+}
+
+// ✅ 마지막 더미 수신 시간 업데이트
+function updateLastDummyTime(time) {
+  lastDummyTime = time;
+}
+
+// ✅ 마지막 더미 수신 시간 불러오기
+function getLastDummyTime() {
+  return lastDummyTime || '❌ 기록 없음';
 }
 
 module.exports = {
