@@ -10,7 +10,10 @@ const {
   sendTextToTelegram,
   editTelegramMessage,
   saveBotState,
-  getInlineKeyboard // ✅ utils에서 가져옴
+  getInlineKeyboard,
+  getLangKeyboard,
+  getReplyKeyboard,
+  getTzKeyboard
 } = require('./utils');
 
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
@@ -44,7 +47,7 @@ function formatTimestamp(ts, lang = 'ko', timezone = 'Asia/Seoul') {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
-  // 1. 인라인 버튼 처리
+  // ✅ 1. 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
@@ -56,18 +59,9 @@ module.exports = async function webhookHandler(req, res) {
 
     // ✅ 언어 선택 메뉴 요청
     if (cmd === 'lang_choi' || cmd === 'lang_ming') {
-      const target = cmd === 'lang_choi' ? '최실장' : '밍밍';
-      const keyboard = {
-        inline_keyboard: [
-          [
-            { text: '🇰🇷 한국어', callback_data: `${cmd}_ko` },
-            { text: '🇺🇸 English', callback_data: `${cmd}_en` },
-            { text: '🇨🇳 中文', callback_data: `${cmd}_zh` },
-            { text: '🇯🇵 日本語', callback_data: `${cmd}_ja` }
-          ]
-        ]
-      };
-      await editTelegramMessage(chatId, messageId, `🌐 ${target} 봇의 언어를 선택하세요:`, keyboard);
+      const bot = cmd === 'lang_choi' ? 'choi' : 'ming';
+      const target = bot === 'choi' ? '최실장' : '밍밍';
+      await editTelegramMessage(chatId, messageId, `🌐 ${target} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
       return;
     }
 
@@ -75,13 +69,11 @@ module.exports = async function webhookHandler(req, res) {
     if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-
       const success = langManager.setUserLang(targetId, langCode);
       const reply = success
         ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>로 설정되었습니다.`
         : `❌ 언어 설정에 실패했습니다.`;
-
-      await editTelegramMessage(chatId, messageId, reply); // 인라인 키보드 제거됨
+      await editTelegramMessage(chatId, messageId, reply); // 키보드 제거
       return;
     }
 
@@ -95,14 +87,9 @@ module.exports = async function webhookHandler(req, res) {
 
     if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(cmd)) {
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-      const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
-      await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
-      return;
     }
 
-    if (cmd === 'status') {
+    if (cmd === 'status' || cmd.includes('_on') || cmd.includes('_off')) {
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
       const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
@@ -111,7 +98,7 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // 2. 명령어 처리
+  // ✅ 2. 텍스트 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const fromId = update.message.chat.id;
@@ -120,22 +107,33 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     res.sendStatus(200);
 
+    // ✅ /setlang
     if (command.startsWith('/setlang')) {
       const input = command.split(' ')[1];
+      if (!input) {
+        await sendTextToTelegram('🌐 언어를 선택해주세요:', getReplyKeyboard('lang'));
+        return;
+      }
       const success = langManager.setUserLang(fromId, input);
       const msg = success ? langMessages.setLangSuccess[lang](input) : langMessages.setLangFail[lang];
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
 
+    // ✅ /settz
     if (command.startsWith('/settz')) {
       const input = command.split(' ')[1];
+      if (!input) {
+        await sendTextToTelegram('🕒 타임존을 선택해주세요:', getTzKeyboard());
+        return;
+      }
       const success = langManager.setUserTimezone(fromId, input);
       const msg = success ? langMessages.setTzSuccess[lang](input) : langMessages.setTzFail[lang];
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
 
+    // ✅ 관리자 명령어
     if (fromId.toString() === config.ADMIN_CHAT_ID) {
       const replyMap = {
         '/start': '🤖 IS 관리자봇에 오신 것을 환영합니다!',
@@ -155,10 +153,11 @@ module.exports = async function webhookHandler(req, res) {
         if (command.includes('ming_on')) global.mingEnabled = true;
         if (command.includes('ming_off')) global.mingEnabled = false;
         saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+
         await sendTextToTelegram(`${replyMap[command]} (🕒 ${timeStr})`, command === '/start' ? getInlineKeyboard() : undefined);
+        return;
       }
     }
-    return;
   }
 
   // ✅ 3. 일반 Alert 메시지 처리
@@ -195,7 +194,7 @@ module.exports = async function webhookHandler(req, res) {
     }
     // 8. 밍밍 봇 전송
     await sendToMingBot(message);
-
+    
     if (!res.headersSent) res.status(200).send('✅ 텔레그램 전송 성공');
   } catch (err) {
     console.error('❌ 텔레그램 전송 실패:', err.message);
