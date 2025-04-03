@@ -14,7 +14,8 @@ const {
   getInlineKeyboard,
   getLangKeyboard,
   getReplyKeyboard,
-  getTzKeyboard
+  getTzKeyboard,
+  getLastDummyTime
 } = require('./utils');
 
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
@@ -104,6 +105,13 @@ module.exports = async function webhookHandler(req, res) {
         `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
         `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
       await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
+      return;
+    }
+    if (cmd === 'dummy_status') {
+      const timeStr = getTimeString(getUserTimezone(chatId));
+      const lastDummy = getLastDummyTime();
+      const msg = `🔁 마지막 더미 알림 수신 시간:\n${lastDummy} (🕒 현재시간: ${timeStr})`;
+      await editTelegramMessage(chatId, messageId, msg, getInlineKeyboard());
       return;
     }
   }
