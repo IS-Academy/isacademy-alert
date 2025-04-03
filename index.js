@@ -1,6 +1,7 @@
 // index.js
 const express = require('express');
 const bodyParser = require('body-parser');
+const { router: dummyRouter } = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const { loadBotState } = require('./utils');
 
@@ -11,6 +12,9 @@ app.use(bodyParser.json());
 const { choiEnabled, mingEnabled } = loadBotState();
 global.choiEnabled = choiEnabled;
 global.mingEnabled = mingEnabled;
+
+// ✅ 더미 핸들러 등록
+app.use(dummyRouter);
 
 // ✅ 라우팅 설정
 app.post('/webhook', webhookHandler);
