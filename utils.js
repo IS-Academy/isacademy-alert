@@ -39,7 +39,8 @@ function getInlineKeyboard() {
         { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }
       ],
       [
-        { text: '📡 상태 확인', callback_data: 'status' }
+        { text: '📡 상태 확인', callback_data: 'status' },
+        { text: '🔁 더미 상태', callback_data: 'dummy_status' } // ✅ 추가된 더미 상태 버튼
       ]
     ]
   };
