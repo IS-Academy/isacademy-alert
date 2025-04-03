@@ -299,6 +299,15 @@ async function sendToMingBot(message) {
   }
 }
 
+function getLastDummyTime() {
+  try {
+    const time = fs.readFileSync('./last_dummy.txt', 'utf8');
+    return time;
+  } catch (e) {
+    return '❌ 기록 없음';
+  }
+}
+
 module.exports = {
   loadBotState,
   saveBotState,
@@ -309,5 +318,6 @@ module.exports = {
   sendTextToTelegram,
   sendToMingBot,
   generateAlertMessage,
-  editTelegramMessage
+  editTelegramMessage,
+  getLastDummyTime
 };
