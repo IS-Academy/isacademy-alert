@@ -69,11 +69,23 @@ module.exports = async function webhookHandler(req, res) {
     if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+
       const success = langManager.setUserLang(targetId, langCode);
       const reply = success
         ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>로 설정되었습니다.`
         : `❌ 언어 설정에 실패했습니다.`;
+
+      // ✅ 언어 선택 메시지 수정
       await editTelegramMessage(chatId, messageId, reply);
+
+      // ✅ 메인 상태 패널 다시 출력
+      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+      const statusMsg =
+        `✅ 현재 상태: (🕒 ${timeStr})\n` +
+        `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
+        `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+      await sendTextToTelegram(statusMsg, getInlineKeyboard());
       return;
     }
 
