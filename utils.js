@@ -244,15 +244,16 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   const L = dict.labels;
 
   // 날짜 처리
-  const time = moment.unix(Number(ts)).tz(timezone);
-  const dayKey = time.format('ddd');
-  const dayTranslated = dict.days?.[dayKey] || dayKey;
-  const ampm = time.format('A') === 'AM' ? dict.am || 'AM' : dict.pm || 'PM';
+const timestamp = Number(ts) || Math.floor(Date.now() / 1000);
+const time = moment.unix(timestamp).tz(timezone);
+const dayKey = time.format('ddd');
+const dayTranslated = dict.days?.[dayKey] || dayKey;
+const ampm = time.format('A') === 'AM' ? dict.am || 'AM' : dict.pm || 'PM';
 
-  const dateFormatted = time.format(`YY. MM. DD. (${dayTranslated})`);
-  const clockFormatted = lang === 'ko'
-    ? `${ampm} ${time.format('hh:mm:ss')}`
-    : time.format('hh:mm:ss A');
+const dateFormatted = time.format(`YY. MM. DD. (${dayTranslated})`);
+const clockFormatted = lang === 'ko'
+  ? `${ampm} ${time.format('hh:mm:ss')}`
+  : time.format('hh:mm:ss A');
 
   const entryTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
   const waitTypes = ['Ready_Support', 'Ready_Resistance', 'Ready_is_Big_Support', 'Ready_is_Big_Resistance'];
