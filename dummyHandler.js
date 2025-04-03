@@ -1,21 +1,21 @@
 // dummyHandler.js
-const { updateLastDummyTime } = require('./utils');
-const config = require('./config');
-const axios = require('axios');
+const express = require('express');
+const router = express.Router();
+const { sendTextToTelegram } = require('./utils');
 
-module.exports = async function dummyHandler(req, res) {
-  updateLastDummyTime(); // <- 더미 수신 시간 기록
+let lastDummyTime = null;
 
-  try {
-    await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      chat_id: config.TELEGRAM_CHAT_ID,
-      text: '🧪 더미 알림 수신 확인됨 ✅',
-      parse_mode: 'HTML'
-    });
+router.post('/dummy', async (req, res) => {
+  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  lastDummyTime = now;
 
-    res.status(200).send('✅ 더미 알림 수신 완료');
-  } catch (err) {
-    console.error('❌ 더미 핸들러 실패:', err.message);
-    res.status(500).send('서버 오류');
-  }
-};
+  console.log('✅ [더미 수신] 시간:', now);
+  await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
+  res.status(200).send('더미 수신 완료');
+});
+
+function getLastDummyTime() {
+  return lastDummyTime || '❌ 기록 없음';
+}
+
+module.exports = { router, getLastDummyTime };
