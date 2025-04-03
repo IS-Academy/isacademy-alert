@@ -57,7 +57,7 @@ module.exports = async function webhookHandler(req, res) {
 
     res.sendStatus(200);
 
-    // ✅ 언어 선택 메뉴 요청
+    // 언어 선택 UI 요청
     if (cmd === 'lang_choi' || cmd === 'lang_ming') {
       const bot = cmd === 'lang_choi' ? 'choi' : 'ming';
       const target = bot === 'choi' ? '최실장' : '밍밍';
@@ -65,7 +65,7 @@ module.exports = async function webhookHandler(req, res) {
       return;
     }
 
-    // ✅ 실제 언어 설정 처리
+    // 언어 설정 처리
     if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
@@ -75,21 +75,16 @@ module.exports = async function webhookHandler(req, res) {
         ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>로 설정되었습니다.`
         : `❌ 언어 설정에 실패했습니다.`;
 
-      // ✅ 언어 선택 메시지 수정
       await editTelegramMessage(chatId, messageId, reply);
 
-      // ✅ 메인 상태 패널 다시 출력
+      // 메인 패널 다시 출력
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-      const statusMsg =
-        `✅ 현재 상태: (🕒 ${timeStr})\n` +
-        `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
-        `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+      const statusMsg = `✅ 현재 상태: (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
       await sendTextToTelegram(statusMsg, getInlineKeyboard());
       return;
     }
 
-    // ✅ ON/OFF 상태 변경 처리
     switch (cmd) {
       case 'choi_on': global.choiEnabled = true; break;
       case 'choi_off': global.choiEnabled = false; break;
@@ -119,7 +114,6 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     res.sendStatus(200);
 
-    // ✅ /setlang
     if (command.startsWith('/setlang')) {
       const input = command.split(' ')[1];
       if (!input) {
@@ -132,7 +126,6 @@ module.exports = async function webhookHandler(req, res) {
       return;
     }
 
-    // ✅ /settz
     if (command.startsWith('/settz')) {
       const input = command.split(' ')[1];
       if (!input) {
@@ -160,7 +153,6 @@ module.exports = async function webhookHandler(req, res) {
         '/ming_status': `📡 밍밍 상태: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`
       };
 
-  // ✅ /settings 명령어도 /start 처리로 연결
       const normalizedCommand = command === '/settings' ? '/start' : command;
 
       if (replyMap[normalizedCommand]) {
@@ -184,7 +176,7 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ 3. 일반 Alert 메시지 처리
+  // ✅ 3. 알림 메시지 처리
   try {
     const alert = req.body;
     const ts = Number(alert.ts);
@@ -195,26 +187,35 @@ module.exports = async function webhookHandler(req, res) {
     const parsedPrice = parseFloat(alert.price);
     const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
 
-    const chatId = global.choiEnabled ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-    const lang = getUserLang(chatId);
-    const tz = getUserTimezone(chatId);
+    // ✅ 봇별 언어 및 시간대 분리
+    const choiLang = getUserLang(config.TELEGRAM_CHAT_ID);
+    const mingLang = getUserLang(config.TELEGRAM_CHAT_ID_A);
+    const choiTz = getUserTimezone(config.TELEGRAM_CHAT_ID);
+    const mingTz = getUserTimezone(config.TELEGRAM_CHAT_ID_A);
 
     const { date, clock } = isValidTs
-      ? formatTimestamp(ts, lang, tz)
-      : formatTimestamp(Math.floor(Date.now() / 1000), lang, tz);
+      ? formatTimestamp(ts, choiLang, choiTz)
+      : formatTimestamp(Math.floor(Date.now() / 1000), choiLang, choiTz);
 
-    const message = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang });
-    console.log('📥 Alert 수신:', { type, symbol, timeframe, price, ts, date, clock, lang });
+    const messageChoi = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang: choiLang });
+    const messageMing = generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang: mingLang });
 
     if (global.choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
         chat_id: config.TELEGRAM_CHAT_ID,
-        text: message,
+        text: messageChoi,
         parse_mode: 'HTML'
       });
     }
 
-    await sendToMingBot(message);
+    if (global.mingEnabled) {
+      await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`, {
+        chat_id: config.TELEGRAM_CHAT_ID_A,
+        text: messageMing,
+        parse_mode: 'HTML'
+      });
+    }
+
     if (!res.headersSent) res.status(200).send('✅ 텔레그램 전송 성공');
   } catch (err) {
     console.error('❌ 텔레그램 전송 실패:', err.message);
