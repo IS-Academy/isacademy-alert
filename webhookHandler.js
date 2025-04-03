@@ -1,4 +1,5 @@
 // webhookHandler.js
+const dummyHandler = require('./dummyHandler'); // ✅ dummy 핸들러 import
 const axios = require('axios');
 const moment = require('moment-timezone');
 const config = require('./config');
@@ -35,6 +36,12 @@ function getTimeString(timezone = 'Asia/Seoul') {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
+  // ✅ 0. 더미 헬스체크 핸들링
+  if (req.originalUrl === '/dummy') {
+    await dummyHandler(req, res);
+    return;
+  }
+  
   // ✅ 1. 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
