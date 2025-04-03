@@ -111,44 +111,146 @@ async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
 }
 
 // ✅ 알림 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang }) {
-  const signalMap = {
-    Ready_Support:           { emoji: '🩵', ko: '롱 진입 대기', en: 'Ready Long', zh: '准备做多', ja: 'ロングエントリー準備' },
-    Ready_Resistance:        { emoji: '❤️', ko: '숏 진입 대기', en: 'Ready Short', zh: '准备做空', ja: 'ショートエントリー準備' },
-    Ready_is_Big_Support:    { emoji: '🚀', ko: '강한 롱 진입 대기', en: 'Strong Ready Long', zh: '强烈准备做多', ja: '強力ロング準備' },
-    Ready_is_Big_Resistance: { emoji: '🛸', ko: '강한 숏 진입 대기', en: 'Strong Ready Short', zh: '强烈准备做空', ja: '強力ショート準備' },
-    show_Support:            { emoji: '🩵', ko: '롱 진입', en: 'Long Entry', zh: '做多进场', ja: 'ロングエントリー' },
-    show_Resistance:         { emoji: '❤️', ko: '숏 진입', en: 'Short Entry', zh: '做空进场', ja: 'ショートエントリー' },
-    is_Big_Support:          { emoji: '🚀', ko: '강한 롱 진입', en: 'Strong Long', zh: '强烈做多', ja: '強力ロング' },
-    is_Big_Resistance:       { emoji: '🛸', ko: '강한 숏 진입', en: 'Strong Short', zh: '强烈做空', ja: '強力ショート' },
-    Ready_exitLong:          { emoji: '💲', ko: '롱 청산 준비', en: 'Ready Exit Long', zh: '准备平多仓', ja: 'ロング決済準備' },
-    Ready_exitShort:         { emoji: '💲', ko: '숏 청산 준비', en: 'Ready Exit Short', zh: '准备平空仓', ja: 'ショート決済準備' },
-    exitLong:                { emoji: '💰', ko: '롱 청산', en: 'Exit Long', zh: '平多仓', ja: 'ロング決済' },
-    exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓', ja: 'ショート決済' }
-  };
-
-  const labels = {
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
+  const translations = {
     ko: {
-      symbol: '종목', timeframe: '타임프레임', price: '가격', captured: '포착시간',
-      days: { Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토', Sun: '일' },
-      am: '오전', pm: '오후'
+      symbols: {
+        Ready_Support: "#🩵롱 대기 📈관점공유",
+        Ready_Resistance: "#❤️숏 대기 📉관점공유",
+        Ready_is_Big_Support: "#🚀강한 롱 대기 📈관점공유",
+        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉관점공유",
+        show_Support: "#🩵롱 진입🩵관점공유🩵",
+        show_Resistance: "#❤️숏 진입❤️관점공유❤️",
+        is_Big_Support: "#🚀강한 롱 진입🚀관점공유🚀",
+        is_Big_Resistance: "#🛸강한 숏 진입🛸관점공유🛸",
+        Ready_exitLong: "#💲롱 청산 준비 📈관점공유",
+        Ready_exitShort: "#💲숏 청산 준비 📉관점공유",
+        exitLong: "#💰롱 청산📈관점공유💰",
+        exitShort: "#💰숏 청산📉관점공유💰"
+      },
+      labels: {
+        symbol: "📌 종목",
+        timeframe: "⏱️ 타임프레임",
+        price: "💲 가격",
+        captured: "🕒 포착시간",
+        weight: "🗝️ 비중: 1%",
+        leverage: "🎲 배율: 50×",
+        disclaimer_short: "⚠️관점은 자율적 참여입니다.",
+        disclaimer_full: "⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다."
+      }
     },
     en: {
-      symbol: 'Symbol', timeframe: 'Timeframe', price: 'Price', captured: 'Captured At',
-      days: { Mon: 'Mon', Tue: 'Tue', Wed: 'Wed', Thu: 'Thu', Fri: 'Fri', Sat: 'Sat', Sun: 'Sun' },
-      am: 'AM', pm: 'PM'
+      symbols: {
+        Ready_Support: "#🩵Long Setup 📈Perspective",
+        Ready_Resistance: "#❤️Short Setup 📉Perspective",
+        Ready_is_Big_Support: "#🚀Strong Long Setup 📈Perspective",
+        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉Perspective",
+        show_Support: "#🩵Long Entry🩵Perspective🩵",
+        show_Resistance: "#❤️Short Entry❤️Perspective❤️",
+        is_Big_Support: "#🚀Strong Long Entry🚀Perspective🚀",
+        is_Big_Resistance: "#🛸Strong Short Entry🛸Perspective🛸",
+        Ready_exitLong: "#💲Exit Long Ready 📈Perspective",
+        Ready_exitShort: "#💲Exit Short Ready 📉Perspective",
+        exitLong: "#💰Exit Long📈Perspective💰",
+        exitShort: "#💰Exit Short📉Perspective💰"
+      },
+      labels: {
+        symbol: "📌 Symbol",
+        timeframe: "⏱️ Timeframe",
+        price: "💲 Price",
+        captured: "🕒 Captured At",
+        weight: "🗝️ Weight: 1%",
+        leverage: "🎲 Leverage: 50×",
+        disclaimer_short: "⚠️This view is voluntary.",
+        disclaimer_full: "⚠️Participation is always voluntary.\n⚠️All decisions are your own responsibility."
+      }
     },
     zh: {
-      symbol: '币种', timeframe: '周期', price: '价格', captured: '捕捉时间',
-      days: { Mon: '周一', Tue: '周二', Wed: '周三', Thu: '周四', Fri: '周五', Sat: '周六', Sun: '周日' },
-      am: '上午', pm: '下午'
+      symbols: {
+        Ready_Support: "#🩵做多准备 📈观点分享",
+        Ready_Resistance: "#❤️做空准备 📉观点分享",
+        Ready_is_Big_Support: "#🚀强烈做多准备 📈观点分享",
+        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉观点分享",
+        show_Support: "#🩵做多进场🩵观点分享🩵",
+        show_Resistance: "#❤️做空进场❤️观点分享❤️",
+        is_Big_Support: "#🚀强烈做多进场🚀观点分享🚀",
+        is_Big_Resistance: "#🛸强烈做空进场🛸观点分享🛸",
+        Ready_exitLong: "#💲平多准备 📈观点分享",
+        Ready_exitShort: "#💲平空准备 📉观点分享",
+        exitLong: "#💰平多📈观点分享💰",
+        exitShort: "#💰平空📉观点分享💰"
+      },
+      labels: {
+        symbol: "📌 币种",
+        timeframe: "⏱️ 周期",
+        price: "💲 价格",
+        captured: "🕒 捕捉时间",
+        weight: "🗝️ 仓位: 1%",
+        leverage: "🎲 杠杆: 50×",
+        disclaimer_short: "⚠️观点为自愿参与。",
+        disclaimer_full: "⚠️观点分享纯属自愿\n⚠️所有交易和决策需自行承担。"
+      }
     },
     ja: {
-      symbol: 'シンボル', timeframe: '時間枠', price: '価格', captured: '検出時間',
-      days: { Mon: '月', Tue: '火', Wed: '水', Thu: '木', Fri: '金', Sat: '土', Sun: '日' },
-      am: '午前', pm: '午後'
+      symbols: {
+        Ready_Support: "#🩵ロング準備 📈視点共有",
+        Ready_Resistance: "#❤️ショート準備 📉視点共有",
+        Ready_is_Big_Support: "#🚀強ロング準備 📈視点共有",
+        Ready_is_Big_Resistance: "#🛸強ショート準備 📉視点共有",
+        show_Support: "#🩵ロングエントリー🩵視点共有🩵",
+        show_Resistance: "#❤️ショートエントリー❤️視点共有❤️",
+        is_Big_Support: "#🚀強ロングエントリー🚀視点共有🚀",
+        is_Big_Resistance: "#🛸強ショートエントリー🛸視点共有🛸",
+        Ready_exitLong: "#💲ロング利確準備 📈視点共有",
+        Ready_exitShort: "#💲ショート利確準備 📉視点共有",
+        exitLong: "#💰ロング利確📈視点共有💰",
+        exitShort: "#💰ショート利確📉視点共有💰"
+      },
+      labels: {
+        symbol: "📌 シンボル",
+        timeframe: "⏱️ 時間枠",
+        price: "💲 価格",
+        captured: "🕒 検出時間",
+        weight: "🗝️ 比率: 1%",
+        leverage: "🎲 レバレッジ: 50×",
+        disclaimer_short: "⚠️視点は任意参加です。",
+        disclaimer_full: "⚠️視点共有は常に任意です。\n⚠️投資判断は自己責任でお願いします。"
+      }
     }
   };
+
+  const dict = translations[lang] || translations.ko;
+  const signal = dict.symbols[type] || '#📢알 수 없는 신호';
+  const L = dict.labels;
+
+  const entryTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
+  const waitTypes = ['Ready_Support', 'Ready_Resistance', 'Ready_is_Big_Support', 'Ready_is_Big_Resistance'];
+  const prepareTypes = ['Ready_exitLong', 'Ready_exitShort'];
+
+  let msg = `${signal}\n\n`;
+  msg += `${L.symbol}: ${symbol}\n`;
+  msg += `${L.timeframe}: ${timeframe}\n`;
+
+  if (entryTypes.includes(type) && price !== 'N/A') {
+    msg += `${L.price}: ${price}\n`;
+  }
+
+  if (waitTypes.includes(type)) {
+    msg += `${L.weight}\n${L.leverage}\n`;
+  }
+
+  if (entryTypes.includes(type)) {
+    msg += `\n${L.captured}:\n${date}\n${clock}\n`;
+  }
+
+  if (entryTypes.includes(type) || prepareTypes.includes(type)) {
+    msg += `\n${L.disclaimer_full}`;
+  } else {
+    msg += `\n${L.disclaimer_short}`;
+  }
+
+  return msg;
+}
 
   const signal = signalMap[type] || { emoji: '🔔', ko: type };
   const title = signal[lang] || signal.ko;
