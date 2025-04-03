@@ -6,7 +6,18 @@ const config = require('./config');
 
 // ✅ 상태 저장 & 불러오기
 const STATE_FILE = './bot_state.json';
-const DUMMY_FILE = './last_dummy_time.txt';
+
+let lastDummyTime = null;
+
+// ✅ 마지막 더미 수신 시간 업데이트
+function updateLastDummyTime(time) {
+  lastDummyTime = time;
+}
+
+// ✅ 마지막 더미 수신 시간 불러오기
+function getLastDummyTime() {
+  return lastDummyTime || '❌ 기록 없음';
+}
 
 // ✅ 상태 불러오기
 function loadBotState() {
@@ -21,21 +32,6 @@ function loadBotState() {
 // ✅ 상태 저장
 function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-// ✅ 마지막 더미 수신 시간 저장
-function saveLastDummyTime() {
-  const now = moment().tz('Asia/Seoul').format('YYYY-MM-DD HH:mm:ss');
-  fs.writeFileSync(DUMMY_FILE, now);
-}
-
-// ✅ 마지막 더미 수신 시간 불러오기
-function getLastDummyTime() {
-  try {
-    return fs.readFileSync(DUMMY_FILE, 'utf-8');
-  } catch (e) {
-    return '❌ 수신 기록 없음';
-  }
 }
 
 // ✅ 인라인 키보드 UI
@@ -335,6 +331,6 @@ module.exports = {
   sendToMingBot,
   generateAlertMessage,
   editTelegramMessage,
-  saveLastDummyTime,
+  updateLastDummyTime,
   getLastDummyTime
 };
