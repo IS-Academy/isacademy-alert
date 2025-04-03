@@ -78,7 +78,7 @@ function getReplyKeyboard(type = 'lang') {
   };
 }
 
-// ✅ 관리자에게 메시지 전송
+// ✅ 텔레그램 메시지 전송 (관리자용)
 async function sendTextToTelegram(text, keyboard = null) {
   try {
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`, {
@@ -92,7 +92,6 @@ async function sendTextToTelegram(text, keyboard = null) {
   }
 }
 
-// ✅ 메시지 수정
 // ✅ 텍스트 수정 (인라인 키보드 포함)
 async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
   try {
@@ -128,6 +127,15 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓', ja: 'ショート決済' }
   };
 
+  const signal = signalMap[type] || { emoji: '🔔', ko: type };
+  const title = signal[lang] || signal.ko;
+
+  let message = `${signal.emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
+  if (price && price !== 'N/A') message += `\n💲 가격: <b>${price}</b>`;
+  message += `\n🕒 포착시간:\n${date}\n${clock}`;
+  return message;
+}
+
 // ✅ 밍밍 봇 전송
 async function sendToMingBot(message) {
   if (!global.mingEnabled) return;
@@ -140,21 +148,6 @@ async function sendToMingBot(message) {
   } catch (err) {
     console.error('❌ 밍밍 전송 실패:', err.response?.data || err.message);
   }
-}
-
-// ✅ Alert 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
-  const signalMap = {
-
-  const signal = signalMap[type] || { emoji: '🔔', ko: type };
-  const title = signal[lang] || signal.ko;
-  let message = `${signal.emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
-  const fullInfoTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
-  if (fullInfoTypes.includes(type)) {
-    if (price !== 'N/A') message += `\n💲 가격: <b>${price}</b>`;
-    message += `\n🕒 포착시간:\n${date}\n${clock}`;
-  }
-  return message;
 }
 
 module.exports = {
