@@ -127,12 +127,50 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     exitShort:               { emoji: '💰', ko: '숏 청산', en: 'Exit Short', zh: '平空仓', ja: 'ショート決済' }
   };
 
+  const labels = {
+    ko: {
+      symbol: '종목', timeframe: '타임프레임', price: '가격', captured: '포착시간',
+      days: { Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토', Sun: '일' },
+      am: '오전', pm: '오후'
+    },
+    en: {
+      symbol: 'Symbol', timeframe: 'Timeframe', price: 'Price', captured: 'Captured At',
+      days: { Mon: 'Mon', Tue: 'Tue', Wed: 'Wed', Thu: 'Thu', Fri: 'Fri', Sat: 'Sat', Sun: 'Sun' },
+      am: 'AM', pm: 'PM'
+    },
+    zh: {
+      symbol: '币种', timeframe: '周期', price: '价格', captured: '捕捉时间',
+      days: { Mon: '周一', Tue: '周二', Wed: '周三', Thu: '周四', Fri: '周五', Sat: '周六', Sun: '周日' },
+      am: '上午', pm: '下午'
+    },
+    ja: {
+      symbol: 'シンボル', timeframe: '時間枠', price: '価格', captured: '検出時間',
+      days: { Mon: '月', Tue: '火', Wed: '水', Thu: '木', Fri: '金', Sat: '土', Sun: '日' },
+      am: '午前', pm: '午後'
+    }
+  };
+
   const signal = signalMap[type] || { emoji: '🔔', ko: type };
   const title = signal[lang] || signal.ko;
 
-  let message = `${signal.emoji} <b>${title}</b>\n\n📌 종목: <b>${symbol}</b>\n⏱️ 타임프레임: ${timeframe}`;
-  if (price && price !== 'N/A') message += `\n💲 가격: <b>${price}</b>`;
-  message += `\n🕒 포착시간:\n${date}\n${clock}`;
+  // 날짜/시간 언어별 포맷 처리
+  const now = new Date();
+  const dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(now); // 'Thu'
+  const label = labels[lang] || labels.ko;
+  const dayTranslated = label.days[dayKey] || dayKey;
+  const ampm = now.getHours() < 12 ? label.am : label.pm;
+  const hour12 = now.toLocaleTimeString('en-US', { hour: '2-digit', hour12: true }).replace(/[^AP]M/, '').includes('AM');
+
+  const clockFormatted = `${ampm} ${now.toTimeString().split(' ')[0]}`;
+  const dateFormatted = `${now.getFullYear().toString().slice(2)}. ${String(now.getMonth() + 1).padStart(2, '0')}. ${String(now.getDate()).padStart(2, '0')}. (${dayTranslated})`;
+
+  // 메시지 생성
+  let message = `${signal.emoji} <b>${title}</b>\n\n`;
+  message += `📌 ${label.symbol}: <b>${symbol}</b>\n`;
+  message += `⏱️ ${label.timeframe}: ${timeframe}\n`;
+  if (price !== 'N/A') message += `💲 ${label.price}: <b>${price}</b>\n`;
+  message += `🕒 ${label.captured}:\n${dateFormatted}\n${clockFormatted}`;
+
   return message;
 }
 
