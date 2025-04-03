@@ -134,31 +134,45 @@ module.exports = async function webhookHandler(req, res) {
     }
 
     // ✅ 관리자 명령어
-    if (fromId.toString() === config.ADMIN_CHAT_ID) {
-      const replyMap = {
-        '/start': '🤖 IS 관리자봇에 오신 것을 환영합니다!',
-        '/help': '🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태',
-        '/도움말': '🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태',
-        '/choi_on': '✅ 최실장 전송 활성화',
-        '/choi_off': '⛔ 최실장 전송 중단',
-        '/choi_status': `📡 최실장 상태: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'}`,
-        '/ming_on': '✅ 밍밍 전송 활성화',
-        '/ming_off': '⛔ 밍밍 전송 중단',
-        '/ming_status': `📡 밍밍 상태: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`
-      };
+if (fromId.toString() === config.ADMIN_CHAT_ID) {
+  const replyMap = {
+    '/start': '🤖 IS 관리자봇에 오신 것을 환영합니다!',
+    '/help': '🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태',
+    '/도움말': '🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태',
+    '/choi_on': '✅ 최실장 전송 활성화',
+    '/choi_off': '⛔ 최실장 전송 중단',
+    '/choi_status': `📡 최실장 상태: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'}`,
+    '/ming_on': '✅ 밍밍 전송 활성화',
+    '/ming_off': '⛔ 밍밍 전송 중단',
+    '/ming_status': `📡 밍밍 상태: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`
+  };
 
-      if (replyMap[command]) {
-        if (command.includes('choi_on')) global.choiEnabled = true;
-        if (command.includes('choi_off')) global.choiEnabled = false;
-        if (command.includes('ming_on')) global.mingEnabled = true;
-        if (command.includes('ming_off')) global.mingEnabled = false;
-        saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+  // ✅ /settings 명령어도 /start 처리로 연결
+  const normalizedCommand = command === '/settings' ? '/start' : command;
 
-        await sendTextToTelegram(`${replyMap[command]} (🕒 ${timeStr})`, command === '/start' ? getInlineKeyboard() : undefined);
-        return;
-      }
-    }
+  if (replyMap[normalizedCommand]) {
+    if (normalizedCommand.includes('choi_on')) global.choiEnabled = true;
+    if (normalizedCommand.includes('choi_off')) global.choiEnabled = false;
+    if (normalizedCommand.includes('ming_on')) global.mingEnabled = true;
+    if (normalizedCommand.includes('ming_off')) global.mingEnabled = false;
+    saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+
+    const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+    const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+    const statusMsg =
+      `✅ 현재 상태: (🕒 ${timeStr})\n` +
+      `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
+      `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+
+    const finalText =
+      normalizedCommand === '/start'
+        ? `${replyMap[normalizedCommand]}\n\n${statusMsg}`
+        : `${replyMap[normalizedCommand]} (🕒 ${timeStr})`;
+
+    await sendTextToTelegram(finalText, normalizedCommand === '/start' ? getInlineKeyboard() : undefined);
+    return;
   }
+}
 
   // ✅ 3. 일반 Alert 메시지 처리
   try {
