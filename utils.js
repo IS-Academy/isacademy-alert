@@ -1,6 +1,7 @@
 // utils.js
 const axios = require('axios');
 const fs = require('fs');
+const moment = require('moment-timezone');
 const config = require('./config');
 
 // ✅ 상태 저장 & 불러오기
@@ -70,7 +71,6 @@ function getReplyKeyboard(type = 'lang') {
       one_time_keyboard: true
     };
   }
-
   return {
     keyboard: [['ko', 'en', 'zh', 'ja']],
     resize_keyboard: true,
@@ -111,7 +111,7 @@ async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
 }
 
 // ✅ 알림 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko' }) {
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul' }) {
   const translations = {
     ko: {
       symbols: {
@@ -137,7 +137,12 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         leverage: "🎲 배율: 50×",
         disclaimer_short: "⚠️관점은 자율적 참여입니다.",
         disclaimer_full: "⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다."
-      }
+      },
+      days: {
+        Mon: "월", Tue: "화", Wed: "수", Thu: "목", Fri: "금", Sat: "토", Sun: "일"
+      },
+      am: "오전",
+      pm: "오후"
     },
     en: {
       symbols: {
@@ -163,7 +168,12 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         leverage: "🎲 Leverage: 50×",
         disclaimer_short: "⚠️This view is voluntary.",
         disclaimer_full: "⚠️Participation is always voluntary.\n⚠️All decisions are your own responsibility."
-      }
+      },
+      days: {
+        Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat", Sun: "Sun"
+      },
+      am: "AM",
+      pm: "PM"
     },
     zh: {
       symbols: {
@@ -189,7 +199,12 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         leverage: "🎲 杠杆: 50×",
         disclaimer_short: "⚠️观点为自愿参与。",
         disclaimer_full: "⚠️观点分享纯属自愿\n⚠️所有交易和决策需自行承担。"
-      }
+      },
+      days: {
+        Mon: "周一", Tue: "周二", Wed: "周三", Thu: "周四", Fri: "周五", Sat: "周六", Sun: "周日"
+      },
+      am: "上午",
+      pm: "下午"
     },
     ja: {
       symbols: {
@@ -215,13 +230,29 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         leverage: "🎲 レバレッジ: 50×",
         disclaimer_short: "⚠️視点は任意参加です。",
         disclaimer_full: "⚠️視点共有は常に任意です。\n⚠️投資判断は自己責任でお願いします。"
-      }
+      },
+      days: {
+        Mon: "月", Tue: "火", Wed: "水", Thu: "木", Fri: "金", Sat: "土", Sun: "日"
+      },
+      am: "午前",
+      pm: "午後"
     }
   };
 
   const dict = translations[lang] || translations.ko;
   const signal = dict.symbols[type] || '#📢알 수 없는 신호';
   const L = dict.labels;
+
+  // 날짜 처리
+  const time = moment.unix(Number(ts)).tz(timezone);
+  const dayKey = time.format('ddd');
+  const dayTranslated = dict.days?.[dayKey] || dayKey;
+  const ampm = time.format('A') === 'AM' ? dict.am || 'AM' : dict.pm || 'PM';
+
+  const dateFormatted = time.format(`YY. MM. DD. (${dayTranslated})`);
+  const clockFormatted = lang === 'ko'
+    ? `${ampm} ${time.format('hh:mm:ss')}`
+    : time.format('hh:mm:ss A');
 
   const entryTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
   const waitTypes = ['Ready_Support', 'Ready_Resistance', 'Ready_is_Big_Support', 'Ready_is_Big_Resistance'];
@@ -240,7 +271,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   }
 
   if (entryTypes.includes(type)) {
-    msg += `\n${L.captured}:\n${date}\n${clock}\n`;
+    msg += `\n${L.captured}:\n${dateFormatted}\n${clockFormatted}\n`;
   }
 
   if (entryTypes.includes(type) || prepareTypes.includes(type)) {
