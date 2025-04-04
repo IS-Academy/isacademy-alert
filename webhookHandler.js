@@ -1,5 +1,5 @@
 // webhookHandler.js
-const dummyHandler = require('./dummyHandler'); // ✅ dummy 핸들러 import
+const dummyHandler = require('./dummyHandler');
 const axios = require('axios');
 const moment = require('moment-timezone');
 const config = require('./config');
@@ -7,6 +7,7 @@ const langManager = require('./langConfigManager');
 const langMessages = require('./langMessages');
 const {
   generateAlertMessage,
+  getWaitingMessage,
   sendToMingBot,
   sendTextToTelegram,
   editTelegramMessage,
@@ -221,22 +222,18 @@ module.exports = async function webhookHandler(req, res) {
     const type = alert.type || '📢';
     const parsedPrice = parseFloat(alert.price);
     const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
-
-    const tsSec = isValidTs ? ts : Math.floor(Date.now() / 1000);
-    const dateObj = moment.unix(tsSec);
-
+    const weight = alert.weight || '1%';
+    const leverage = alert.leverage || '50×';
     const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
     const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-    const tzChoi = getUserTimezone(config.TELEGRAM_CHAT_ID);
-    const tzMing = getUserTimezone(config.TELEGRAM_CHAT_ID_A);
 
-    const dateChoi = dateObj.clone().tz(tzChoi).format('YY. MM. DD. (ddd)');
-    const clockChoi = dateObj.clone().tz(tzChoi).format('A hh:mm:ss');
-    const dateMing = dateObj.clone().tz(tzMing).format('YY. MM. DD. (ddd)');
-    const clockMing = dateObj.clone().tz(tzMing).format('A hh:mm:ss');
+    const msgChoi = type.startsWith('Ready_')
+      ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langChoi)
+      : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi });
 
-    const msgChoi = generateAlertMessage({ type, symbol, timeframe, price, date: dateChoi, clock: clockChoi, lang: langChoi });
-    const msgMing = generateAlertMessage({ type, symbol, timeframe, price, date: dateMing, clock: clockMing, lang: langMing });
+    const msgMing = type.startsWith('Ready_')
+      ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langMing)
+      : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing });
 
     if (global.choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
