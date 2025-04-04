@@ -160,5 +160,6 @@ module.exports = {
   updateLastDummyTime,
   getLastDummyTime,
   readLastDummyTimeFromFile,
-  generateAlertMessage
+  generateAlertMessage,
+  getWaitingMessage
 };
