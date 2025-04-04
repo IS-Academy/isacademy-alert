@@ -2,6 +2,76 @@
 
 const moment = require('moment-timezone');
 
+// ✅ 간단한 대기 메시지 (축약형, generateAlertMessage와 통일된 메시지명 사용)
+function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko') {
+  const translations = {
+    ko: {
+      symbols: {
+        Ready_Support: "#🩵롱 대기 📈",
+        Ready_Resistance: "#❤️숏 대기 📉",
+        Ready_is_Big_Support: "#🚀강한 롱 대기 📈",
+        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉"
+      },
+      labels: {
+        symbol: "📌 종목",
+        weight: "🗝️ 비중",
+        leverage: "🎲 배율"
+      }
+    },
+    en: {
+      symbols: {
+        Ready_Support: "#🩵Long Setup 📈",
+        Ready_Resistance: "#❤️Short Setup 📉",
+        Ready_is_Big_Support: "#🚀Strong Long Setup 📈",
+        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉"
+      },
+      labels: {
+        symbol: "📌 Symbol",
+        weight: "🗝️ Weight",
+        leverage: "🎲 Leverage"
+      }
+    },
+    zh: {
+      symbols: {
+        Ready_Support: "#🩵做多准备 📈",
+        Ready_Resistance: "#❤️做空准备 📉",
+        Ready_is_Big_Support: "#🚀强烈做多准备 📈",
+        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉"
+      },
+      labels: {
+        symbol: "📌 币种",
+        weight: "🗝️ 仓位",
+        leverage: "🎲 杠杆"
+      }
+    },
+    ja: {
+      symbols: {
+        Ready_Support: "#🩵ロング準備 📈",
+        Ready_Resistance: "#❤️ショート準備 📉",
+        Ready_is_Big_Support: "#🚀強ロング準備 📈",
+        Ready_is_Big_Resistance: "#🛸強ショート準備 📉"
+      },
+      labels: {
+        symbol: "📌 シンボル",
+        weight: "🗝️ 比率",
+        leverage: "🎲 レバレッジ"
+      }
+    }
+  };
+
+  const dict = translations[lang] || translations.ko;
+  const label = dict.labels;
+  const signal = dict.symbols[type] || '#❓Unknown Signal';
+
+  const tfStr = `${timeframe}⏱️`;
+  const infoLine = `${label.symbol}: ${symbol}\n${label.weight}: ${weight} / ${label.leverage}: ${leverage}`;
+
+  let message = 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n';
+  message += `${signal} ${tfStr}\n\n${infoLine}\n`;
+  message += 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ';
+  return message;
+}
+
 // ✅ 알림 메시지 생성
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul' }) {
   const translations = {
@@ -179,5 +249,6 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
 }
 
 module.exports = {
-  generateAlertMessage
+  generateAlertMessage,
+  getWaitingMessage
 };
