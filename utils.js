@@ -91,7 +91,7 @@ async function sendTextToTelegram(text, keyboard = null) {
       reply_markup: keyboard || undefined
     });
   } catch (err) {
-    console.error('❌ 관리자 메시지 전송 실패:', err.response?.data || err.message);
+    console.error('❌ 관리자 메시지 전송 실패:', err.stack || err.message);
   }
 }
 
@@ -108,7 +108,7 @@ async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
   } catch (err) {
     const isNotModified = err.response?.data?.description?.includes("message is not modified");
     if (!isNotModified) {
-      console.error('❌ editMessageText 실패:', err.response?.data || err.message);
+      console.error('❌ editMessageText 실패:', err.stack || err.message);
     }
   }
 }
@@ -124,7 +124,7 @@ async function sendToMingBot(message) {
       parse_mode: 'HTML'
     });
   } catch (err) {
-    console.error('❌ 밍밍 전송 실패:', err.response?.data || err.message);
+    console.error('❌ 밍밍 전송 실패:', err.stack || err.message);
   }
 }
 
