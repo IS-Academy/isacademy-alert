@@ -129,23 +129,23 @@ async function sendToMingBot(message) {
   }
 }
 
+// ✅ 마지막 더미 수신 시간 - 메모리 기반
+function updateLastDummyTime(time) {
+  lastDummyTime = time;
+}
+
 function getLastDummyTime() {
+  return lastDummyTime || '❌ 기록 없음';
+}
+
+// ✅ 파일에서 마지막 더미 수신 시간 읽기
+function readLastDummyTimeFromFile() {
   try {
     const time = fs.readFileSync('./last_dummy.txt', 'utf8');
     return time;
   } catch (e) {
     return '❌ 기록 없음';
   }
-}
-
-// ✅ 마지막 더미 수신 시간 업데이트
-function updateLastDummyTime(time) {
-  lastDummyTime = time;
-}
-
-// ✅ 마지막 더미 수신 시간 불러오기
-function getLastDummyTime() {
-  return lastDummyTime || '❌ 기록 없음';
 }
 
 module.exports = {
@@ -159,5 +159,7 @@ module.exports = {
   sendToMingBot,
   editTelegramMessage,
   updateLastDummyTime,
-  getLastDummyTime
+  getLastDummyTime,
+  readLastDummyTimeFromFile,
+  generateAlertMessage
 };
