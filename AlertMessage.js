@@ -10,7 +10,9 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
         Ready_Support: "#🩵롱 대기 📈",
         Ready_Resistance: "#❤️숏 대기 📉",
         Ready_is_Big_Support: "#🚀강한 롱 대기 📈",
-        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉"
+        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉",
+        Ready_exitLong: "#💲롱 청산 준비 📈",
+        Ready_exitShort: "#💲숏 청산 준비 📉"
       },
       labels: {
         symbol: "📌 종목",
@@ -23,7 +25,9 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
         Ready_Support: "#🩵Long Setup 📈",
         Ready_Resistance: "#❤️Short Setup 📉",
         Ready_is_Big_Support: "#🚀Strong Long Setup 📈",
-        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉"
+        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉",
+        Ready_exitLong: "#💲Exit Long Ready 📈",
+        Ready_exitShort: "#💲Exit Short Ready 📉"
       },
       labels: {
         symbol: "📌 Symbol",
@@ -36,7 +40,9 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
         Ready_Support: "#🩵做多准备 📈",
         Ready_Resistance: "#❤️做空准备 📉",
         Ready_is_Big_Support: "#🚀强烈做多准备 📈",
-        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉"
+        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉",
+        Ready_exitLong: "#💲平多准备 📈",
+        Ready_exitShort: "#💲平空准备 📉"
       },
       labels: {
         symbol: "📌 币种",
@@ -49,7 +55,9 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
         Ready_Support: "#🩵ロング準備 📈",
         Ready_Resistance: "#❤️ショート準備 📉",
         Ready_is_Big_Support: "#🚀強ロング準備 📈",
-        Ready_is_Big_Resistance: "#🛸強ショート準備 📉"
+        Ready_is_Big_Resistance: "#🛸強ショート準備 📉",
+        Ready_exitLong: "#💲ロング利確準備 📈",
+        Ready_exitShort: "#💲ショート利確準備 📉"
       },
       labels: {
         symbol: "📌 シンボル",
