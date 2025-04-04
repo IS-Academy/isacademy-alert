@@ -2,7 +2,6 @@
 const axios = require('axios');
 const fs = require('fs');
 const { generateAlertMessage } = require('./AlertMessage');
-const moment = require('moment-timezone');
 const config = require('./config');
 
 let lastDummyTime = null;
