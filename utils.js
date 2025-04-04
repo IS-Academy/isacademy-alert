@@ -1,7 +1,7 @@
 // utils.js
 const axios = require('axios');
 const fs = require('fs');
-const { generateAlertMessage } = require('./AlertMessage');
+const { generateAlertMessage, getWaitingMessage } = require('./AlertMessage');
 const config = require('./config');
 
 let lastDummyTime = null;
