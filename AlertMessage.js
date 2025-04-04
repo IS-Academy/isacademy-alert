@@ -66,9 +66,7 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
   const tfStr = `${timeframe}⏱️`;
   const infoLine = `${label.symbol}: ${symbol}\n${label.weight}: ${weight} / ${label.leverage}: ${leverage}`;
 
-  let message = 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n';
-  message += `${signal} ${tfStr}\n\n${infoLine}\n`;
-  message += 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ';
+  let message = `${signal} ${tfStr}\n\n${infoLine}`;
   return message;
 }
 
