@@ -16,8 +16,17 @@ const {
   getLangKeyboard,
   getReplyKeyboard,
   getTzKeyboard,
-  getLastDummyTime
+  getLastDummyTime,
+  addEntry,
+  clearEntries,
+  getEntryInfo,
 } = require('./utils');
+
+const {
+  DEFAULT_WEIGHT,
+  DEFAULT_LEVERAGE,
+  MAX_ENTRY_PERCENT
+} = require('./config');
 
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
 
@@ -215,8 +224,9 @@ module.exports = async function webhookHandler(req, res) {
   // ✅ 3. 알림 메시지 처리
   try {
     const alert = req.body;
-    const ts = Number(alert.ts);
-    const isValidTs = Number.isFinite(ts) && ts > 0;
+    
+    // ✅ ts 보완
+    const ts = Number.isFinite(Number(alert.ts)) ? Number(alert.ts) : Math.floor(Date.now() / 1000);
     
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳';
@@ -224,18 +234,24 @@ module.exports = async function webhookHandler(req, res) {
     const parsedPrice = parseFloat(alert.price);
     const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
     
-    const weight = alert.weight || '1%';
-    const leverage = alert.leverage || '50×';
-
-    const entryCount = parseInt(alert.entry_count || '1');
-    const entryAvg = alert.entry_avg || price;
-    const maxEntryPct = 30;
-    
     const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
     const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
+    if ([
+      'show_Support', 'show_Resistance',
+      'is_Big_Support', 'is_Big_Resistance'
+    ].includes(type)) {
+      addEntry(symbol, type, parseFloat(price));
+    }
+
+    if ([ 'exitLong', 'exitShort' ].includes(type)) {
+      clearEntries(symbol, type);
+    }
+
+    const { entryCount, avgEntry } = getEntryInfo(symbol, type);
+    
     const msgChoi = type.startsWith('Ready_')
-      ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langChoi)
+      ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
       : generateAlertMessage({
         type,
         symbol,
@@ -245,11 +261,11 @@ module.exports = async function webhookHandler(req, res) {
         lang: langChoi,
         entryCount,
         entryAvg,
-        entryLimit: maxEntryPct
+        entryLimit: MAX_ENTRY_PERCENT
       });
 
     const msgMing = type.startsWith('Ready_')
-      ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langMing)
+      ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langMing)
       : generateAlertMessage({
         type,
         symbol,
@@ -259,7 +275,7 @@ module.exports = async function webhookHandler(req, res) {
         lang: langMing,
         entryCount,
         entryAvg,
-        entryLimit: maxEntryPct
+        entryLimit: MAX_ENTRY_PERCENT
       });
 
     if (global.choiEnabled) {
