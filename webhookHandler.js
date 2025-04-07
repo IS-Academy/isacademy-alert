@@ -1,4 +1,4 @@
-// webhookHandler.js
+// ✅ webhookHandler.js
 const dummyHandler = require('./dummyHandler');
 const axios = require('axios');
 const moment = require('moment-timezone');
@@ -52,8 +52,63 @@ module.exports = async function webhookHandler(req, res) {
     await dummyHandler(req, res);
     return;
   }
+
+  // ✅ 1. 알림 메시지 처리 우선
+  if (update.symbol || update.type) {
+    try {
+      const alert = update;
+      const ts = Number.isFinite(Number(alert.ts)) ? Number(alert.ts) : Math.floor(Date.now() / 1000);
+      const symbol = alert.symbol || 'Unknown';
+      const timeframe = alert.timeframe || '⏳';
+      const type = alert.type || '📢';
+      const parsedPrice = parseFloat(alert.price);
+      const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
+      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+
+      if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
+        addEntry(symbol, type, parsedPrice, timeframe);
+      }
+
+      if ([ 'exitLong', 'exitShort' ].includes(type)) {
+        clearEntries(symbol, type, timeframe);
+      }
+
+      const { entryCount, avgEntry } = getEntryInfo(symbol, type, timeframe);
+
+      const msgChoi = type.startsWith('Ready_')
+        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, avgEntry, entryLimit: MAX_ENTRY_PERCENT });
+
+      const msgMing = type.startsWith('Ready_')
+        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langMing)
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, avgEntry, entryLimit: MAX_ENTRY_PERCENT });
+
+      if (global.choiEnabled) {
+        await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          chat_id: config.TELEGRAM_CHAT_ID,
+          text: msgChoi,
+          parse_mode: 'HTML'
+        });
+      }
+
+      if (global.mingEnabled) {
+        await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`, {
+          chat_id: config.TELEGRAM_CHAT_ID_A,
+          text: msgMing,
+          parse_mode: 'HTML'
+        });
+      }
+
+      if (!res.headersSent) res.status(200).send('✅ 텔레그램 전송 성공');
+    } catch (err) {
+      console.error('❌ 텔레그램 전송 실패:', err.message);
+      if (!res.headersSent) res.status(500).send('서버 오류');
+    }
+    return;
+  }
   
-  // ✅ 1. 인라인 버튼 처리
+  // ✅ 2. 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
@@ -134,7 +189,7 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ 2. 텍스트 명령어 처리
+  // ✅ 3. 텍스트 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const fromId = update.message.chat.id;
@@ -249,83 +304,7 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ 3. 알림 메시지 처리
-  if (update.symbol || update.type) {
-    try {
-      const alert = update;
-      // ✅ ts 보완
-      const ts = Number.isFinite(Number(alert.ts)) ? Number(alert.ts) : Math.floor(Date.now() / 1000);
-      const symbol = alert.symbol || 'Unknown';
-      const timeframe = alert.timeframe || '⏳';
-      const type = alert.type || '📢';
-      const parsedPrice = parseFloat(alert.price);
-      const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
-
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-
-
-      if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
-        addEntry(symbol, type, parsedPrice, timeframe);
-      }
-
-      if ([ 'exitLong', 'exitShort' ].includes(type)) {
-        clearEntries(symbol, type, timeframe);
-      }
-
-      const { entryCount, avgEntry } = getEntryInfo(symbol, type, timeframe);
-
-      const msgChoi = type.startsWith('Ready_')
-        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
-        : generateAlertMessage({
-            type,
-            symbol,
-            timeframe,
-            price,
-            ts,
-            lang: langChoi,
-            entryCount,
-            avgEntry,
-            entryLimit: MAX_ENTRY_PERCENT
-          });
-
-      const msgMing = type.startsWith('Ready_')
-        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langMing)
-        : generateAlertMessage({
-            type,
-            symbol,
-            timeframe,
-            price,
-            ts,
-            lang: langMing,
-            entryCount,
-            avgEntry,
-            entryLimit: MAX_ENTRY_PERCENT
-          });
-
-      if (global.choiEnabled) {
-        await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          chat_id: config.TELEGRAM_CHAT_ID,
-          text: msgChoi,
-          parse_mode: 'HTML'
-        });
-      }
-
-      if (global.mingEnabled) {
-        await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`, {
-          chat_id: config.TELEGRAM_CHAT_ID_A,
-          text: msgMing,
-          parse_mode: 'HTML'
-        });
-      }
-
-      if (!res.headersSent) res.status(200).send('✅ 텔레그램 전송 성공');
-    } catch (err) {
-      console.error('❌ 텔레그램 전송 실패:', err.message);
-      if (!res.headersSent) res.status(500).send('서버 오류');
-    }
-    return;
-  }
+  
 
   // 그 외 처리: 버튼, 커맨드 등
   res.sendStatus(200); // 기본 응답 처리
