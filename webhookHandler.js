@@ -76,7 +76,6 @@ module.exports = async function webhookHandler(req, res) {
     if (cmd.startsWith('lang_choi_') || cmd.startsWith('lang_ming_')) {
       const [_, bot, langCode] = cmd.split('_');
       const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-
       const success = langManager.setUserLang(targetId, langCode);
       const reply = success
         ? `✅ ${bot === 'choi' ? '최실장' : '밍밍'} 봇의 언어가 <b>${langCode}</b>로 설정되었습니다.`
@@ -116,7 +115,7 @@ module.exports = async function webhookHandler(req, res) {
       await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
       return;
     }
-    
+
     if (cmd === 'dummy_status') {
       const tz = getUserTimezone(chatId);
       const timeStr = getTimeString(tz);
@@ -267,7 +266,7 @@ module.exports = async function webhookHandler(req, res) {
     const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
     if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
-      addEntry(symbol, type, parseFloat(price), timeframe);
+      addEntry(symbol, type, parsedPrice, timeframe);
     }
 
     if ([ 'exitLong', 'exitShort' ].includes(type)) {
