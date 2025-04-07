@@ -133,10 +133,16 @@ const shortEntries = {};  // 예: { "BTCUSDT.P": [78000, 78100] }
 
 // 진입 발생 시 호출
 function addEntry(symbol, type, price) {
+  const parsedPrice = parseFloat(price);
+  if (!Number.isFinite(parsedPrice)) {
+    console.warn(`⚠️ addEntry: Invalid price received for ${symbol}:`, price);
+    return; // 유효하지 않으면 무시
+  }
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
   if (!entryMap[symbol]) entryMap[symbol] = [];
-  entryMap[symbol].push(parseFloat(price));
+  entryMap[symbol].push(parsedPrice);
 }
+
 
 // 청산 발생 시 호출
 function clearEntries(symbol, type) {
