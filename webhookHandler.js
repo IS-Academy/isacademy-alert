@@ -69,7 +69,6 @@ module.exports = async function webhookHandler(req, res) {
       if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
         addEntry(symbol, type, parsedPrice, timeframe);
       }
-
       if ([ 'exitLong', 'exitShort' ].includes(type)) {
         clearEntries(symbol, type, timeframe);
       }
@@ -107,7 +106,7 @@ module.exports = async function webhookHandler(req, res) {
     }
     return;
   }
-  
+
   // ✅ 2. 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
@@ -156,7 +155,7 @@ module.exports = async function webhookHandler(req, res) {
       case 'ming_off': global.mingEnabled = false; break;
     }
 
-    if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(cmd)) {
+    if ([ 'choi_on', 'choi_off', 'ming_on', 'ming_off' ].includes(cmd)) {
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
     }
 
@@ -196,8 +195,26 @@ module.exports = async function webhookHandler(req, res) {
     const lang = getUserLang(fromId);
     const tz = getUserTimezone(fromId);
     const timeStr = getTimeString(tz);
+
     res.sendStatus(200);
 
+    // ✅ /help, /도움말 처리 (모든 사용자 허용)
+    if (['/help', '/도움말'].includes(command)) {
+      const helpMsg = '🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off';
+      await sendTextToTelegram(helpMsg);
+      return;
+    }
+
+    // ✅ 관리자 전용 명령어 차단 (도움말 제외)
+    if (      
+      ['/start', '/settings', '/setlang', '/settz'].some(cmd => command.startsWith(cmd)) &&
+      fromId.toString() !== config.ADMIN_CHAT_ID
+    ) {
+      await sendTextToTelegram('⛔ 관리자 전용 명령어입니다.');
+      return;
+    }
+
+    // ✅ 언어 설정
     if (command.startsWith('/setlang')) {
       const input = command.split(' ')[1];
       if (!input) {
@@ -212,6 +229,7 @@ module.exports = async function webhookHandler(req, res) {
       return;
     }
 
+    // ✅ 타임존 설정
     if (command.startsWith('/settz')) {
       const input = command.split(' ')[1];
       if (!input) {
@@ -225,7 +243,8 @@ module.exports = async function webhookHandler(req, res) {
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
-    
+
+    // ✅ 관리자 패널
     if (['/start', '/settings'].includes(command)) {
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
@@ -238,15 +257,13 @@ module.exports = async function webhookHandler(req, res) {
         `────────────────────`;
       const welcomeMsg = `🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>\n`;
 
-      // ✅ 메시지 1: 환영 + 상태 + 컨트롤 버튼
       await sendTextToTelegram(`${welcomeMsg}${statusMsg}`, getInlineKeyboard());
       await sendTextToTelegram('🌐 <b>최실장 봇의 언어를 선택하세요:</b>', getLangKeyboard('choi'));
       await sendTextToTelegram('🌐 <b>밍밍 봇의 언어를 선택하세요:</b>', getLangKeyboard('ming'));
       return;
     }
-  }
-    
-    // ✅ 관리자 명령어
+
+    // ✅ 관리자 명령어 확장
     if (fromId.toString() === config.ADMIN_CHAT_ID) {
       const replyMap = {
         '/start': {
@@ -277,10 +294,12 @@ module.exports = async function webhookHandler(req, res) {
             `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
           await sendTextToTelegram(`${langStartMsg}\n\n${statusMsg}`, getInlineKeyboard());
           return;
+
         case '/help':
         case '/도움말':
           await sendTextToTelegram(langHelpMsg);
           return;
+
         case '/choi_on': global.choiEnabled = true; break;
         case '/choi_off': global.choiEnabled = false; break;
         case '/ming_on': global.mingEnabled = true; break;
@@ -304,8 +323,6 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  
-
-  // 그 외 처리: 버튼, 커맨드 등
-  res.sendStatus(200); // 기본 응답 처리
+  // ✅ 기본 응답 처리
+  res.sendStatus(200);
 };
