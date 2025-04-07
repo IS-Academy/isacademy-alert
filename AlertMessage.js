@@ -73,13 +73,12 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
 
   const tfStr = `${timeframe}⏱️`;
   const infoLine = `${label.symbol}: ${symbol}\n${label.weight}: ${weight} / ${label.leverage}: ${leverage}`;
-
   let message = `${signal} ${tfStr}\n\n${infoLine}`;
   return message;
 }
 
 // ✅ 알림 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul' }) {
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = 'N/A', entryLimit = 30 }) {
   const translations = {
     ko: {
       symbols: {
@@ -235,6 +234,13 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   if (entryTypes.includes(type) && price !== 'N/A') {
     msg += `${L.price}: ${price}\n`;
   }
+
+  if (entryTypes.includes(type) && entryCount > 0) {
+    msg += `📊 진입 ${entryCount}% / 평균가 ${entryAvg}\n`;
+    if (entryCount >= entryLimit) {
+      msg += `⚠️ 롱 포지션 포화 상태입니다.\n`;
+    }
+  }  
 
   if (waitTypes.includes(type)) {
     msg += `${L.weight}\n${L.leverage}\n`;
