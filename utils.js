@@ -132,33 +132,28 @@ function getEntryKey(symbol, timeframe) {
   return `${symbol}|${timeframe}`;
 }
 
-// 심볼별 진입 기록 저장
-const longEntries = {};
-const shortEntries = {};
+// ✅ 타임프레임별 진입 기록
+const longEntries = {};   // 예: { "BTCUSDT.P": { "5m": [77700] } }
+const shortEntries = {};  // 예: { "BTCUSDT.P": { "5m": [78000] } }
 
 // ✅ 진입 저장
-function addEntry(symbol, type, price, timeframe) {
-  const key = getEntryKey(symbol, timeframe);
+function addEntry(symbol, type, price, timeframe = 'default') {
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  if (!entryMap[key]) entryMap[key] = [];
-  const parsed = parseFloat(price);
-  if (Number.isFinite(parsed)) {
-    entryMap[key].push(parsed);
-  }
+  if (!entryMap[symbol]) entryMap[symbol] = {};
+  if (!entryMap[symbol][timeframe]) entryMap[symbol][timeframe] = [];
+  entryMap[symbol][timeframe].push(parseFloat(price));
 }
 
 // ✅ 청산 시 삭제
-function clearEntries(symbol, type, timeframe) {
-  const key = getEntryKey(symbol, timeframe);
+function clearEntries(symbol, type, timeframe = 'default') {
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  entryMap[key] = [];
+  if (entryMap[symbol]) entryMap[symbol][timeframe] = [];
 }
 
 // ✅ 평균 단가 및 진입 비율 계산
-function getEntryInfo(symbol, type, timeframe) {
-  const key = getEntryKey(symbol, timeframe);
+function getEntryInfo(symbol, type, timeframe = 'default') {
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  const entries = entryMap[key] || [];
+  const entries = entryMap[symbol]?.[timeframe] || [];
   const entryCount = entries.length;
   const avgEntry = entryCount > 0
     ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
