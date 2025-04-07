@@ -127,34 +127,39 @@ async function sendToMingBot(message) {
   }
 }
 
+// ✅ 심볼 + 타임프레임 키 생성
+function getEntryKey(symbol, timeframe) {
+  return `${symbol}|${timeframe}`;
+}
+
 // 심볼별 진입 기록 저장
-const longEntries = {};   // 예: { "BTCUSDT.P": [77700, 77800] }
-const shortEntries = {};  // 예: { "BTCUSDT.P": [78000, 78100] }
+const longEntries = {};
+const shortEntries = {};
 
-// 진입 발생 시 호출
-function addEntry(symbol, type, price) {
-  const parsedPrice = parseFloat(price);
-  if (!Number.isFinite(parsedPrice)) {
-    console.warn(`⚠️ addEntry: Invalid price received for ${symbol}:`, price);
-    return; // 유효하지 않으면 무시
+// ✅ 진입 저장
+function addEntry(symbol, type, price, timeframe) {
+  const key = getEntryKey(symbol, timeframe);
+  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  if (!entryMap[key]) entryMap[key] = [];
+  const parsed = parseFloat(price);
+  if (Number.isFinite(parsed)) {
+    entryMap[key].push(parsed);
   }
-  const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  if (!entryMap[symbol]) entryMap[symbol] = [];
-  entryMap[symbol].push(parsedPrice);
 }
 
-
-// 청산 발생 시 호출
-function clearEntries(symbol, type) {
+// ✅ 청산 시 삭제
+function clearEntries(symbol, type, timeframe) {
+  const key = getEntryKey(symbol, timeframe);
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  entryMap[symbol] = [];
+  entryMap[key] = [];
 }
 
-// 현재 진입 비율과 평균 단가 계산
-function getEntryInfo(symbol, type) {
+// ✅ 평균 단가 및 진입 비율 계산
+function getEntryInfo(symbol, type, timeframe) {
+  const key = getEntryKey(symbol, timeframe);
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  const entries = entryMap[symbol] || [];
-  const entryCount = entries.length; // 1진입 = 1%
+  const entries = entryMap[key] || [];
+  const entryCount = entries.length;
   const avgEntry = entryCount > 0
     ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
     : 'N/A';
