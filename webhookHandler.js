@@ -259,8 +259,8 @@ module.exports = async function webhookHandler(req, res) {
         price,
         ts,
         lang: langChoi,
-        - entryAvg,
-        + avgEntry,
+        entryCount,
+        avgEntry,
         entryLimit: MAX_ENTRY_PERCENT
       });
 
@@ -273,8 +273,8 @@ module.exports = async function webhookHandler(req, res) {
         price,
         ts,
         lang: langMing,
-        - entryAvg,
-        + avgEntry,
+        entryCount,
+        avgEntry,
         entryLimit: MAX_ENTRY_PERCENT
       });
 
