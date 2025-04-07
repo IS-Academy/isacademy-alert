@@ -241,14 +241,14 @@ module.exports = async function webhookHandler(req, res) {
       'show_Support', 'show_Resistance',
       'is_Big_Support', 'is_Big_Resistance'
     ].includes(type)) {
-      addEntry(symbol, type, parseFloat(price));
+      addEntry(symbol, type, parseFloat(price), timeframe);
     }
 
     if ([ 'exitLong', 'exitShort' ].includes(type)) {
-      clearEntries(symbol, type);
+      clearEntries(symbol, type, timeframe);
     }
 
-    const { entryCount, avgEntry } = getEntryInfo(symbol, type);
+    const { entryCount, avgEntry } = getEntryInfo(symbol, type, timeframe);
     
     const msgChoi = type.startsWith('Ready_')
       ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
