@@ -100,7 +100,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         timeframe: "⏱️ 타임프레임",
         price: "💲 가격",
         entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
-        entryLimitReached: "⚠️ 롱 포지션 포화 상태입니다."
+        entryLimitReached: "⚠️ 롱 포지션 포화 상태입니다.",
         captured: "🕒 포착시간",
         weight: "🗝️ 비중: 1%",
         leverage: "🎲 배율: 50×",
@@ -133,7 +133,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         timeframe: "⏱️ Timeframe",
         price: "💲 Price",
         entryInfo: "📊 Entry {entryCount}% / Avg {entryAvg}",
-        entryLimitReached: "⚠️ Long position is saturated."
+        entryLimitReached: "⚠️ Long position is saturated.",
         captured: "🕒 Captured At",
         weight: "🗝️ Weight: 1%",
         leverage: "🎲 Leverage: 50×",
@@ -166,7 +166,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         timeframe: "⏱️ 周期",
         price: "💲 价格",
         entryInfo: "📊 已进场 {entryCount}% / 均价 {entryAvg}",
-        entryLimitReached: "⚠️ 多头持仓已饱和。"
+        entryLimitReached: "⚠️ 多头持仓已饱和。",
         captured: "🕒 捕捉时间",
         weight: "🗝️ 仓位: 1%",
         leverage: "🎲 杠杆: 50×",
@@ -199,7 +199,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         timeframe: "⏱️ 時間枠",
         price: "💲 価格",
         entryInfo: "📊 エントリー {entryCount}% / 平均価格 {entryAvg}",
-        entryLimitReached: "⚠️ ロングポジションが飽和状態です。"
+        entryLimitReached: "⚠️ ロングポジションが飽和状態です。",
         captured: "🕒 検出時間",
         weight: "🗝️ 比率: 1%",
         leverage: "🎲 レバレッジ: 50×",
