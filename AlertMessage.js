@@ -104,6 +104,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         captured: "🕒 포착시간",
         weight: "🗝️ 비중: 1%",
         leverage: "🎲 배율: 50×",
+        pnl: "📈 손익: {value}%",
         disclaimer_short: "⚠️관점은 자율적 참여입니다.",
         disclaimer_full: "⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다."
       },
@@ -137,6 +138,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         captured: "🕒 Captured At",
         weight: "🗝️ Weight: 1%",
         leverage: "🎲 Leverage: 50×",
+        pnl: "📈 PnL: {value}%",
         disclaimer_short: "⚠️This view is voluntary.",
         disclaimer_full: "⚠️Participation is always voluntary.\n⚠️All decisions are your own responsibility."
       },
@@ -170,6 +172,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         captured: "🕒 捕捉时间",
         weight: "🗝️ 仓位: 1%",
         leverage: "🎲 杠杆: 50×",
+        pnl: "📈 盈亏: {value}%",
         disclaimer_short: "⚠️观点为自愿参与。",
         disclaimer_full: "⚠️观点分享纯属自愿\n⚠️所有交易和决策需自行承担。"
       },
@@ -203,6 +206,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         captured: "🕒 検出時間",
         weight: "🗝️ 比率: 1%",
         leverage: "🎲 レバレッジ: 50×",
+        pnl: "📈 損益: {value}%",
         disclaimer_short: "⚠️視点は任意参加です。",
         disclaimer_full: "⚠️視点共有は常に任意です。\n⚠️投資判断は自己責任でお願いします。"
       },
