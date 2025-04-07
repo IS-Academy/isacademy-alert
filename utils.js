@@ -113,7 +113,6 @@ async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
   }
 }
 
-
 // ✅ 밍밍 봇 전송
 async function sendToMingBot(message) {
   if (!global.mingEnabled) return;
@@ -126,6 +125,34 @@ async function sendToMingBot(message) {
   } catch (err) {
     console.error('❌ 밍밍 전송 실패:', err.stack || err.message);
   }
+}
+
+// 심볼별 진입 기록 저장
+const longEntries = {};   // 예: { "BTCUSDT.P": [77700, 77800] }
+const shortEntries = {};  // 예: { "BTCUSDT.P": [78000, 78100] }
+
+// 진입 발생 시 호출
+function addEntry(symbol, type, price) {
+  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  if (!entryMap[symbol]) entryMap[symbol] = [];
+  entryMap[symbol].push(parseFloat(price));
+}
+
+// 청산 발생 시 호출
+function clearEntries(symbol, type) {
+  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  entryMap[symbol] = [];
+}
+
+// 현재 진입 비율과 평균 단가 계산
+function getEntryInfo(symbol, type) {
+  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  const entries = entryMap[symbol] || [];
+  const entryCount = entries.length; // 1진입 = 1%
+  const avgEntry = entryCount > 0
+    ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
+    : 'N/A';
+  return { entryCount, avgEntry };
 }
 
 // ✅ 마지막 더미 수신 시간 - 메모리 기반
@@ -161,5 +188,8 @@ module.exports = {
   getLastDummyTime,
   readLastDummyTimeFromFile,
   generateAlertMessage,
-  getWaitingMessage
+  getWaitingMessage,
+  addEntry,
+  clearEntries,
+  getEntryInfo
 };
