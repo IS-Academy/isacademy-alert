@@ -1,5 +1,6 @@
 // AlertMessage.js
 
+const config = require('./config');
 const moment = require('moment-timezone');
 
 // ✅ 간단한 대기 메시지 (축약형, generateAlertMessage와 통일된 메시지명 사용)
@@ -78,7 +79,7 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
 }
 
 // ✅ 알림 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = 'N/A', entryLimit = 30 }) {
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = 'N/A', entryLimit = config.MAX_ENTRY_PERCENT }) {
   const translations = {
     ko: {
       symbols: {
