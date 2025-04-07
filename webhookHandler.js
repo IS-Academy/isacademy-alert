@@ -217,23 +217,50 @@ module.exports = async function webhookHandler(req, res) {
     const alert = req.body;
     const ts = Number(alert.ts);
     const isValidTs = Number.isFinite(ts) && ts > 0;
+    
     const symbol = alert.symbol || 'Unknown';
     const timeframe = alert.timeframe || '⏳';
     const type = alert.type || '📢';
     const parsedPrice = parseFloat(alert.price);
     const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
+    
     const weight = alert.weight || '1%';
     const leverage = alert.leverage || '50×';
+
+    const entryCount = parseInt(alert.entry_count || '1');
+    const entryAvg = alert.entry_avg || price;
+    const maxEntryPct = 30;
+    
     const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
     const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
     const msgChoi = type.startsWith('Ready_')
       ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langChoi)
-      : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi });
+      : generateAlertMessage({
+        type,
+        symbol,
+        timeframe,
+        price,
+        ts,
+        lang: langChoi,
+        entryCount,
+        entryAvg,
+        entryLimit: maxEntryPct
+      });
 
     const msgMing = type.startsWith('Ready_')
       ? getWaitingMessage(type, symbol, timeframe, weight, leverage, langMing)
-      : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing });
+      : generateAlertMessage({
+        type,
+        symbol,
+        timeframe,
+        price,
+        ts,
+        lang: langMing,
+        entryCount,
+        entryAvg,
+        entryLimit: maxEntryPct
+      });
 
     if (global.choiEnabled) {
       await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
