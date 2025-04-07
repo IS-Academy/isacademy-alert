@@ -84,7 +84,6 @@ module.exports = async function webhookHandler(req, res) {
 
       await editTelegramMessage(chatId, messageId, reply);
 
-      // 메인 패널 다시 출력
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
       const statusMsg =
@@ -117,10 +116,20 @@ module.exports = async function webhookHandler(req, res) {
       await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
       return;
     }
+    
     if (cmd === 'dummy_status') {
-      const timeStr = getTimeString(getUserTimezone(chatId));
+      const tz = getUserTimezone(chatId);
+      const timeStr = getTimeString(tz);
       const lastDummy = getLastDummyTime();
-      const msg = `🔁 마지막 더미 알림 수신 시간:\n${lastDummy} (🕒 현재시간: ${timeStr})`;
+      const nowFormatted = moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
+
+      const msg =
+        `🔁 <b>더미 알림 수신 기록</b>\n` +
+        `──────────────────────\n` +
+        `📥 마지막 수신 시간: <code>${lastDummy}</code>\n` +
+        `🕒 현재 시간: <code>${nowFormatted}</code>\n` +
+        `──────────────────────`;
+
       await editTelegramMessage(chatId, messageId, msg, getInlineKeyboard());
       return;
     }
@@ -162,7 +171,27 @@ module.exports = async function webhookHandler(req, res) {
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
+    
+    if (['/start', '/settings'].includes(command)) {
+      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+      const statusMsg =
+        `🧬 <b>IS 관리자봇 패널</b>\n` +
+        `────────────────────\n` +
+        `📍 현재 상태 (🕒 <b>${timeStr}</b>)\n\n` +
+        `👨‍💼 최실장: ${global.choiEnabled ? '✅ <b>ON</b>' : '⛔ <b>OFF</b>'} <code>(${langChoi})</code>\n` +
+        `👩‍🚀 밍밍: ${global.mingEnabled ? '✅ <b>ON</b>' : '⛔ <b>OFF</b>'} <code>(${langMing})</code>\n` +
+        `────────────────────`;
+      const welcomeMsg = `🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>\n`;
 
+      // ✅ 메시지 1: 환영 + 상태 + 컨트롤 버튼
+      await sendTextToTelegram(`${welcomeMsg}${statusMsg}`, getInlineKeyboard());
+      await sendTextToTelegram('🌐 <b>최실장 봇의 언어를 선택하세요:</b>', getLangKeyboard('choi'));
+      await sendTextToTelegram('🌐 <b>밍밍 봇의 언어를 선택하세요:</b>', getLangKeyboard('ming'));
+      return;
+    }
+  }
+    
     // ✅ 관리자 명령어
     if (fromId.toString() === config.ADMIN_CHAT_ID) {
       const replyMap = {
@@ -237,10 +266,7 @@ module.exports = async function webhookHandler(req, res) {
     const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
     const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-    if ([
-      'show_Support', 'show_Resistance',
-      'is_Big_Support', 'is_Big_Resistance'
-    ].includes(type)) {
+    if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
       addEntry(symbol, type, parseFloat(price), timeframe);
     }
 
