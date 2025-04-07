@@ -51,14 +51,12 @@ function getInlineKeyboard() {
 // ✅ 언어 선택용 인라인 키보드
 function getLangKeyboard(bot) {
   return {
-    inline_keyboard: [
-      [
-        { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
-        { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
-        { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
-        { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
-      ]
-    ]
+    inline_keyboard: [[
+      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
+      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
+      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
+      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
+    ]]
   };
 }
 
@@ -127,11 +125,6 @@ async function sendToMingBot(message) {
   }
 }
 
-// ✅ 심볼 + 타임프레임 키 생성
-function getEntryKey(symbol, timeframe) {
-  return `${symbol}|${timeframe}`;
-}
-
 // ✅ 타임프레임별 진입 기록
 const longEntries = {};   // 예: { "BTCUSDT.P": { "5m": [77700] } }
 const shortEntries = {};  // 예: { "BTCUSDT.P": { "5m": [78000] } }
@@ -141,7 +134,10 @@ function addEntry(symbol, type, price, timeframe = 'default') {
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
   if (!entryMap[symbol]) entryMap[symbol] = {};
   if (!entryMap[symbol][timeframe]) entryMap[symbol][timeframe] = [];
-  entryMap[symbol][timeframe].push(parseFloat(price));
+  const parsed = parseFloat(price);
+  if (Number.isFinite(parsed)) {
+    entryMap[symbol][timeframe].push(parsed);
+  }
 }
 
 // ✅ 청산 시 삭제
