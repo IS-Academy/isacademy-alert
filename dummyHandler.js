@@ -9,6 +9,7 @@ module.exports = async function dummyHandler(req, res) {
   updateLastDummyTime(now);
 
   // 관리자에게 텔레그램 메시지 전송
-  await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
+  //await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
+  
   res.status(200).send('더미 수신 완료');
 };
