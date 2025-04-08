@@ -4,6 +4,7 @@ const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
+const handleTableWebhook = require("./handlers/tableHandler");
 const {
   addEntry,
   clearEntries,
@@ -43,6 +44,12 @@ module.exports = async function webhookHandler(req, res) {
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
+  }
+
+  // ✅ long_table / short_table 분리 처리
+  if (["long_table", "short_table"].includes(update.type)) {
+    await handleTableWebhook(update);
+    return res.status(200).send("✅ 테이블 전송됨");
   }
 
   if (update.symbol || update.type) {
