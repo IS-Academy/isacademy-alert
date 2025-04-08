@@ -1,8 +1,6 @@
-// commands/status.js
 const { getTimeString } = require('../utils');
 const { sendToAdmin, inlineKeyboard } = require('../botManager');
 const config = require('../config');
-const moment = require('moment-timezone');
 const langManager = require('../langConfigManager');
 
 module.exports = async function sendBotStatus(timeStr, suffix = '') {
@@ -25,5 +23,5 @@ module.exports = async function sendBotStatus(timeStr, suffix = '') {
     (suffix ? `\n${suffix}` : '') +
     `\n──────────────────────`;
 
-  await sendToAdmin(statusMsg, inlineKeyboard);
+  await sendToAdmin(statusMsg, inlineKeyboard); // ✅ 여기서 꼭 이걸로!
 };
