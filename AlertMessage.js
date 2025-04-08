@@ -263,7 +263,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   if (isEntry && entryCount > 0) {
     const entryText = L.entryInfo
       .replace('{entryCount}', entryCount)
-      .replace('{entryAvg}', entryAvg !== null ? Number(entryAvg || 0).toLocaleString() : 'N/A')
+      .replace('{entryAvg}', entryAvg && !isNaN(entryAvg) ? Number(entryAvg).toLocaleString() : 'N/A')
     msg += `${entryText}\n`;
     if (entryCount >= entryLimit) {
       msg += `${L.entryLimitReached}\n`;
