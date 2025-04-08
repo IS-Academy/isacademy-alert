@@ -6,6 +6,11 @@ const config = require('./config');
 
 let lastDummyTime = null;
 
+// ✅ 템플릿 자동 치환 유틸
+function replaceTemplate(str, values = {}) {
+  return str.replace(/\{(.*?)\}/g, (_, key) => values[key] ?? `{${key}}`);
+}
+
 // ✅ 롱 타입 여부 판별 함수
 function isLongType(type) {
   return ['showSup', 'isBigSup', 'Ready_showSup', 'Ready_isBigSup'].includes(type);
@@ -136,8 +141,8 @@ async function sendToMingBot(message) {
 }
 
 // ✅ 타임프레임별 진입 기록
-const longEntries = {};   // 예: { "BTCUSDT.P": { "5m": [77700] } }
-const shortEntries = {};  // 예: { "BTCUSDT.P": { "5m": [78000] } }
+const longEntries = {};
+const shortEntries = {};
 
 // ✅ 진입 저장
 function addEntry(symbol, type, price, timeframe = 'default') {
@@ -182,11 +187,11 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   return { entryCount, entryAvg };
 }
 
-// ✅ 마지막 더미 수신 시간 - 메모리 기반
 function updateLastDummyTime(time) {
   lastDummyTime = time;
 }
 
+// ✅ 파일에서 마지막 더미 수신 시간 읽기
 function getLastDummyTime() {
   return lastDummyTime || '❌ 기록 없음';
 }
@@ -218,5 +223,8 @@ module.exports = {
   getWaitingMessage,
   addEntry,
   clearEntries,
-  getEntryInfo
+  getEntryInfo,
+  isLongType,
+  isShortType,
+  replaceTemplate
 };
