@@ -1,4 +1,4 @@
-// ✅ status.js (디자인 개선: 사진2 스타일 UI + 언어선택 포함)
+// ✅ status.js (상태 확인/언어선택 작동 + 현재상태 시간 명시 + 날짜 위치 개선)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
 const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
@@ -30,17 +30,22 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
     const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-    const now = getFormattedNow(lang, tz);
+    const now = moment().tz(tz);
+    const day = now.day();
+    const label = dayLabels[lang] || dayLabels.ko;
+    const formatted = now.format(`YYYY.MM.DD (${label[day]}) HH:mm:ss`);
+    const onlyDate = now.format(`YYYY.MM.DD`);
+    const onlyTime = now.format(`HH:mm:ss`);
     const dummyTime = getLastDummyTime();
 
     const msg =
       `🎯 <b>IS 관리자봇 패널</b>\n` +
       `──────────────────────\n` +
-      `📍 현재 상태 (<code>🕐 ${now.split(' ')[1]}</code>)\n\n` +
+      `📍 <b>현재 상태:</b> (🕐 ${onlyTime})\n\n` +
       `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} <code>(${langChoi})</code>\n` +
-      `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>\n` +
-      `\n🗓️ ${now.split(' ')[0]}\n🌐 TZ: <code>${tz}</code>\n\n` +
-      `📡 더미 수신: ${dummyTime.includes('없음') ? '❌ 기록 없음' : `✅ <code>${dummyTime}</code>`}\n` +
+      `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>\n\n` +
+      `📅 ${onlyDate}\n🌐 TZ: <code>${tz}</code>\n\n` +
+      `🛰 더미 수신: ${dummyTime.includes('없음') ? '❌ 기록 없음' : `✅ <code>${dummyTime}</code>`}\n` +
       (showLangUI
         ? `──────────────────────\n🌐 <b>최실장 언어 선택:</b>\n${getLangButtonsInline('choi')}\n\n🌐 <b>밍밍 언어 선택:</b>\n${getLangButtonsInline('ming')}\n`
         : '') +
