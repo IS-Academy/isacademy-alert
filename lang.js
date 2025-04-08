@@ -22,6 +22,10 @@ const translations = {
       timeframe: "⏱️ 타임프레임",
       price: "💲 가격",
       entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
+      entrySummary: "⏱️ 진입 현황:",
+      entryInfoByTF: "• {tf}min → ✅ {percent}% / 평균가 {avg}",
+      pnlLineProfit: "📈수익률 {pnl}% / 원금대비 {capital}%",
+      pnlLineLoss: "📉수익률 {pnl}% / 원금대비 {capital}%",
       entryLimitReached: "⚠️ 롱 포지션 포화 상태입니다.",
       captured: "🕒 포착시간",
       weight: "🗝️ 비중: {weight}",
@@ -56,6 +60,10 @@ const translations = {
       timeframe: "⏱️ Timeframe",
       price: "💲 Price",
       entryInfo: "📊 Entry {entryCount}% / Avg {entryAvg}",
+      entrySummary: "⏱️ Entry Summary:",
+      entryInfoByTF: "• {tf}min → ✅ {percent}% / Avg {avg}",
+      pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
+      pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%"      
       entryLimitReached: "⚠️ Long position is saturated.",
       captured: "🕒 Captured At",
       weight: "🗝️ Weight: {weight}",
@@ -77,7 +85,10 @@ const translations = {
       Ready_isBigRes: "#🛸强烈做空准备 📉",
       Ready_exitLong: "#💲平多准备 📈",
       Ready_exitShort: "#💲平空准备 📉",
-
+      entrySummary: "⏱️ 入场概况:",
+      entryInfoByTF: "• {tf}分钟 → ✅ {percent}% / 均价 {avg}",
+      pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
+      pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%"
       showSup: "#🩵做多进场 📈 观点分享🩵",
       showRes: "#❤️做空进场 📉 观点分享❤️",
       isBigSup: "#🚀强烈做多进场 📈 观点分享🚀",
@@ -90,6 +101,7 @@ const translations = {
       timeframe: "⏱️ 周期",
       price: "💲 价格",
       entryInfo: "📊 已进场 {entryCount}% / 均价 {entryAvg}",
+      
       entryLimitReached: "⚠️ 多头持仓已饱和。",
       captured: "🕒 捕捉时间",
       weight: "🗝️ 仓位: {weight}",
@@ -124,6 +136,10 @@ const translations = {
       timeframe: "⏱️ 時間枠",
       price: "💲 価格",
       entryInfo: "📊 エントリー {entryCount}% / 平均価格 {entryAvg}",
+      entrySummary: "⏱️ エントリー状況:",
+      entryInfoByTF: "• {tf}分 → ✅ {percent}% / 平均価格 {avg}",
+      pnlLineProfit: "📈利益率 {pnl}% / 元本比 {capital}%",
+      pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%"      
       entryLimitReached: "⚠️ ロングポジションが飽和状態です。",
       captured: "🕒 検出時間",
       weight: "🗝️ 比率: {weight}",
