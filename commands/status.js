@@ -1,52 +1,35 @@
-const moment = require("moment-timezone");
-const config = require("../config");
+// ✅ commands/status.js
+const { getTimeString, getLastDummyTime } = require("../utils");
 const langManager = require("../langConfigManager");
-const {
-  getTimeString,
-  getLastDummyTime
-} = require("../utils");
-const {
-  editMessage,
-  inlineKeyboard,
-  getLangKeyboard
-} = require("../botManager");
+const config = require("../config");
+const { editMessage, getLangKeyboard, inlineKeyboard } = require("../botManager");
 
-function formatStatusMessage(timeStr, langCho, langMing, dummyTime, showLangUI, targetBot = null) {
-  const now = moment().tz(config.DEFAULT_TIMEZONE);
-  const dateStr = now.format("YY.MM.DD (dd)"); // 25.04.08 (화)
-  const dummy = dummyTime?.startsWith("❌") ? `❌ 기록 없음` : `✅ ${dummyTime}`;
-
-  const statusText =
-`🎯 <b>IS 관리자봇 패널</b>
-━━━━━━━━━━━━━
-📍 <b>현재 상태:</b> 🕓 <code>${timeStr}</code>
-
-👨‍💼 최실장: ${global.choiEnabled ? "✅ ON" : "❌ OFF"} (${langCho})
-👩‍💼 밍밍: ${global.mingEnabled ? "✅ ON" : "❌ OFF"} (${langMing})
-
-📅 ${dateStr}
-🛰️ 더미 수신: ${dummy}
-${showLangUI && targetBot === 'choi' ? `\n🌐 최실장 언어 선택:\n🇰🇷 한국어    🇺🇸 English    🇨🇳 中文    🇯🇵 日本語` : ''}
-${showLangUI && targetBot === 'ming' ? `\n🌐 밍밍 언어 선택:\n🇰🇷 한국어    🇺🇸 English    🇨🇳 中文    🇯🇵 日本語` : ''}
-━━━━━━━━━━━━━`;
-
-  return statusText;
-}
-
-module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
+module.exports = async function sendBotStatus(timeStr, _, chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+  const tz = langManager.getUserConfig(config.ADMIN_CHAT_ID)?.tz || config.DEFAULT_TIMEZONE;
+
+  const now = getTimeString(tz);
   const dummyTime = getLastDummyTime();
 
-  const showLangUI = options.showLangUI || false;
-  const botTarget = options.targetBot || null;
+  const showLangUI = true; // ✅ 언어선택 UI 표시 여부
 
-  const statusMsg = formatStatusMessage(timeStr, langChoi, langMing, dummyTime, showLangUI, botTarget);
+  const statusMsg =
+    `🎯 <b>IS 관리자봇 패널</b>\n` +
+    `┏ 📍 <b>현재 상태:</b> 🕓 <code>${now}</code>\n` +
+    `┣ 👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n` +
+    `┣ 👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n` +
+    `┣ 📅 <b>25.04.08 (화)</b>\n` +
+    `┗ 🛰 <b>더미 수신:</b> ${dummyTime.includes('없음') ? '❌ 기록 없음' : '✅ <code>' + dummyTime + '</code>'}`;
 
-  if (messageId) {
-    await editMessage('admin', chatId, messageId, statusMsg, inlineKeyboard);
-  } else {
-    const { sendToAdmin } = require("../botManager");
-    await sendToAdmin(statusMsg, inlineKeyboard);
-  }
+  // ✅ 키보드 병합 처리
+  const mergedKeyboard = {
+    inline_keyboard: [
+      ...(showLangUI ? getLangKeyboard('choi').inline_keyboard : []),
+      ...(showLangUI ? getLangKeyboard('ming').inline_keyboard : []),
+      ...inlineKeyboard.inline_keyboard
+    ]
+  };
+
+  await editMessage("admin", chatId, messageId, statusMsg, mergedKeyboard);
 };
