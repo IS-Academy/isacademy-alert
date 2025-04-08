@@ -1,7 +1,7 @@
-// ✅ status.js (최종 수정: 언어선택 UI가 메시지 내 포함되도록 editMessage 활용 개선)
+// ✅ status.js (언어선택 시 메시지 내부 UI 완전히 출력되도록 getLangKeyboard 개선 반영)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
-const { editMessage, inlineKeyboard, sendToAdmin } = require('../botManager');
+const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
 const config = require('../config');
 const langManager = require('../langConfigManager');
 const moment = require('moment-timezone');
@@ -24,7 +24,7 @@ function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
 }
 
 function getLangButtonsInline(bot) {
-  const keyboard = require('../botManager').getLangKeyboard(bot);
+  const keyboard = getLangKeyboard(bot);
   return keyboard.inline_keyboard[0].map(btn => btn.text).join('  ');
 }
 
