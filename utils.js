@@ -141,7 +141,7 @@ const shortEntries = {};  // 예: { "BTCUSDT.P": { "5m": [78000] } }
 
 // ✅ 진입 저장
 function addEntry(symbol, type, price, timeframe = 'default') {
-  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  const entryMap = getEntryMapByType(type);
   if (!entryMap) return;
 
   if (!entryMap[symbol]) entryMap[symbol] = {};
@@ -155,15 +155,22 @@ function addEntry(symbol, type, price, timeframe = 'default') {
 
 // ✅ 청산 시 삭제
 function clearEntries(symbol, type, timeframe = 'default') {
-  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  const entryMap = getEntryMapByType(type);
   if (entryMap && entryMap[symbol]) {
     entryMap[symbol][timeframe] = [];
   }
 }
 
+// ✅ 공통 entryMap 반환 함수
+function getEntryMapByType(type) {
+  if (isLongType(type)) return longEntries;
+  if (isShortType(type)) return shortEntries;
+  return null;
+}
+
 // ✅ 평균 단가 및 진입 비율 계산
 function getEntryInfo(symbol, type, timeframe = 'default') {
-  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  const entryMap = getEntryMapByType(type);
   if (!entryMap) return { entryCount: 0, entryAvg: 'N/A' };
 
   const entries = entryMap[symbol]?.[timeframe] || [];
@@ -171,9 +178,9 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   const entryAvg = entryCount > 0
     ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
     : 'N/A';
+
   return { entryCount, entryAvg };
 }
-
 
 // ✅ 마지막 더미 수신 시간 - 메모리 기반
 function updateLastDummyTime(time) {
