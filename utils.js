@@ -1,150 +1,29 @@
-// utils.js
-const axios = require('axios');
 const fs = require('fs');
-const { generateAlertMessage, getWaitingMessage } = require('./AlertMessage');
-const config = require('./config');
+const moment = require('moment-timezone');
 
-let lastDummyTime = null;
-
-// ✅ 템플릿 자동 치환 유틸
+// ✅ 템플릿 치환
 function replaceTemplate(str, values = {}) {
   return str.replace(/\{(.*?)\}/g, (_, key) => values[key] ?? `{${key}}`);
 }
 
-// ✅ 롱 타입 여부 판별 함수
+// ✅ 진입 관련
+const longEntries = {};
+const shortEntries = {};
+
 function isLongType(type) {
   return ['showSup', 'isBigSup', 'Ready_showSup', 'Ready_isBigSup'].includes(type);
 }
 
-// ✅ 숏 타입 여부 판별 함수
 function isShortType(type) {
   return ['showRes', 'isBigRes', 'Ready_showRes', 'Ready_isBigRes'].includes(type);
 }
 
-// ✅ 상태 저장 & 불러오기
-const STATE_FILE = './bot_state.json';
-
-// ✅ 상태 불러오기
-function loadBotState() {
-  try {
-    const raw = fs.readFileSync(STATE_FILE);
-    return JSON.parse(raw);
-  } catch (err) {
-    return { choiEnabled: true, mingEnabled: true };
-  }
+function getEntryMapByType(type) {
+  if (isLongType(type)) return longEntries;
+  if (isShortType(type)) return shortEntries;
+  return null;
 }
 
-// ✅ 상태 저장
-function saveBotState(state) {
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
-}
-
-// ✅ 인라인 키보드 UI
-function getInlineKeyboard() {
-  return {
-    inline_keyboard: [
-      [
-        { text: '▶️ 최실장 켜기', callback_data: 'choi_on' },
-        { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }
-      ],
-      [
-        { text: '▶️ 밍밍 켜기', callback_data: 'ming_on' },
-        { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }
-      ],
-      [
-        { text: '🌐 최실장 언어선택', callback_data: 'lang_choi' },
-        { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }
-      ],
-      [
-        { text: '📡 상태 확인', callback_data: 'status' },
-        { text: '🔁 더미 상태', callback_data: 'dummy_status' }
-      ]
-    ]
-  };
-}
-
-// ✅ 언어 선택용 인라인 키보드
-function getLangKeyboard(bot) {
-  return {
-    inline_keyboard: [[
-      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
-      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
-      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
-      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
-    ]]
-  };
-}
-
-// ✅ 일반 키보드 (ReplyKeyboardMarkup)
-function getReplyKeyboard(type = 'lang') {
-  if (type === 'tz') {
-    return {
-      keyboard: [
-        ['Asia/Seoul', 'Asia/Tokyo'],
-        ['UTC', 'America/New_York']
-      ],
-      resize_keyboard: true,
-      one_time_keyboard: true
-    };
-  }
-  return {
-    keyboard: [['ko', 'en', 'zh', 'ja']],
-    resize_keyboard: true,
-    one_time_keyboard: true
-  };
-}
-
-// ✅ 텔레그램 메시지 전송 (관리자용)
-async function sendTextToTelegram(text, keyboard = null) {
-  try {
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/sendMessage`, {
-      chat_id: config.ADMIN_CHAT_ID,
-      text,
-      parse_mode: 'HTML',
-      reply_markup: keyboard || undefined
-    });
-  } catch (err) {
-    console.error('❌ 관리자 메시지 전송 실패:', err.stack || err.message);
-  }
-}
-
-// ✅ 텍스트 수정 (인라인 키보드 포함)
-async function editTelegramMessage(chatId, messageId, text, keyboard = null) {
-  try {
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/editMessageText`, {
-      chat_id: chatId,
-      message_id: messageId,
-      text,
-      parse_mode: 'HTML',
-      reply_markup: keyboard?.inline_keyboard ? keyboard : { inline_keyboard: [] }
-    });
-  } catch (err) {
-    const isNotModified = err.response?.data?.description?.includes("message is not modified");
-    if (!isNotModified) {
-      console.error('❌ editMessageText 실패:', err.stack || err.message);
-    }
-  }
-}
-
-// ✅ 밍밍 봇 전송
-async function sendToMingBot(message) {
-  if (!global.mingEnabled) return;
-  try {
-    await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN_A}/sendMessage`, {
-      chat_id: config.TELEGRAM_CHAT_ID_A,
-      text: message,
-      parse_mode: 'HTML'
-    });
-  } catch (err) {
-    console.error('❌ 밍밍 전송 실패:', err.stack || err.message);
-  }
-}
-
-// ✅ 타임프레임별 진입 기록
-const longEntries = {};
-const shortEntries = {};
-
-// ✅ 진입 저장
 function addEntry(symbol, type, price, timeframe = 'default') {
   const entryMap = getEntryMapByType(type);
   if (!entryMap) return;
@@ -158,7 +37,6 @@ function addEntry(symbol, type, price, timeframe = 'default') {
   }
 }
 
-// ✅ 청산 시 삭제
 function clearEntries(symbol, type, timeframe = 'default') {
   const entryMap = getEntryMapByType(type);
   if (entryMap && entryMap[symbol]) {
@@ -166,14 +44,6 @@ function clearEntries(symbol, type, timeframe = 'default') {
   }
 }
 
-// ✅ 공통 entryMap 반환 함수
-function getEntryMapByType(type) {
-  if (isLongType(type)) return longEntries;
-  if (isShortType(type)) return shortEntries;
-  return null;
-}
-
-// ✅ 평균 단가 및 진입 비율 계산
 function getEntryInfo(symbol, type, timeframe = 'default') {
   const entryMap = getEntryMapByType(type);
   if (!entryMap) return { entryCount: 0, entryAvg: 'N/A' };
@@ -187,44 +57,47 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   return { entryCount, entryAvg };
 }
 
-function updateLastDummyTime(time) {
+// ✅ 더미 타임
+let lastDummyTime = null;
+
+function updateLastDummyTime(time = new Date().toISOString()) {
   lastDummyTime = time;
 }
 
-// ✅ 파일에서 마지막 더미 수신 시간 읽기
 function getLastDummyTime() {
   return lastDummyTime || '❌ 기록 없음';
 }
 
-// ✅ 파일에서 마지막 더미 수신 시간 읽기
-function readLastDummyTimeFromFile() {
+// ✅ 봇 상태 저장
+const STATE_FILE = './bot_state.json';
+
+function loadBotState() {
   try {
-    const time = fs.readFileSync('./last_dummy.txt', 'utf8');
-    return time;
-  } catch (e) {
-    return '❌ 기록 없음';
+    const raw = fs.readFileSync(STATE_FILE);
+    return JSON.parse(raw);
+  } catch {
+    return { choiEnabled: true, mingEnabled: true };
   }
 }
 
+function saveBotState(state) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function getTimeString(tz = 'Asia/Seoul') {
+  return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
+}
+
 module.exports = {
-  loadBotState,
-  saveBotState,
-  getInlineKeyboard,
-  getLangKeyboard,
-  getReplyKeyboard,
-  getTzKeyboard: () => getReplyKeyboard('tz'),
-  sendTextToTelegram,
-  sendToMingBot,
-  editTelegramMessage,
-  updateLastDummyTime,
-  getLastDummyTime,
-  readLastDummyTimeFromFile,
-  generateAlertMessage,
-  getWaitingMessage,
+  replaceTemplate,
+  isLongType,
+  isShortType,
   addEntry,
   clearEntries,
   getEntryInfo,
-  isLongType,
-  isShortType,
-  replaceTemplate
+  updateLastDummyTime,
+  getLastDummyTime,
+  loadBotState,
+  saveBotState,
+  getTimeString
 };
