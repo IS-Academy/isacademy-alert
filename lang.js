@@ -87,10 +87,7 @@ const translations = {
       Ready_isBigRes: "#🛸强烈做空准备 📉",
       Ready_exitLong: "#💲平多准备 📈",
       Ready_exitShort: "#💲平空准备 📉",
-      entrySummary: "⏱️ 入场概况:",
-      entryInfoByTF: "• {tf}分钟 → ✅ {percent}% / 均价 {avg}",
-      pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
-      pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
+
       showSup: "#🩵做多进场 📈 观点分享🩵",
       showRes: "#❤️做空进场 📉 观点分享❤️",
       isBigSup: "#🚀强烈做多进场 📈 观点分享🚀",
