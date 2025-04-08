@@ -10,12 +10,12 @@ const translations = {
       Ready_exitLong: "#💲롱 청산 준비 📈",
       Ready_exitShort: "#💲숏 청산 준비 📉",
 
-      showSup: "#🩵롱 진입🩵관점공유🩵",
-      showRes: "#❤️숏 진입❤️관점공유❤️",
-      isBigSup: "#🚀강한 롱 진입🚀관점공유🚀",
-      isBigRes: "#🛸강한 숏 진입🛸관점공유🛸",
-      exitLong: "#💰롱 청산📈관점공유💰",
-      exitShort: "#💰숏 청산📉관점공유💰"
+      showSup: "#🩵롱 진입 📈 관점공유🩵",
+      showRes: "#❤️숏 진입 📉 관점공유❤️",
+      isBigSup: "#🚀강한 롱 진입 📈 관점공유🚀",
+      isBigRes: "#🛸강한 숏 진입 📉 관점공유🛸",
+      exitLong: "#💰롱 청산 📈 관점공유💰",
+      exitShort: "#💰숏 청산 📉 관점공유💰"
     },
     labels: {
       symbol: "📌 종목",
@@ -44,12 +44,12 @@ const translations = {
       Ready_exitLong: "#💲Exit Long Ready 📈",
       Ready_exitShort: "#💲Exit Short Ready 📉",
 
-      showSup: "#🩵Long Entry🩵Perspective🩵",
-      showRes: "#❤️Short Entry❤️Perspective❤️",
-      isBigSup: "#🚀Strong Long Entry🚀Perspective🚀",
-      isBigRes: "#🛸Strong Short Entry🛸Perspective🛸",
-      exitLong: "#💰Exit Long📈Perspective💰",
-      exitShort: "#💰Exit Short📉Perspective💰"
+      showSup: "#🩵Long Entry 📈 Perspective🩵",
+      showRes: "#❤️Short Entry📉Perspective❤️",
+      isBigSup: "#🚀Strong Long Entry 📈 Perspective🚀",
+      isBigRes: "#🛸Strong Short Entry 📉 Perspective🛸",
+      exitLong: "#💰Exit Long 📈 Perspective💰",
+      exitShort: "#💰Exit Short 📉 Perspective💰"
     },
     labels: {
       symbol: "📌 Symbol",
@@ -78,12 +78,12 @@ const translations = {
       Ready_exitLong: "#💲平多准备 📈",
       Ready_exitShort: "#💲平空准备 📉",
 
-      showSup: "#🩵做多进场🩵观点分享🩵",
-      showRes: "#❤️做空进场❤️观点分享❤️",
-      isBigSup: "#🚀强烈做多进场🚀观点分享🚀",
-      isBigRes: "#🛸强烈做空进场🛸观点分享🛸",
-      exitLong: "#💰平多📈观点分享💰",
-      exitShort: "#💰平空📉观点分享💰"
+      showSup: "#🩵做多进场 📈 观点分享🩵",
+      showRes: "#❤️做空进场 📉 观点分享❤️",
+      isBigSup: "#🚀强烈做多进场 📈 观点分享🚀",
+      isBigRes: "#🛸强烈做空进场 📉 观点分享🛸",
+      exitLong: "#💰平多 📈 观点分享💰",
+      exitShort: "#💰平空 📉 观点分享💰"
     },
     labels: {
       symbol: "📌 币种",
@@ -112,12 +112,12 @@ const translations = {
       Ready_exitLong: "#💲ロング利確準備 📈",
       Ready_exitShort: "#💲ショート利確準備 📉",
 
-      showSup: "#🩵ロングエントリー🩵視点共有🩵",
-      showRes: "#❤️ショートエントリー❤️視点共有❤️",
-      isBigSup: "#🚀強ロングエントリー🚀視点共有🚀",
-      isBigRes: "#🛸強ショートエントリー🛸視点共有🛸",
-      exitLong: "#💰ロング利確📈視点共有💰",
-      exitShort: "#💰ショート利確📉視点共有💰"
+      showSup: "#🩵ロングエントリー 📈 視点共有🩵",
+      showRes: "#❤️ショートエントリー 📉 視点共有❤️",
+      isBigSup: "#🚀強ロングエントリー 📈 視点共有🚀",
+      isBigRes: "#🛸強ショートエントリー 📉 視点共有🛸",
+      exitLong: "#💰ロング利確 📈 視点共有💰",
+      exitShort: "#💰ショート利確 📉 視点共有💰"
     },
     labels: {
       symbol: "📌 シンボル",
