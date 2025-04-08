@@ -1,4 +1,4 @@
-// ✅ status.js - 상태 메시지 하나로 통합 (editMessage 기반)
+// ✅ status.js - 언어·시간 포맷 반영 / 빠른 editMessage 처리 개선
 
 const { getTimeString, getLastDummyTime, saveBotState } = require('../utils');
 const { editMessage, inlineKeyboard } = require('../botManager');
@@ -6,15 +6,31 @@ const config = require('../config');
 const langManager = require('../langConfigManager');
 const moment = require('moment-timezone');
 
-module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+const dayLabels = {
+  ko: ['일', '월', '화', '수', '목', '금', '토'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  zh: ['日', '一', '二', '三', '四', '五', '六'],
+  ja: ['日', '月', '火', '水', '木', '金', '土']
+};
+
+function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
+  const now = moment().tz(tz);
+  const day = now.day();
+  const label = dayLabels[lang] || dayLabels.ko;
+  return now.format(`YYYY.MM.DD (${label[day]}) HH:mm:ss`);
+}
+
+module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+  const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
   const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-  const now = getTimeString(tz);
+
+  const now = getFormattedNow(lang, tz);
   const dummyTime = getLastDummyTime();
 
   const msg =
-    `🧾 <b>IS 관리자 봇 상태</b>\n` +
+    `📡 <b>IS 관리자 봇 상태</b>\n` +
     `──────────────────────\n` +
     `🕒 현재 시간: <code>${now}</code>\n` +
     `🌍 시간대: <code>${tz}</code>\n` +
@@ -28,7 +44,6 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   if (messageId) {
     await editMessage('admin', chatId, messageId, msg, inlineKeyboard);
   } else {
-    // 최초 상태 메시지 전송 시
     const { sendToAdmin } = require('../botManager');
     await sendToAdmin(msg, inlineKeyboard);
   }
