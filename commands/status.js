@@ -41,11 +41,13 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
                    inlineKeyboard;
 
   let statusMsg = `⌨📡 <b>IS 관리자봇 패널</b>\n`;
+  statusMsg += `──────────────────────\n`;
   statusMsg += `📍 <b>현재 상태:</b> 🌖 <code>${timeFormatted}</code>\n\n`;
   statusMsg += `♂️ 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
   statusMsg += `♀️ 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
   statusMsg += `📅 <b>${dateFormatted}</b>\n`;
-  statusMsg += `🔁 <b>더미 수신:</b> ${lastDummy !== '❌ 기록 없음' ? '✅' : '❌'} <code>${dummyTime}</code>`;
+  statusMsg += `🔁 <b>더미 수신:</b> ${lastDummy !== '❌ 기록 없음' ? '✅' : '❌'} <code>${dummyTime}</code>\n`;
+  statusMsg += `──────────────────────`;
 
   try {
     await editMessage('admin', chatId, messageId, statusMsg, keyboard, { parse_mode: 'HTML' });
