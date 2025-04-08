@@ -1,4 +1,4 @@
-// ✅ AlertMessage.js - 모든 알림 포맷 통합 (이모지형)
+// ✅ AlertMessage.js - 이모지 포맷 보강 적용
 
 const moment = require('moment-timezone');
 const config = require('./config');
@@ -13,19 +13,34 @@ function formatDate(ts, tz = config.DEFAULT_TIMEZONE) {
   return `${m.format('YY. MM. DD. (ddd)')}\n${m.format('A hh:mm:ss')}`;
 }
 
-// ✅ 진입 및 청산 알림 메시지 (관점 공유)
+function getEmojiByType(type) {
+  if (type.includes('Short')) return '📉';
+  if (type.includes('Long')) return '📈';
+  return '📊';
+}
+
+function getSymbolEmoji(type) {
+  if (type.includes('강한') && type.includes('Long')) return '🚀';
+  if (type.includes('강한') && type.includes('Short')) return '🛸';
+  if (type.includes('Long')) return '🩵';
+  if (type.includes('Short')) return '❤️';
+  return '💰';
+}
+
+// ✅ 진입 및 청산 알림 메시지
 function generateAlertMessage({ type, symbol, timeframe, price, ts, lang = 'ko', entryCount = 0, entryAvg = 0 }) {
   const label = getLangMsg(type, lang);
   const timeStr = formatDate(ts);
+  const emoji = getSymbolEmoji(label);
+
   const avgDisplay = entryCount > 0 ? `📊 진입 ${entryCount}% / 평균가 ${entryAvg}` : '';
 
   return (
-    `# ${label} 관점공유\n` +
-    `\n` +
+    `#${emoji}${label}${emoji}관점공유${emoji}\n\n` +
     `📌 종목: ${symbol}\n` +
     `⏱️ 타임프레임: ${timeframe}\n` +
     `💲 가격: ${price}\n` +
-    (avgDisplay ? `${avgDisplay}\n` : '') +
+    (avgDisplay ? `${avgDisplay}\n` : ``) +
     `\n` +
     `🕒 포착시간:\n${timeStr}\n` +
     `\n` +
@@ -33,12 +48,13 @@ function generateAlertMessage({ type, symbol, timeframe, price, ts, lang = 'ko',
   );
 }
 
-// ✅ 대기 메시지 (대기 상태용 4줄 고정)
+// ✅ 대기 메시지 (4줄 고정 + 이모지)
 function getWaitingMessage(type, symbol, timeframe, weight = config.DEFAULT_WEIGHT, leverage = config.DEFAULT_LEVERAGE, lang = 'ko') {
   const label = getLangMsg(type, lang);
+  const icon = getEmojiByType(label);
+
   return (
-    `# ${label} ${timeframe}⏱️\n` +
-    `\n` +
+    `#${label} ${icon}${timeframe}⏱️\n\n` +
     `📌 종목: ${symbol}\n` +
     `🗝️ 비중: ${weight}% / 🎲 배율: ${leverage}×`
   );
