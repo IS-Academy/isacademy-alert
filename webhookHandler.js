@@ -1,4 +1,5 @@
-// ✅ webhookHandler.js (완성본)
+// ✅ webhookHandler.js (최신 수정 반영본)
+
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -105,12 +106,13 @@ module.exports = async function webhookHandler(req, res) {
     const messageId = update.callback_query.message.message_id;
     const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
+    const lang = getUserLang(chatId);
 
     res.sendStatus(200);
 
     try {
       if (cmd === "lang_choi" || cmd === "lang_ming") {
-        await sendBotStatus(timeStr, '', chatId, messageId, cmd); // 언어 선택 UI 추가
+        await sendBotStatus(timeStr, '', chatId, messageId, cmd); // 👈 lang 명령 전달
         return;
       }
 
@@ -118,15 +120,16 @@ module.exports = async function webhookHandler(req, res) {
         const [_, bot, langCode] = cmd.split("_");
         const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendBotStatus(timeStr, '', chatId, messageId); // 설정 후 갱신
+        await sendBotStatus(timeStr, '', chatId, messageId);
         return;
       }
 
       if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-        global.choiEnabled = cmd === "choi_on" ? true : global.choiEnabled;
-        global.choiEnabled = cmd === "choi_off" ? false : global.choiEnabled;
-        global.mingEnabled = cmd === "ming_on" ? true : global.mingEnabled;
-        global.mingEnabled = cmd === "ming_off" ? false : global.mingEnabled;
+        if (cmd === "choi_on") global.choiEnabled = true;
+        if (cmd === "choi_off") global.choiEnabled = false;
+        if (cmd === "ming_on") global.mingEnabled = true;
+        if (cmd === "ming_off") global.mingEnabled = false;
+
         saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
         await sendBotStatus(timeStr, '', chatId, messageId);
         return;
@@ -151,6 +154,11 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
 
     res.sendStatus(200);
+
+    if (["/help", "/도움말"].includes(command)) {
+      await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off /summary /pnl");
+      return;
+    }
 
     if (["/start", "/settings"].includes(command)) {
       await sendBotStatus(timeStr);
