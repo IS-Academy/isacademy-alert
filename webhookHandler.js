@@ -1,4 +1,5 @@
-// ✅ webhookHandler.js (최종 수정 완료)
+// ✅ webhookHandler.js
+
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -12,7 +13,7 @@ const {
   saveBotState
 } = require("./utils");
 
-const { generateAlertMessage } = require("./AlertMessage");
+const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 const { getTranslation, translations } = require("./lang");
@@ -34,13 +35,6 @@ const TYPE_MAP = {
 
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
-}
-
-function formatDate(lang) {
-  const now = moment().tz(config.DEFAULT_TIMEZONE);
-  const dayKey = now.format('ddd');
-  const dayTranslated = translations[lang].days[dayKey];
-  return now.format(`YY.MM.DD (${dayTranslated})`);
 }
 
 module.exports = async function webhookHandler(req, res) {
@@ -73,22 +67,14 @@ module.exports = async function webhookHandler(req, res) {
 
       const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
-      const generateMsg = (lang) => {
-        const symbolText = getTranslation(lang, 'symbols', type);
-        const labels = translations[lang]?.labels;
-
-        if (type.startsWith('Ready_')) {
-          return `${symbolText} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', config.DEFAULT_WEIGHT)} / ${labels.leverage.replace('{leverage}', config.DEFAULT_LEVERAGE)}`;
-        }
-
-        return generateAlertMessage({
-          type, symbol, timeframe, price, ts,
-          lang, entryCount, entryAvg
-        });
-      };
-
-      const msgChoi = generateMsg(langChoi);
-      const msgMing = generateMsg(langMing);
+      const msgChoi = getTemplate({
+        type, symbol, timeframe, price, ts,
+        lang: langChoi, entryCount, entryAvg
+      });
+      const msgMing = getTemplate({
+        type, symbol, timeframe, price, ts,
+        lang: langMing, entryCount, entryAvg
+      });
 
       if (global.choiEnabled && msgChoi.trim()) {
         console.log(`📤 [최실장에게 전송] lang=${langChoi}, chatId=${config.TELEGRAM_CHAT_ID}`);
