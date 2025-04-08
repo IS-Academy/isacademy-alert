@@ -29,6 +29,7 @@ function getLangKeyboard(bot) {
 
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
+  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}, message="${text?.slice?.(0, 30)}..."`);
   try {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
@@ -37,7 +38,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
       reply_markup: replyMarkup || undefined
     });
   } catch (err) {
-    console.error(`❌ sendTextToBot 실패:`, err.response?.data?.description || err.message);
+    console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
   }
 }
 
@@ -77,3 +78,4 @@ module.exports = {
   mainKeyboard,
   getLangKeyboard
 };
+
