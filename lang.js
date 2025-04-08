@@ -1,4 +1,4 @@
-// lang.js
+// ✅ lang.js
 
 const translations = {
   ko: {
