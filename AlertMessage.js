@@ -1,4 +1,4 @@
-// ✅ AlertMessage.js - 다국어 대응 메시지 모듈 통합
+// ✅ AlertMessage.js - 모든 알림 포맷 통합 (이모지형)
 
 const moment = require('moment-timezone');
 const config = require('./config');
@@ -9,49 +9,48 @@ function getLangMsg(key, lang = 'ko') {
 }
 
 function formatDate(ts, tz = config.DEFAULT_TIMEZONE) {
-  return moment.unix(ts).tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
+  const m = moment.unix(ts).tz(tz);
+  return `${m.format('YY. MM. DD. (ddd)')}\n${m.format('A hh:mm:ss')}`;
 }
 
-// ✅ 일반 알림 메시지 생성
+// ✅ 진입 및 청산 알림 메시지 (관점 공유)
 function generateAlertMessage({ type, symbol, timeframe, price, ts, lang = 'ko', entryCount = 0, entryAvg = 0 }) {
+  const label = getLangMsg(type, lang);
   const timeStr = formatDate(ts);
+  const avgDisplay = entryCount > 0 ? `📊 진입 ${entryCount}% / 평균가 ${entryAvg}` : '';
 
   return (
-    `🚨 <b>${getLangMsg(type, lang)}</b>\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `📊 종목: <code>${symbol}</code>\n` +
-    `⏱️ 타임프레임: <code>${timeframe}</code>\n` +
-    `💵 가격: <b>${price}</b>\n` +
-    (entryCount > 0
-      ? `📈 진입 수량: <code>${entryCount}</code>\n📉 평균 단가: <code>${entryAvg}</code>\n`
-      : '') +
-    `🕒 포착시간: <code>${timeStr}</code>`
+    `# ${label} 관점공유\n` +
+    `\n` +
+    `📌 종목: ${symbol}\n` +
+    `⏱️ 타임프레임: ${timeframe}\n` +
+    `💲 가격: ${price}\n` +
+    (avgDisplay ? `${avgDisplay}\n` : '') +
+    `\n` +
+    `🕒 포착시간:\n${timeStr}\n` +
+    `\n` +
+    `⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다.`
   );
 }
 
-// ✅ 대기 메시지 (Ready_ 시리즈)
-function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko') {
+// ✅ 대기 메시지 (대기 상태용 4줄 고정)
+function getWaitingMessage(type, symbol, timeframe, weight = config.DEFAULT_WEIGHT, leverage = config.DEFAULT_LEVERAGE, lang = 'ko') {
   const label = getLangMsg(type, lang);
   return (
-    `⏳ <b>${label}</b>\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `📊 종목: <code>${symbol}</code>\n` +
-    `⏱️ 타임프레임: <code>${timeframe}</code>\n` +
-    `📦 포지션 비중: ${weight}%\n` +
-    `📌 레버리지: ${leverage}x`
+    `# ${label} ${timeframe}⏱️\n` +
+    `\n` +
+    `📌 종목: ${symbol}\n` +
+    `🗝️ 비중: ${weight}% / 🎲 배율: ${leverage}×`
   );
 }
 
-// ✅ 진입 요약 메시지
 function generateSummaryMessage(entryList = [], lang = 'ko') {
   if (entryList.length === 0) return getLangMsg('no_entries', lang);
-
   const header = `📋 <b>${getLangMsg('entry_summary', lang)}</b>`;
   const body = entryList.map(e => `• ${e.symbol} (${e.timeframe}) - ${e.price}`).join('\n');
   return `${header}\n${body}`;
 }
 
-// ✅ PnL 메시지
 function generatePnLMessage({ symbol, pnlPercent, entryAvg, lang = 'ko' }) {
   const status = pnlPercent >= 0 ? '📈 수익중' : '📉 손실중';
   return (
