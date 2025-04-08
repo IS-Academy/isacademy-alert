@@ -1,82 +1,19 @@
 // lang.js
 
-  const translations = {
-    ko: {
-      symbols: {
-        Ready_showSup: "#🩵롱 대기 📈",
-        Ready_showRes: "#❤️숏 대기 📉",
-        Ready_isBigSup: "#🚀강한 롱 대기 📈",
-        Ready_isBigRes: "#🛸강한 숏 대기 📉",
-        Ready_exitLong: "#💲롱 청산 준비 📈",
-        Ready_exitShort: "#💲숏 청산 준비 📉"
-      },
-      labels: {
-        symbol: "📌 종목",
-        weight: "🗝️ 비중",
-        leverage: "🎲 배율"
-      }
-    },
-    en: {
-      symbols: {
-        Ready_showSup: "#🩵Long Setup 📈",
-        Ready_showRes: "#❤️Short Setup 📉",
-        Ready_isBigSup: "#🚀Strong Long Setup 📈",
-        Ready_isBigRes: "#🛸Strong Short Setup 📉",
-        Ready_exitLong: "#💲Exit Long Ready 📈",
-        Ready_exitShort: "#💲Exit Short Ready 📉"
-      },
-      labels: {
-        symbol: "📌 Symbol",
-        weight: "🗝️ Weight",
-        leverage: "🎲 Leverage"
-      }
-    },
-    zh: {
-      symbols: {
-        Ready_showSup: "#🩵做多准备 📈",
-        Ready_showRes: "#❤️做空准备 📉",
-        Ready_isBigSup: "#🚀强烈做多准备 📈",
-        Ready_isBigRes: "#🛸强烈做空准备 📉",
-        Ready_exitLong: "#💲平多准备 📈",
-        Ready_exitShort: "#💲平空准备 📉"
-      },
-      labels: {
-        symbol: "📌 币种",
-        weight: "🗝️ 仓位",
-        leverage: "🎲 杠杆"
-      }
-    },
-    ja: {
-      symbols: {
-        Ready_showSup: "#🩵ロング準備 📈",
-        Ready_showRes: "#❤️ショート準備 📉",
-        Ready_isBigSup: "#🚀強ロング準備 📈",
-        Ready_isBigRes: "#🛸強ショート準備 📉",
-        Ready_exitLong: "#💲ロング利確準備 📈",
-        Ready_exitShort: "#💲ショート利確準備 📉"
-      },
-      labels: {
-        symbol: "📌 シンボル",
-        weight: "🗝️ 比率",
-        leverage: "🎲 レバレッジ"
-      }
-    }
-  };
-
-
 const translations = {
   ko: {
     symbols: {
-      Ready_showSup: "#🩵롱 대기 📈관점공유",
-      Ready_showRes: "#❤️숏 대기 📉관점공유",
-      Ready_isBigSup: "#🚀강한 롱 대기 📈관점공유",
-      Ready_isBigRes: "#🛸강한 숏 대기 📉관점공유",
+      Ready_showSup: "#🩵롱 대기 📈",
+      Ready_showRes: "#❤️숏 대기 📉",
+      Ready_isBigSup: "#🚀강한 롱 대기 📈",
+      Ready_isBigRes: "#🛸강한 숏 대기 📉",
+      Ready_exitLong: "#💲롱 청산 준비 📈",
+      Ready_exitShort: "#💲숏 청산 준비 📉",
+
       showSup: "#🩵롱 진입🩵관점공유🩵",
       showRes: "#❤️숏 진입❤️관점공유❤️",
       isBigSup: "#🚀강한 롱 진입🚀관점공유🚀",
       isBigRes: "#🛸강한 숏 진입🛸관점공유🛸",
-      Ready_exitLong: "#💲롱 청산 준비 📈관점공유",
-      Ready_exitShort: "#💲숏 청산 준비 📉관점공유",
       exitLong: "#💰롱 청산📈관점공유💰",
       exitShort: "#💰숏 청산📉관점공유💰"
     },
@@ -101,16 +38,17 @@ const translations = {
   },
   en: {
     symbols: {
-      Ready_showSup: "#🩵Long Setup 📈Perspective",
-      Ready_showRes: "#❤️Short Setup 📉Perspective",
-      Ready_isBigSup: "#🚀Strong Long Setup 📈Perspective",
-      Ready_isBigRes: "#🛸Strong Short Setup 📉Perspective",
+      Ready_showSup: "#🩵Long Setup 📈",
+      Ready_showRes: "#❤️Short Setup 📉",
+      Ready_isBigSup: "#🚀Strong Long Setup 📈",
+      Ready_isBigRes: "#🛸Strong Short Setup 📉",
+      Ready_exitLong: "#💲Exit Long Ready 📈",
+      Ready_exitShort: "#💲Exit Short Ready 📉",
+
       showSup: "#🩵Long Entry🩵Perspective🩵",
       showRes: "#❤️Short Entry❤️Perspective❤️",
       isBigSup: "#🚀Strong Long Entry🚀Perspective🚀",
       isBigRes: "#🛸Strong Short Entry🛸Perspective🛸",
-      Ready_exitLong: "#💲Exit Long Ready 📈Perspective",
-      Ready_exitShort: "#💲Exit Short Ready 📉Perspective",
       exitLong: "#💰Exit Long📈Perspective💰",
       exitShort: "#💰Exit Short📉Perspective💰"
     },
@@ -135,16 +73,17 @@ const translations = {
   },
   zh: {
     symbols: {
-      Ready_showSup: "#🩵做多准备 📈观点分享",
-      Ready_showRes: "#❤️做空准备 📉观点分享",
-      Ready_isBigSup: "#🚀强烈做多准备 📈观点分享",
-      Ready_isBigRes: "#🛸强烈做空准备 📉观点分享",
+      Ready_showSup: "#🩵做多准备 📈",
+      Ready_showRes: "#❤️做空准备 📉",
+      Ready_isBigSup: "#🚀强烈做多准备 📈",
+      Ready_isBigRes: "#🛸强烈做空准备 📉",
+      Ready_exitLong: "#💲平多准备 📈",
+      Ready_exitShort: "#💲平空准备 📉",
+
       showSup: "#🩵做多进场🩵观点分享🩵",
       showRes: "#❤️做空进场❤️观点分享❤️",
       isBigSup: "#🚀强烈做多进场🚀观点分享🚀",
       isBigRes: "#🛸强烈做空进场🛸观点分享🛸",
-      Ready_exitLong: "#💲平多准备 📈观点分享",
-      Ready_exitShort: "#💲平空准备 📉观点分享",
       exitLong: "#💰平多📈观点分享💰",
       exitShort: "#💰平空📉观点分享💰"
     },
@@ -169,16 +108,17 @@ const translations = {
   },
   ja: {
     symbols: {
-      Ready_showSup: "#🩵ロング準備 📈視点共有",
-      Ready_showRes: "#❤️ショート準備 📉視点共有",
-      Ready_isBigSup: "#🚀強ロング準備 📈視点共有",
-      Ready_isBigRes: "#🛸強ショート準備 📉視点共有",
+      Ready_showSup: "#🩵ロング準備 📈",
+      Ready_showRes: "#❤️ショート準備 📉",
+      Ready_isBigSup: "#🚀強ロング準備 📈",
+      Ready_isBigRes: "#🛸強ショート準備 📉",
+      Ready_exitLong: "#💲ロング利確準備 📈",
+      Ready_exitShort: "#💲ショート利確準備 📉",
+
       showSup: "#🩵ロングエントリー🩵視点共有🩵",
       showRes: "#❤️ショートエントリー❤️視点共有❤️",
       isBigSup: "#🚀強ロングエントリー🚀視点共有🚀",
       isBigRes: "#🛸強ショートエントリー🛸視点共有🛸",
-      Ready_exitLong: "#💲ロング利確準備 📈視点共有",
-      Ready_exitShort: "#💲ショート利確準備 📉視点共有",
       exitLong: "#💰ロング利確📈視点共有💰",
       exitShort: "#💰ショート利確📉視点共有💰"
     },
@@ -203,4 +143,17 @@ const translations = {
   }
 };
 
-module.exports = { translations };
+function getUserLang(lang) {
+  return translations[lang] ? lang : 'ko';
+}
+
+function getTranslation(lang, section, key) {
+  const userLang = getUserLang(lang);
+  return translations[userLang]?.[section]?.[key] || '';
+}
+
+module.exports = {
+  translations,
+  getUserLang,
+  getTranslation
+};
