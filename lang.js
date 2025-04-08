@@ -64,9 +64,9 @@ const translations = {
       entrySummary: "⏱️ Entry Summary:",
       entryInfoByTF: "• {tf}min → ✅ {percent}% / Avg {avg}",
       pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
-      pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%"      
+      pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%",
       entryLimitReachedLong: "⚠️ Long position is saturated.",
-      entryLimitReachedShort: "⚠️ Short position is saturated."
+      entryLimitReachedShort: "⚠️ Short position is saturated.",
       captured: "🕒 Captured At",
       weight: "🗝️ Weight: {weight}",
       leverage: "🎲 Leverage: {leverage}",
@@ -90,7 +90,7 @@ const translations = {
       entrySummary: "⏱️ 入场概况:",
       entryInfoByTF: "• {tf}分钟 → ✅ {percent}% / 均价 {avg}",
       pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
-      pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%"
+      pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
       showSup: "#🩵做多进场 📈 观点分享🩵",
       showRes: "#❤️做空进场 📉 观点分享❤️",
       isBigSup: "#🚀强烈做多进场 📈 观点分享🚀",
@@ -108,7 +108,7 @@ const translations = {
       pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
       pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
       entryLimitReachedLong: "⚠️ 多头持仓已饱和。",
-      entryLimitReachedShort: "⚠️ 空头持仓已饱和。"      
+      entryLimitReachedShort: "⚠️ 空头持仓已饱和。",
       captured: "🕒 捕捉时间",
       weight: "🗝️ 仓位: {weight}",
       leverage: "🎲 杠杆: {leverage}",
@@ -145,9 +145,9 @@ const translations = {
       entrySummary: "⏱️ エントリー状況:",
       entryInfoByTF: "• {tf}分 → ✅ {percent}% / 平均価格 {avg}",
       pnlLineProfit: "📈利益率 {pnl}% / 元本比 {capital}%",
-      pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%"      
+      pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%",
       entryLimitReachedLong: "⚠️ ロングポジションが飽和状態です。",
-      entryLimitReachedShort: "⚠️ ショートポジションが飽和状態です。"
+      entryLimitReachedShort: "⚠️ ショートポジションが飽和状態です。",
       captured: "🕒 検出時間",
       weight: "🗝️ 比率: {weight}",
       leverage: "🎲 レバレッジ: {leverage}",
