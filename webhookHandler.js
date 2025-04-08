@@ -1,9 +1,10 @@
-// ✅ webhookHandler.js (언어선택도 상태 메시지로 갱신)
+// ✅ webhookHandler.js (언어선택 UI 정상 출력 포함 최종본)
 
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
+
 const {
   generateAlertMessage,
   getWaitingMessage,
@@ -108,22 +109,29 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     const lang = getUserLang(chatId);
 
-    res.sendStatus(200); // ✅ 즉시 응답
+    res.sendStatus(200);
 
     try {
-      if (cmd === "lang_choi" || cmd === "lang_ming") {
-        await sendBotStatus(timeStr, '', chatId, messageId); // ✅ 메시지 유지하며 언어 버튼 표시
+      // ✅ 언어선택 UI 표시용
+      if (cmd === "lang_choi") {
+        await sendBotStatus(timeStr, '', chatId, messageId, true, 'choi');
+        return;
+      }
+      if (cmd === "lang_ming") {
+        await sendBotStatus(timeStr, '', chatId, messageId, true, 'ming');
         return;
       }
 
+      // ✅ 언어 선택 후 저장 & 상태창 갱신
       if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
         const [_, bot, langCode] = cmd.split("_");
         const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendBotStatus(timeStr, '', chatId, messageId); // ✅ 설정 후 즉시 메시지 업데이트
+        await sendBotStatus(timeStr, '', chatId, messageId); // UI 제거, 상태만 표시
         return;
       }
 
+      // ✅ 봇 ON/OFF 토글
       if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
         if (cmd === "choi_on") global.choiEnabled = true;
         if (cmd === "choi_off") global.choiEnabled = false;
@@ -135,17 +143,19 @@ module.exports = async function webhookHandler(req, res) {
         return;
       }
 
+      // ✅ 상태 확인
       if (["status", "dummy_status"].includes(cmd)) {
         await sendBotStatus(timeStr, '', chatId, messageId);
         return;
       }
+
     } catch (e) {
       console.error('❌ 인라인 명령 처리 오류:', e.message);
     }
     return;
   }
 
-  // ✅ 텍스트 명령어 처리 (/summary, /pnl 포함)
+  // ✅ 텍스트 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const chatId = update.message.chat.id;
