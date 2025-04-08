@@ -21,10 +21,10 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
   const translations = {
     ko: {
       symbols: {
-        Ready_Support: "#🩵롱 대기 📈",
-        Ready_Resistance: "#❤️숏 대기 📉",
-        Ready_is_Big_Support: "#🚀강한 롱 대기 📈",
-        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉",
+        Ready_showSup: "#🩵롱 대기 📈",
+        Ready_showRes: "#❤️숏 대기 📉",
+        Ready_isBigSup: "#🚀강한 롱 대기 📈",
+        Ready_isBigRes: "#🛸강한 숏 대기 📉",
         Ready_exitLong: "#💲롱 청산 준비 📈",
         Ready_exitShort: "#💲숏 청산 준비 📉"
       },
@@ -36,10 +36,10 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
     },
     en: {
       symbols: {
-        Ready_Support: "#🩵Long Setup 📈",
-        Ready_Resistance: "#❤️Short Setup 📉",
-        Ready_is_Big_Support: "#🚀Strong Long Setup 📈",
-        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉",
+        Ready_showSup: "#🩵Long Setup 📈",
+        Ready_showRes: "#❤️Short Setup 📉",
+        Ready_isBigSup: "#🚀Strong Long Setup 📈",
+        Ready_isBigRes: "#🛸Strong Short Setup 📉",
         Ready_exitLong: "#💲Exit Long Ready 📈",
         Ready_exitShort: "#💲Exit Short Ready 📉"
       },
@@ -51,10 +51,10 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
     },
     zh: {
       symbols: {
-        Ready_Support: "#🩵做多准备 📈",
-        Ready_Resistance: "#❤️做空准备 📉",
-        Ready_is_Big_Support: "#🚀强烈做多准备 📈",
-        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉",
+        Ready_showSup: "#🩵做多准备 📈",
+        Ready_showRes: "#❤️做空准备 📉",
+        Ready_isBigSup: "#🚀强烈做多准备 📈",
+        Ready_isBigRes: "#🛸强烈做空准备 📉",
         Ready_exitLong: "#💲平多准备 📈",
         Ready_exitShort: "#💲平空准备 📉"
       },
@@ -66,10 +66,10 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
     },
     ja: {
       symbols: {
-        Ready_Support: "#🩵ロング準備 📈",
-        Ready_Resistance: "#❤️ショート準備 📉",
-        Ready_is_Big_Support: "#🚀強ロング準備 📈",
-        Ready_is_Big_Resistance: "#🛸強ショート準備 📉",
+        Ready_showSup: "#🩵ロング準備 📈",
+        Ready_showRes: "#❤️ショート準備 📉",
+        Ready_isBigSup: "#🚀強ロング準備 📈",
+        Ready_isBigRes: "#🛸強ショート準備 📉",
         Ready_exitLong: "#💲ロング利確準備 📈",
         Ready_exitShort: "#💲ショート利確準備 📉"
       },
@@ -95,10 +95,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   const translations = {
     ko: {
       symbols: {
-        Ready_Support: "#🩵롱 대기 📈관점공유",
-        Ready_Resistance: "#❤️숏 대기 📉관점공유",
-        Ready_is_Big_Support: "#🚀강한 롱 대기 📈관점공유",
-        Ready_is_Big_Resistance: "#🛸강한 숏 대기 📉관점공유",
+        Ready_showSup: "#🩵롱 대기 📈관점공유",
+        Ready_showRes: "#❤️숏 대기 📉관점공유",
+        Ready_isBigSup: "#🚀강한 롱 대기 📈관점공유",
+        Ready_isBigRes: "#🛸강한 숏 대기 📉관점공유",
         show_Support: "#🩵롱 진입🩵관점공유🩵",
         show_Resistance: "#❤️숏 진입❤️관점공유❤️",
         is_Big_Support: "#🚀강한 롱 진입🚀관점공유🚀",
@@ -128,10 +128,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     },
     en: {
       symbols: {
-        Ready_Support: "#🩵Long Setup 📈Perspective",
-        Ready_Resistance: "#❤️Short Setup 📉Perspective",
-        Ready_is_Big_Support: "#🚀Strong Long Setup 📈Perspective",
-        Ready_is_Big_Resistance: "#🛸Strong Short Setup 📉Perspective",
+        Ready_showSup: "#🩵Long Setup 📈Perspective",
+        Ready_showRes: "#❤️Short Setup 📉Perspective",
+        Ready_isBigSup: "#🚀Strong Long Setup 📈Perspective",
+        Ready_isBigRes: "#🛸Strong Short Setup 📉Perspective",
         show_Support: "#🩵Long Entry🩵Perspective🩵",
         show_Resistance: "#❤️Short Entry❤️Perspective❤️",
         is_Big_Support: "#🚀Strong Long Entry🚀Perspective🚀",
@@ -161,10 +161,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     },
     zh: {
       symbols: {
-        Ready_Support: "#🩵做多准备 📈观点分享",
-        Ready_Resistance: "#❤️做空准备 📉观点分享",
-        Ready_is_Big_Support: "#🚀强烈做多准备 📈观点分享",
-        Ready_is_Big_Resistance: "#🛸强烈做空准备 📉观点分享",
+        Ready_showSup: "#🩵做多准备 📈观点分享",
+        Ready_showRes: "#❤️做空准备 📉观点分享",
+        Ready_isBigSup: "#🚀强烈做多准备 📈观点分享",
+        Ready_isBigRes: "#🛸强烈做空准备 📉观点分享",
         show_Support: "#🩵做多进场🩵观点分享🩵",
         show_Resistance: "#❤️做空进场❤️观点分享❤️",
         is_Big_Support: "#🚀强烈做多进场🚀观点分享🚀",
@@ -194,10 +194,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
     },
     ja: {
       symbols: {
-        Ready_Support: "#🩵ロング準備 📈視点共有",
-        Ready_Resistance: "#❤️ショート準備 📉視点共有",
-        Ready_is_Big_Support: "#🚀強ロング準備 📈視点共有",
-        Ready_is_Big_Resistance: "#🛸強ショート準備 📉視点共有",
+        Ready_showSup: "#🩵ロング準備 📈視点共有",
+        Ready_showRes: "#❤️ショート準備 📉視点共有",
+        Ready_isBigSup: "#🚀強ロング準備 📈視点共有",
+        Ready_isBigRes: "#🛸強ショート準備 📉視点共有",
         show_Support: "#🩵ロングエントリー🩵視点共有🩵",
         show_Resistance: "#❤️ショートエントリー❤️視点共有❤️",
         is_Big_Support: "#🚀強ロングエントリー🚀視点共有🚀",
