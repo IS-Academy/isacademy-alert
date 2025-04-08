@@ -1,4 +1,4 @@
-// ✅ status.js - 언어선택 버튼 포함한 상태 메시지 통합 (키보드 유지)
+// ✅ status.js (최종 리팩토링: 언어선택 UI 상태창에 출력 + 봇 작동상태에 언어 포함 + 이모지 구성)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
 const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
@@ -21,37 +21,32 @@ function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
 }
 
 function getLangButtonsInline(bot) {
-  return getLangKeyboard(bot).inline_keyboard[0]
-    .map(btn => `<code>${btn.text}</code>`) // 보기용 코드박스로 강조
-    .join(' ');
+  return getLangKeyboard(bot).inline_keyboard[0].map(btn => btn.text).join('  ');
 }
 
-module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false) {
   try {
     const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
     const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
     const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-
     const now = getFormattedNow(lang, tz);
     const dummyTime = getLastDummyTime();
-
-    const langChoiBtns = getLangButtonsInline('choi');
-    const langMingBtns = getLangButtonsInline('ming');
 
     const msg =
       `📡 <b>IS 관리자 봇 상태</b>\n` +
       `──────────────────────\n` +
       `🕒 현재 시간: <code>${now}</code>\n` +
-      `🌍 시간대: <code>${tz}</code>\n` +
-      `🌐 최실장 언어: <code>${langChoi}</code>\n` +
-      `🌐 밍밍 언어: <code>${langMing}</code>\n` +
-      `✅ 봇 작동 상태:\n├ 최실장: ${global.choiEnabled ? '🟢 ON' : '🔴 OFF'}\n└ 밍밍: ${global.mingEnabled ? '🟢 ON' : '🔴 OFF'}\n` +
-      `\n🔁 더미 알림 수신: <code>${dummyTime}</code>` +
-      `\n──────────────────────\n` +
-      `🌐 <b>최실장 언어 선택:</b>\n${langChoiBtns}\n\n🌐 <b>밍밍 언어 선택:</b>\n${langMingBtns}` +
-      (suffix ? `\n\n${suffix}` : '') +
-      `\n──────────────────────`;
+      `🌍 시간대: <code>${tz}</code>\n\n` +
+      `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} <code>(${langChoi})</code>\n` +
+      `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>\n` +
+      `──────────────────────\n` +
+      `🔁 더미 알림 수신: <code>${dummyTime}</code>\n` +
+      (showLangUI
+        ? `──────────────────────\n🌐 <b>최실장 언어 선택:</b>\n${getLangButtonsInline('choi')}\n\n🌐 <b>밍밍 언어 선택:</b>\n${getLangButtonsInline('ming')}\n`
+        : '') +
+      (suffix ? `\n${suffix}` : '') +
+      `──────────────────────`;
 
     if (messageId) {
       await editMessage('admin', chatId, messageId, msg, inlineKeyboard);
