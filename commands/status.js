@@ -7,18 +7,29 @@ const { getLastDummyTime } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 
+const cache = new Map();
+
 module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+  const key = `${chatId}_${suffix}`;
+  const now = moment().tz(config.DEFAULT_TIMEZONE);
+  const nowTime = now.format('HH:mm:ss');
+
+  // 캐시된 시간과 동일하면 메시지 생략
+  if (cache.get(key) === nowTime) {
+    console.log('⚠️ 상태 메시지 중복 생략');
+    return;
+  }
+  cache.set(key, nowTime);
+
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
   const userLang = langManager.getUserConfig(chatId)?.lang || 'ko';
   const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
 
-  const now = moment().tz(tz);
-  const timeFormatted = now.format('HH:mm:ss');
-  
   const dayKey = now.format('ddd');
-  const dayTranslated = translations[userLang]?.days[dayKey] || dayKey;
+  const dayTranslated = translations[userLang]?.days?.[dayKey] || dayKey;
   const dateFormatted = now.format(`YY.MM.DD (${dayTranslated})`);
+  const timeFormatted = now.format('HH:mm:ss');
 
   const lastDummy = getLastDummyTime();
   const dummyTime = lastDummy !== '❌ 기록 없음'
@@ -34,7 +45,12 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   statusMsg += `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
   statusMsg += `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
   statusMsg += `📅 <b>${dateFormatted}</b>\n`;
-  statusMsg += `🛰 <b>더미 수신:</b> ${lastDummy !== '❌ 기록 없음' ? '✅' : '❌'} <code>${dummyTime}</code>\n`;
+  statusMsg += `🛰 <b>더미 수신:</b> ${lastDummy !== '❌ 기록 없음' ? '✅' : '❌'} <code>${dummyTime}</code>`;
 
-  await editMessage('admin', chatId, messageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-};
+  try {
+    await editMessage('admin', chatId, messageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+  } catch (err) {
+    console.warn('🧯 editMessage 실패, 새 메시지 발송 시도');
+    const { sendTextToBot } = require('../botManager');
+    await sendTextToBot('admin', chatId, statusMsg, keyboard);
+  }
