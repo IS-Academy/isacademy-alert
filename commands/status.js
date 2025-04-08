@@ -1,6 +1,6 @@
-// ✅ status.js (핵심 수정: getLangButtonsInline → 전체 버튼 출력, UI 표시 보장)
+// ✅ status.js (최종 수정: 언어선택 UI가 무조건 메시지 안에 보이도록 텍스트 강제 삽입)
 
-const { getTimeString, getLastDummyTime } = require('../utils');
+const { getLastDummyTime } = require('../utils');
 const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
 const config = require('../config');
 const langManager = require('../langConfigManager');
@@ -23,9 +23,9 @@ function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
   return { full: `${year}.${date} (${label[day]})`, time };
 }
 
-function formatLangKeyboardText(bot) {
+function getLangListText(bot) {
   const kb = getLangKeyboard(bot);
-  return kb.inline_keyboard[0].map(btn => `${btn.text}`).join('  ');
+  return kb.inline_keyboard[0].map(btn => btn.text).join(' '); // 넓은 공백
 }
 
 module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false) {
@@ -37,12 +37,9 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     const now = getFormattedNow(lang, tz);
     const dummyTime = getLastDummyTime();
 
-    let langSection = '';
-    if (showLangUI) {
-      langSection = `\n──────────────────────\n` +
-        `🌐 <b>최실장 언어 선택:</b>\n${formatLangKeyboardText('choi')}\n\n` +
-        `🌐 <b>밍밍 언어 선택:</b>\n${formatLangKeyboardText('ming')}\n`;
-    }
+    const langSection = showLangUI ? `\n──────────────────────\n` +
+      `🌐 <b>최실장 언어 선택:</b>\n${getLangListText('choi')}\n\n` +
+      `🌐 <b>밍밍 언어 선택:</b>\n${getLangListText('ming')}` : '';
 
     const msg =
       `🎯 <b>IS 관리자봇 패널</b>\n` +
