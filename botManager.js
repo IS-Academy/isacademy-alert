@@ -1,6 +1,51 @@
 const axios = require('axios');
 const config = require('./config');
 
+// 🔧 키보드 정의
+const inlineKeyboard = {
+  inline_keyboard: [
+    [
+      { text: '▶️ 최실장 켜기', callback_data: 'choi_on' },
+      { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }
+    ],
+    [
+      { text: '▶️ 밍밍 켜기', callback_data: 'ming_on' },
+      { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }
+    ],
+    [
+      { text: '🌐 최실장 언어선택', callback_data: 'lang_choi' },
+      { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }
+    ],
+    [
+      { text: '📡 상태 확인', callback_data: 'status' },
+      { text: '🔁 더미 상태', callback_data: 'dummy_status' }
+    ]
+  ]
+};
+
+function getLangKeyboard(bot) {
+  return {
+    inline_keyboard: [[
+      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
+      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
+      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
+      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
+    ]]
+  };
+}
+
+function getTzKeyboard() {
+  return {
+    keyboard: [
+      ['Asia/Seoul', 'Asia/Tokyo'],
+      ['UTC', 'America/New_York']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: true
+  };
+}
+
+// 🔧 전송기
 function getBotToken(botType) {
   switch (botType) {
     case 'choi': return config.TELEGRAM_BOT_TOKEN;
@@ -59,5 +104,8 @@ module.exports = {
   editMessage,
   sendToChoi,
   sendToMing,
-  sendToAdmin
+  sendToAdmin,
+  getLangKeyboard,
+  getTzKeyboard,
+  inlineKeyboard
 };
