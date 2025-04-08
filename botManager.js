@@ -39,8 +39,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
     token = config.ADMIN_BOT_TOKEN;
   }
 
-  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}, message="${text?.slice?.(0, 30)}..."`);
-
+  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}`);
   try {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
@@ -55,7 +54,6 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
-  console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
   try {
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
