@@ -6,11 +6,11 @@ const { updateLastDummyTime, getTimeString } = require('./utils');
 const sendBotStatus = require('./commands/status');
 
 module.exports = async function dummyHandler(req, res) {
-  const now = moment().tz(config.DEFAULT_TIMEZONE).format('YY.MM.DD HH:mm:ss');
+  const nowIso = new Date().toISOString();
+  const displayTime = moment().tz(config.DEFAULT_TIMEZONE).format('YY.MM.DD HH:mm:ss');
 
-  // 콘솔 기록 및 변수 저장
-  const now = new Date().toISOString();
-  updateLastDummyTime(now);
+  console.log('✅ [더미 수신] 시간:', displayTime);
+  updateLastDummyTime(nowIso);
 
   // ✅ 관리자봇 상태 자동 갱신 (더미 수신 시)
   await sendBotStatus(getTimeString());
