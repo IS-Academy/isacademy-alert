@@ -1,4 +1,4 @@
-// ✅ status.js (최종 리팩토링: 언어선택 UI 상태창에 출력 + 봇 작동상태에 언어 포함 + 이모지 구성)
+// ✅ status.js (디자인 개선: 사진2 스타일 UI + 언어선택 포함)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
 const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
@@ -34,19 +34,18 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     const dummyTime = getLastDummyTime();
 
     const msg =
-      `📡 <b>IS 관리자 봇 상태</b>\n` +
+      `🎯 <b>IS 관리자봇 패널</b>\n` +
       `──────────────────────\n` +
-      `🕒 현재 시간: <code>${now}</code>\n` +
-      `🌍 시간대: <code>${tz}</code>\n\n` +
+      `📍 현재 상태 (<code>🕐 ${now.split(' ')[1]}</code>)\n\n` +
       `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} <code>(${langChoi})</code>\n` +
       `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>\n` +
-      `──────────────────────\n` +
-      `🔁 더미 알림 수신: <code>${dummyTime}</code>\n` +
+      `\n🗓️ ${now.split(' ')[0]}\n🌐 TZ: <code>${tz}</code>\n\n` +
+      `📡 더미 수신: ${dummyTime.includes('없음') ? '❌ 기록 없음' : `✅ <code>${dummyTime}</code>`}\n` +
       (showLangUI
         ? `──────────────────────\n🌐 <b>최실장 언어 선택:</b>\n${getLangButtonsInline('choi')}\n\n🌐 <b>밍밍 언어 선택:</b>\n${getLangButtonsInline('ming')}\n`
         : '') +
       (suffix ? `\n${suffix}` : '') +
-      `──────────────────────`;
+      `\n──────────────────────`;
 
     if (messageId) {
       await editMessage('admin', chatId, messageId, msg, inlineKeyboard);
