@@ -151,10 +151,10 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   const entryMap = type.includes("Support") ? longEntries : shortEntries;
   const entries = entryMap[symbol]?.[timeframe] || [];
   const entryCount = entries.length;
-  const avgEntry = entryCount > 0
+  const entryAvg = entryCount > 0
     ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
     : 'N/A';
-  return { entryCount, avgEntry };
+  return { entryCount, entryAvg };
 }
 
 // ✅ 마지막 더미 수신 시간 - 메모리 기반
