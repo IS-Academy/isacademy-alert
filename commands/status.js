@@ -1,66 +1,93 @@
-// ✅ status.js (언어선택 이후 UI 사라지고, 메인 상태 유지되도록 showLangUI 조절)
+// ✅ status.js (언어선택 버튼 포함 최종본)
 
-const { getLastDummyTime } = require('../utils');
-const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
+const moment = require('moment-timezone');
 const config = require('../config');
 const langManager = require('../langConfigManager');
-const moment = require('moment-timezone');
+const { getTimeString, getLastDummyTime } = require('../utils');
+const { sendToAdmin, editMessage } = require('../botManager');
 
-const dayLabels = {
-  ko: ['일', '월', '화', '수', '목', '금', '토'],
-  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-  zh: ['日', '一', '二', '三', '四', '五', '六'],
-  ja: ['日', '月', '火', '水', '木', '金', '土']
-};
+module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, langTarget = null) {
+  const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
+  const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+  const tz = langManager.getUserConfig(config.ADMIN_CHAT_ID)?.tz || config.DEFAULT_TIMEZONE;
 
-function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
-  const now = moment().tz(tz);
-  const day = now.day();
-  const label = dayLabels[lang] || dayLabels.ko;
-  const year = now.format('YY');
-  const date = now.format(`MM.DD`);
-  const time = now.format('HH:mm:ss');
-  return { full: `${year}.${date} (${label[day]})`, time };
-}
+  const now = getTimeString(tz);
+  const dateFormatted = moment().tz(tz).format('YY.MM.DD (dd)');
+  const dummyTime = getLastDummyTime();
 
-function getLangListText(bot) {
-  const kb = getLangKeyboard(bot);
-  return kb.inline_keyboard[0].map(btn => btn.text).join(' '); // 넓은 공백
-}
+  const showLangUI = langTarget === 'choi' || langTarget === 'ming';
 
-module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false, langTarget = null) {
-  try {
-    const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
-    const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
-    const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
-    const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-    const now = getFormattedNow(lang, tz);
-    const dummyTime = getLastDummyTime();
+  let msg =
+    `🎯 <b>IS 관리자봇 패널</b>
+` +
+    `───────────────
+` +
+    `📍 <b>현재 상태:</b>🌔 <code>${now}</code>
 
-    let langSection = '';
-    if (showLangUI && langTarget) {
-      const label = langTarget === 'choi' ? '최실장' : '밍밍';
-      langSection = `\n──────────────────────\n🌐 <b>${label} 언어 선택:</b>\n${getLangListText(langTarget)}\n`;
-    }
+` +
+    `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)
+` +
+    `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)
 
-    const msg =
-      `🎯 <b>IS 관리자봇 패널</b>\n` +
-      `──────────────────────\n` +
-      `📍 <b>현재 상태:</b> (🕐 ${now.time})\n\n` +
-      `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} <code>(${langChoi})</code>\n` +
-      `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>\n\n` +
-      `📅 ${now.full}\n` +
-      `🛰 더미 수신: ${dummyTime.includes('없음') ? '❌ 기록 없음' : `✅ ${dummyTime}`}` +
-      langSection +
-      (suffix ? `\n${suffix}` : '') +
-      `\n──────────────────────`;
+` +
+    `📅 ${dateFormatted}
+` +
+    `🛰 더미 수신: ${dummyTime === '❌ 기록 없음' ? '❌ <i>기록 없음</i>' : `✅ <code>${dummyTime}</code>`}
+` +
+    (suffix ? `
+${suffix}` : '') +
+    `
+───────────────`;
 
-    if (messageId) {
-      await editMessage('admin', chatId, messageId, msg, inlineKeyboard);
-    } else {
-      await sendToAdmin(msg, inlineKeyboard);
-    }
-  } catch (e) {
-    console.error('❌ 상태 메시지 출력 실패:', e.message);
+  const keyboard = {
+    inline_keyboard: []
+  };
+
+  if (showLangUI && langTarget === 'choi') {
+    msg += `
+🌐 <b>최실장 언어 선택:</b>`;
+    keyboard.inline_keyboard.push([
+      { text: '🇰🇷 한국어', callback_data: 'lang_choi_ko' },
+      { text: '🇺🇸 English', callback_data: 'lang_choi_en' },
+      { text: '🇨🇳 中文', callback_data: 'lang_choi_zh' },
+      { text: '🇯🇵 日本語', callback_data: 'lang_choi_ja' }
+    ]);
+  }
+
+  if (showLangUI && langTarget === 'ming') {
+    msg += `
+🌐 <b>밍밍 언어 선택:</b>`;
+    keyboard.inline_keyboard.push([
+      { text: '🇰🇷 한국어', callback_data: 'lang_ming_ko' },
+      { text: '🇺🇸 English', callback_data: 'lang_ming_en' },
+      { text: '🇨🇳 中文', callback_data: 'lang_ming_zh' },
+      { text: '🇯🇵 日本語', callback_data: 'lang_ming_ja' }
+    ]);
+  }
+
+  // 메인 키보드 항상 유지
+  keyboard.inline_keyboard.push(
+    [
+      { text: '▶️ 최실장 켜기', callback_data: 'choi_on' },
+      { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }
+    ],
+    [
+      { text: '▶️ 밍밍 켜기', callback_data: 'ming_on' },
+      { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }
+    ],
+    [
+      { text: '🌐 최실장 언어선택', callback_data: 'lang_choi' },
+      { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }
+    ],
+    [
+      { text: '🛰 상태 확인', callback_data: 'status' },
+      { text: '📡 더미 상태', callback_data: 'dummy_status' }
+    ]
+  );
+
+  if (messageId) {
+    await editMessage(chatId, messageId, msg, keyboard);
+  } else {
+    await sendToAdmin(msg, keyboard);
   }
 };
