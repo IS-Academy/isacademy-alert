@@ -59,6 +59,23 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   return { entryCount, entryAvg };
 }
 
+// ✅ 전체 타임프레임 진입 요약 (for 메시지)
+function getAllEntryInfo(symbol, type) {
+  const entryMap = getEntryMapByType(type);
+  if (!entryMap || !entryMap[symbol]) return [];
+
+  return Object.entries(entryMap[symbol])
+    .map(([tf, entries]) => {
+      const entryCount = entries.length;
+      const entryAvg = entryCount > 0
+        ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
+        : 'N/A';
+      return { timeframe: tf, entryCount, entryAvg };
+    })
+    .filter(e => e.entryCount > 0)
+    .sort((a, b) => parseInt(a.timeframe) - parseInt(b.timeframe));
+}
+
 // ✅ 더미 타임
 let lastDummyTime = null;
 
@@ -97,6 +114,7 @@ module.exports = {
   addEntry,
   clearEntries,
   getEntryInfo,
+  getAllEntryInfo,
   updateLastDummyTime,
   getLastDummyTime,
   loadBotState,
