@@ -248,6 +248,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   };
 
   const dict = translations[lang] || translations.ko;
+  const normalizedType = normalizeType(type);
   const signal = dict.symbols[normalizedType] || '#📢알 수 없는 신호';
   const L = dict.labels;
 
