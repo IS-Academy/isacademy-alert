@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (통합 상태 메시지 기반 최종본)
+// ✅ webhookHandler.js (최종 완성본) - /summary /pnl 통합 포함
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -7,6 +7,8 @@ const dummyHandler = require("./dummyHandler");
 const {
   generateAlertMessage,
   getWaitingMessage,
+  generateSummaryMessage,
+  generatePnLMessage,
   addEntry,
   clearEntries,
   getEntryInfo,
@@ -51,7 +53,7 @@ function getUserTimezone(chatId) {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
-  // ✅ 더미 웹훅
+  // ✅ 더미 헬스체크
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
@@ -73,12 +75,11 @@ module.exports = async function webhookHandler(req, res) {
       if (["showSup", "showRes", "isBigSup", "isBigRes"].includes(type)) {
         addEntry(symbol, type, price, timeframe);
       }
-
       if (["exitLong", "exitShort"].includes(type)) {
         clearEntries(symbol, type, timeframe);
       }
 
-      const { entryCount = 0, entryAvg = 0 } = getEntryInfo(symbol, type, timeframe) || {};
+      const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
       const msgChoi = type.startsWith("Ready_")
         ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langChoi)
@@ -91,10 +92,10 @@ module.exports = async function webhookHandler(req, res) {
       if (global.choiEnabled) await sendToChoi(msgChoi);
       if (global.mingEnabled) await sendToMing(msgMing);
 
-      if (!res.headersSent) res.status(200).send("✅ 알림 전송 완료");
+      if (!res.headersSent) res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
-      console.error("❌ 알림 처리 오류:", err.message);
-      if (!res.headersSent) res.status(500).send("알림 처리 오류");
+      console.error("❌ 텔레그램 전송 실패:", err.message);
+      if (!res.headersSent) res.status(500).send("서버 오류");
     }
     return;
   }
@@ -106,6 +107,7 @@ module.exports = async function webhookHandler(req, res) {
     const messageId = update.callback_query.message.message_id;
     const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
+    const lang = getUserLang(chatId);
 
     if (cmd === "lang_choi" || cmd === "lang_ming") {
       const bot = cmd === "lang_choi" ? "choi" : "ming";
@@ -118,7 +120,7 @@ module.exports = async function webhookHandler(req, res) {
       const [_, bot, langCode] = cmd.split("_");
       const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
       langManager.setUserLang(targetId, langCode);
-      await sendBotStatus(timeStr, '', chatId, messageId); // 상태창 덮어쓰기
+      await sendBotStatus(timeStr, '', chatId, messageId);
       return;
     }
 
@@ -129,14 +131,15 @@ module.exports = async function webhookHandler(req, res) {
       if (cmd === "ming_off") global.mingEnabled = false;
 
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr, '', chatId, messageId); // 상태창 갱신
+      await sendBotStatus(timeStr, '', chatId, messageId);
       return;
     }
 
-    return res.sendStatus(200);
+    res.sendStatus(200);
+    return;
   }
 
-  // ✅ 텍스트 명령어 처리
+  // ✅ 텍스트 명령어 처리 (/summary, /pnl 포함)
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const chatId = update.message.chat.id;
@@ -147,24 +150,41 @@ module.exports = async function webhookHandler(req, res) {
     res.sendStatus(200);
 
     if (["/help", "/도움말"].includes(command)) {
-      await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off");
+      await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off /summary /pnl");
       return;
     }
 
     if (["/start", "/settings"].includes(command)) {
-      await sendBotStatus(timeStr); // 상태 메시지 1개로 처리
+      await sendBotStatus(timeStr);
       return;
     }
 
-    if (["/setlang"].some((cmd) => command.startsWith(cmd))) {
+    if (command.startsWith("/setlang")) {
       const input = command.split(" ")[1];
       await handleSetLang(chatId, input, lang, timeStr);
       return;
     }
 
-    if (["/settz"].some((cmd) => command.startsWith(cmd))) {
+    if (command.startsWith("/settz")) {
       const input = command.split(" ")[1];
       await handleSetTz(chatId, input, lang, timeStr);
+      return;
+    }
+
+    if (command === "/summary") {
+      const entryList = require("./utils").getAllEntries?.() || [];
+      const summary = generateSummaryMessage(entryList, lang);
+      await sendToAdmin(summary);
+      return;
+    }
+
+    if (command.startsWith("/pnl")) {
+      const args = command.split(" ");
+      const symbol = args[1] || "BTCUSDT.P";
+      const pnl = parseFloat(args[2] || 0);
+      const avg = args[3] || 'N/A';
+      const msg = generatePnLMessage({ symbol, pnlPercent: pnl, entryAvg: avg, lang });
+      await sendToAdmin(msg);
       return;
     }
 
