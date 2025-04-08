@@ -18,14 +18,14 @@ function escapeHTML(str) {
 
 // ✅ 타입 매핑 (기본 타입 ➜ 줄임 타입)
 const TYPE_MAP = {
-  show_Support: 'showSup',
-  show_Resistance: 'showRes',
-  is_Big_Support: 'isBigSup',
-  is_Big_Resistance: 'isBigRes',
-  Ready_show_Support: 'Ready_showSup',
-  Ready_show_Resistance: 'Ready_showRes',
-  Ready_is_Big_Support: 'Ready_isBigSup',
-  Ready_is_Big_Resistance: 'Ready_isBigRes'
+  showSup: 'showSup',
+  showRes: 'showRes',
+  isBigSup: 'isBigSup',
+  isBigRes: 'isBigRes',
+  Ready_showSup: 'Ready_showSup',
+  Ready_showRes: 'Ready_showRes',
+  Ready_isBigSup: 'Ready_isBigSup',
+  Ready_isBigRes: 'Ready_isBigRes'
 };
 
 function normalizeType(type) {
@@ -119,10 +119,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         Ready_showRes: "#❤️숏 대기 📉관점공유",
         Ready_isBigSup: "#🚀강한 롱 대기 📈관점공유",
         Ready_isBigRes: "#🛸강한 숏 대기 📉관점공유",
-        show_Support: "#🩵롱 진입🩵관점공유🩵",
-        show_Resistance: "#❤️숏 진입❤️관점공유❤️",
-        is_Big_Support: "#🚀강한 롱 진입🚀관점공유🚀",
-        is_Big_Resistance: "#🛸강한 숏 진입🛸관점공유🛸",
+        showSup: "#🩵롱 진입🩵관점공유🩵",
+        showRes: "#❤️숏 진입❤️관점공유❤️",
+        isBigSup: "#🚀강한 롱 진입🚀관점공유🚀",
+        isBigRes: "#🛸강한 숏 진입🛸관점공유🛸",
         Ready_exitLong: "#💲롱 청산 준비 📈관점공유",
         Ready_exitShort: "#💲숏 청산 준비 📉관점공유",
         exitLong: "#💰롱 청산📈관점공유💰",
@@ -152,10 +152,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         Ready_showRes: "#❤️Short Setup 📉Perspective",
         Ready_isBigSup: "#🚀Strong Long Setup 📈Perspective",
         Ready_isBigRes: "#🛸Strong Short Setup 📉Perspective",
-        show_Support: "#🩵Long Entry🩵Perspective🩵",
-        show_Resistance: "#❤️Short Entry❤️Perspective❤️",
-        is_Big_Support: "#🚀Strong Long Entry🚀Perspective🚀",
-        is_Big_Resistance: "#🛸Strong Short Entry🛸Perspective🛸",
+        showSup: "#🩵Long Entry🩵Perspective🩵",
+        showRes: "#❤️Short Entry❤️Perspective❤️",
+        isBigSup: "#🚀Strong Long Entry🚀Perspective🚀",
+        isBigRes: "#🛸Strong Short Entry🛸Perspective🛸",
         Ready_exitLong: "#💲Exit Long Ready 📈Perspective",
         Ready_exitShort: "#💲Exit Short Ready 📉Perspective",
         exitLong: "#💰Exit Long📈Perspective💰",
@@ -185,10 +185,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         Ready_showRes: "#❤️做空准备 📉观点分享",
         Ready_isBigSup: "#🚀强烈做多准备 📈观点分享",
         Ready_isBigRes: "#🛸强烈做空准备 📉观点分享",
-        show_Support: "#🩵做多进场🩵观点分享🩵",
-        show_Resistance: "#❤️做空进场❤️观点分享❤️",
-        is_Big_Support: "#🚀强烈做多进场🚀观点分享🚀",
-        is_Big_Resistance: "#🛸强烈做空进场🛸观点分享🛸",
+        showSup: "#🩵做多进场🩵观点分享🩵",
+        showRes: "#❤️做空进场❤️观点分享❤️",
+        isBigSup: "#🚀强烈做多进场🚀观点分享🚀",
+        isBigRes: "#🛸强烈做空进场🛸观点分享🛸",
         Ready_exitLong: "#💲平多准备 📈观点分享",
         Ready_exitShort: "#💲平空准备 📉观点分享",
         exitLong: "#💰平多📈观点分享💰",
@@ -218,10 +218,10 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
         Ready_showRes: "#❤️ショート準備 📉視点共有",
         Ready_isBigSup: "#🚀強ロング準備 📈視点共有",
         Ready_isBigRes: "#🛸強ショート準備 📉視点共有",
-        show_Support: "#🩵ロングエントリー🩵視点共有🩵",
-        show_Resistance: "#❤️ショートエントリー❤️視点共有❤️",
-        is_Big_Support: "#🚀強ロングエントリー🚀視点共有🚀",
-        is_Big_Resistance: "#🛸強ショートエントリー🛸視点共有🛸",
+        showSup: "#🩵ロングエントリー🩵視点共有🩵",
+        showRes: "#❤️ショートエントリー❤️視点共有❤️",
+        isBigSup: "#🚀強ロングエントリー🚀視点共有🚀",
+        isBigRes: "#🛸強ショートエントリー🛸視点共有🛸",
         Ready_exitLong: "#💲ロング利確準備 📈視点共有",
         Ready_exitShort: "#💲ショート利確準備 📉視点共有",
         exitLong: "#💰ロング利確📈視点共有💰",
@@ -309,4 +309,3 @@ module.exports = {
   generateAlertMessage,
   getWaitingMessage
 };
-
