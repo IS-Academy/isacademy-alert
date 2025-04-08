@@ -30,6 +30,18 @@ const {
 
 const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
 
+// ✅ 줄임 타입 매핑
+const TYPE_MAP = {
+  show_Support: 'showSup',
+  show_Resistance: 'showRes',
+  is_Big_Support: 'isBigSup',
+  is_Big_Resistance: 'isBigRes',
+  Ready_show_Support: 'Ready_showSup',
+  Ready_show_Resistance: 'Ready_showRes',
+  Ready_is_Big_Support: 'Ready_isBigSup',
+  Ready_is_Big_Resistance: 'Ready_isBigRes'
+};
+
 // ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
 function getUserLang(chatId) {
   const lang = langManager.getUserConfig(chatId)?.lang;
@@ -60,28 +72,29 @@ module.exports = async function webhookHandler(req, res) {
       const ts = Number.isFinite(Number(alert.ts)) ? Number(alert.ts) : Math.floor(Date.now() / 1000);
       const symbol = alert.symbol || 'Unknown';
       const timeframe = alert.timeframe || '⏳';
-      const type = alert.type || '📢';
+      let type = alert.type || '📢';
+      type = TYPE_MAP[type] || type; // ← 줄임 타입으로 매핑 적용
       const parsedPrice = parseFloat(alert.price);
       const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-      if ([ 'show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance' ].includes(type)) {
+      if ([ 'showSup', 'showRes', 'isBigSup', 'isBigRes' ].includes(type)) {
         addEntry(symbol, type, parsedPrice, timeframe);
       }
       if ([ 'exitLong', 'exitShort' ].includes(type)) {
         clearEntries(symbol, type, timeframe);
       }
 
-      const { entryCount, avgEntry } = getEntryInfo(symbol, type, timeframe);
+      const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
       const msgChoi = type.startsWith('Ready_')
         ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, avgEntry, entryLimit: MAX_ENTRY_PERCENT });
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, entryAvg, entryLimit: MAX_ENTRY_PERCENT });
 
       const msgMing = type.startsWith('Ready_')
         ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langMing)
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, avgEntry, entryLimit: MAX_ENTRY_PERCENT });
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg, entryLimit: MAX_ENTRY_PERCENT });
 
       if (global.choiEnabled) {
         await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
