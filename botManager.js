@@ -1,4 +1,4 @@
-// ✅ botManager.js 최종 수정본 (HTML 특수문자 처리 포함)
+// ✅ botManager.js
 const axios = require('axios');
 const config = require('./config');
 
@@ -27,17 +27,12 @@ function getLangKeyboard(bot) {
   };
 }
 
-// ✅ HTML 특수문자 변환 필수
-function escapeHTML(text) {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
   try {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
-      text: escapeHTML(text),
+      text,
       parse_mode: 'HTML',
       reply_markup: replyMarkup || undefined
     });
@@ -52,7 +47,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
-      text: escapeHTML(text),
+      text,
       parse_mode: 'HTML',
       reply_markup: replyMarkup || inlineKeyboard
     });
