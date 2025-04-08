@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js
+// ✅ webhookHandler.js (최종 정리본)
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -52,11 +52,13 @@ function getUserTimezone(chatId) {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
+  // ✅ 더미 헬스체크
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
   }
 
+  // ✅ 트레이딩뷰 알림 처리
   if (update.symbol || update.type) {
     try {
       const alert = update;
@@ -97,6 +99,7 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
+  // ✅ 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
@@ -105,12 +108,11 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     const lang = getUserLang(chatId);
 
-    res.sendStatus(200);
+    res.sendStatus(200); // ✅ 즉시 응답
 
     try {
       if (cmd === "lang_choi" || cmd === "lang_ming") {
-        const target = cmd === "lang_choi" ? 'choi' : 'ming';
-        await sendBotStatus(timeStr, '', chatId, messageId, { showLangUI: true, targetBot: target });
+        await sendBotStatus(timeStr, '', chatId, messageId, cmd); // ✅ 언어선택 UI 포함 갱신
         return;
       }
 
@@ -118,7 +120,7 @@ module.exports = async function webhookHandler(req, res) {
         const [_, bot, langCode] = cmd.split("_");
         const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendBotStatus(timeStr, '', chatId, messageId);
+        await sendBotStatus(timeStr, '', chatId, messageId); // ✅ 언어 선택 후 상태만 갱신
         return;
       }
 
@@ -143,6 +145,7 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
+  // ✅ 텍스트 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
     const chatId = update.message.chat.id;
@@ -152,7 +155,7 @@ module.exports = async function webhookHandler(req, res) {
 
     res.sendStatus(200);
 
-    if (["/help", "/·도움말"].includes(command)) {
+    if (["/help", "/도움말"].includes(command)) {
       await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off /summary /pnl");
       return;
     }
