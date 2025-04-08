@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js - 인라인 버튼 모든 명령 즉시 응답 & 상태 업데이트 안정화
+// ✅ webhookHandler.js (언어선택도 상태 메시지로 갱신)
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -108,13 +108,11 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     const lang = getUserLang(chatId);
 
-    res.sendStatus(200); // ✅ 즉시 응답 후 처리
+    res.sendStatus(200); // ✅ 즉시 응답
 
     try {
       if (cmd === "lang_choi" || cmd === "lang_ming") {
-        const bot = cmd === "lang_choi" ? "choi" : "ming";
-        const label = bot === "choi" ? "최실장" : "밍밍";
-        await editMessage('admin', chatId, messageId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
+        await sendBotStatus(timeStr, '', chatId, messageId); // ✅ 메시지 유지하며 언어 버튼 표시
         return;
       }
 
@@ -122,7 +120,7 @@ module.exports = async function webhookHandler(req, res) {
         const [_, bot, langCode] = cmd.split("_");
         const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendBotStatus(timeStr, '', chatId, messageId);
+        await sendBotStatus(timeStr, '', chatId, messageId); // ✅ 설정 후 즉시 메시지 업데이트
         return;
       }
 
