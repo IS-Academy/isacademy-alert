@@ -54,3 +54,4 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
     const { sendTextToBot } = require('../botManager');
     await sendTextToBot('admin', chatId, statusMsg, keyboard);
   }
+};
