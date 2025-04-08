@@ -1,7 +1,7 @@
-// ✅ status.js - 메시지 중복 호출 제거, 빠른 응답 최적화
+// ✅ status.js (키보드 정상 출력 + 빠른 응답 개선 + 한국어 요일 지원)
 
-const { getTimeString, getLastDummyTime, saveBotState } = require('../utils');
-const { editMessage, inlineKeyboard } = require('../botManager');
+const { getTimeString, getLastDummyTime } = require('../utils');
+const { editMessage, inlineKeyboard, sendToAdmin } = require('../botManager');
 const config = require('../config');
 const langManager = require('../langConfigManager');
 const moment = require('moment-timezone');
@@ -45,7 +45,6 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     if (messageId) {
       await editMessage('admin', chatId, messageId, msg, inlineKeyboard);
     } else {
-      const { sendToAdmin } = require('../botManager');
       await sendToAdmin(msg, inlineKeyboard);
     }
   } catch (e) {
