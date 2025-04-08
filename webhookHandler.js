@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (최종 최적화 수정본)
+// ✅ webhookHandler.js (최종 완성)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -34,6 +34,13 @@ const TYPE_MAP = {
 
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
+}
+
+function formatDate(lang) {
+  const now = moment().tz(config.DEFAULT_TIMEZONE);
+  const dayKey = now.format('ddd');
+  const dayTranslated = translations[lang].days[dayKey];
+  return now.format(`YY.MM.DD (${dayTranslated})`);
 }
 
 module.exports = async function webhookHandler(req, res) {
@@ -81,8 +88,8 @@ module.exports = async function webhookHandler(req, res) {
       const msgChoi = generateMsg(langChoi);
       const msgMing = generateMsg(langMing);
 
-      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi, { parse_mode: 'HTML' });
-      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing, { parse_mode: 'HTML' });
+      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
+      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
       return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
@@ -101,15 +108,16 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString();
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      if (cmd === "choi_on") global.choiEnabled = true;
-      else if (cmd === "choi_off") global.choiEnabled = false;
-
-      if (cmd === "ming_on") global.mingEnabled = true;
-      else if (cmd === "ming_off") global.mingEnabled = false;
-
+      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
+      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr, '', chatId, messageId);
     } else if (["lang_choi", "lang_ming", "status", "dummy_status"].includes(cmd) || cmd.startsWith("lang_")) {
+      if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
+        const [_, bot, langCode] = cmd.split("_");
+        const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+        langManager.setUserLang(targetId, langCode);
+      }
       await sendBotStatus(timeStr, cmd, chatId, messageId);
     }
 
