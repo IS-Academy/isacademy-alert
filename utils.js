@@ -2,6 +2,11 @@
 
 const fs = require('fs');
 const moment = require('moment-timezone');
+const { getTranslation } = require('./lang');
+const { sendToAdmin, sendToChoi, sendToMing } = require('./botManager');
+const config = require('./config');
+
+const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
 
 // ✅ 템플릿 치환
 function replaceTemplate(str, values = {}) {
@@ -26,7 +31,7 @@ function getEntryMapByType(type) {
   return null;
 }
 
-function addEntry(symbol, type, price, timeframe = 'default') {
+function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
   const entryMap = getEntryMapByType(type);
   if (!entryMap) return;
 
@@ -34,9 +39,21 @@ function addEntry(symbol, type, price, timeframe = 'default') {
   if (!entryMap[symbol][timeframe]) entryMap[symbol][timeframe] = [];
 
   const parsed = parseFloat(price);
-  if (Number.isFinite(parsed)) {
-    entryMap[symbol][timeframe].push(parsed);
+  if (!Number.isFinite(parsed)) return;
+
+  // ✅ 현재 진입 개수 확인
+  const currentCount = entryMap[symbol][timeframe].length;
+  const currentPercent = currentCount + 1; // 1회 = 1%
+
+  if (currentPercent > MAX_ENTRY_PERCENT) {
+    const key = isLongType(type) ? 'entryLimitReachedLong' : 'entryLimitReachedShort';
+    const warning = getTranslation(lang, 'labels', key);
+    if (global.choiEnabled) sendToChoi(warning);
+    if (global.mingEnabled) sendToMing(warning);
+    return; // 포화 상태이면 진입하지 않음
   }
+
+  entryMap[symbol][timeframe].push(parsed);
 }
 
 function clearEntries(symbol, type, timeframe = 'default') {
