@@ -1,51 +1,38 @@
-// ✅ status.js (언어선택 버튼 포함 최종본)
+// ✅ status.js (언어선택 버튼 포함 완성본)
+const moment = require("moment-timezone");
+const config = require("../config");
+const langManager = require("../langConfigManager");
+const { getLastDummyTime } = require("../utils");
+const { sendToAdmin, editMessage, inlineKeyboard } = require("../botManager");
 
-const moment = require('moment-timezone');
-const config = require('../config');
-const langManager = require('../langConfigManager');
-const { getTimeString, getLastDummyTime } = require('../utils');
-const { sendToAdmin, editMessage } = require('../botManager');
-
-module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, langTarget = null) {
+module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = null, messageId = null, showLangUI = false, langTarget = null) {
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
   const tz = langManager.getUserConfig(config.ADMIN_CHAT_ID)?.tz || config.DEFAULT_TIMEZONE;
 
-  const now = getTimeString(tz);
-  const dateFormatted = moment().tz(tz).format('YY.MM.DD (dd)');
-  const dummyTime = getLastDummyTime();
+  const now = moment().tz(tz);
+  const timeText = now.format("HH:mm:ss");
+  const dateText = now.format("YY.MM.DD (ddd)");
+  const dummyText = getLastDummyTime();
 
-  const showLangUI = langTarget === 'choi' || langTarget === 'ming';
+  const emoji = global.choiEnabled ? '🟢' : '🔴';
+  const emoji2 = global.mingEnabled ? '🟢' : '🔴';
+  const langTagChoi = `(${langChoi})`;
+  const langTagMing = `(${langMing})`;
 
-  let msg =
-    `🎯 <b>IS 관리자봇 패널</b>
-` +
-    `───────────────
-` +
-    `📍 <b>현재 상태:</b>🌔 <code>${now}</code>
+  let msg = '';
+  msg += `🎯 <b>IS 관리자봇 패널</b>\n`;
+  msg += `┌ <b>현재 상태:</b> (🕓 ${timeText})\n`;
+  msg += `├ 🧑‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} ${langTagChoi}\n`;
+  msg += `└ 🧑‍🚀 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} ${langTagMing}\n`;
+  msg += `📅 ${dateText}\n`;
+  msg += `🛰 더미 수신: ${dummyText.includes('❌') ? '❌ 기록 없음' : `✅ ${dummyText}`}\n`;
 
-` +
-    `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)
-` +
-    `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)
-
-` +
-    `📅 ${dateFormatted}
-` +
-    `🛰 더미 수신: ${dummyTime === '❌ 기록 없음' ? '❌ <i>기록 없음</i>' : `✅ <code>${dummyTime}</code>`}
-` +
-    (suffix ? `
-${suffix}` : '') +
-    `
-───────────────`;
-
-  const keyboard = {
-    inline_keyboard: []
-  };
+  // ✅ 언어 선택 UI 추가
+  const keyboard = { inline_keyboard: [...inlineKeyboard.inline_keyboard] };
 
   if (showLangUI && langTarget === 'choi') {
-    msg += `
-🌐 <b>최실장 언어 선택:</b>`;
+    msg += `\n🌐 <b>최실장 언어 선택:</b>`;
     keyboard.inline_keyboard.push([
       { text: '🇰🇷 한국어', callback_data: 'lang_choi_ko' },
       { text: '🇺🇸 English', callback_data: 'lang_choi_en' },
@@ -55,8 +42,7 @@ ${suffix}` : '') +
   }
 
   if (showLangUI && langTarget === 'ming') {
-    msg += `
-🌐 <b>밍밍 언어 선택:</b>`;
+    msg += `\n🌐 <b>밍밍 언어 선택:</b>`;
     keyboard.inline_keyboard.push([
       { text: '🇰🇷 한국어', callback_data: 'lang_ming_ko' },
       { text: '🇺🇸 English', callback_data: 'lang_ming_en' },
@@ -65,29 +51,11 @@ ${suffix}` : '') +
     ]);
   }
 
-  // 메인 키보드 항상 유지
-  keyboard.inline_keyboard.push(
-    [
-      { text: '▶️ 최실장 켜기', callback_data: 'choi_on' },
-      { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }
-    ],
-    [
-      { text: '▶️ 밍밍 켜기', callback_data: 'ming_on' },
-      { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }
-    ],
-    [
-      { text: '🌐 최실장 언어선택', callback_data: 'lang_choi' },
-      { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }
-    ],
-    [
-      { text: '🛰 상태 확인', callback_data: 'status' },
-      { text: '📡 더미 상태', callback_data: 'dummy_status' }
-    ]
-  );
+  if (suffix) msg += `\n${suffix}`;
 
-  if (messageId) {
+  if (chatId && messageId) {
     await editMessage(chatId, messageId, msg, keyboard);
   } else {
-    await sendToAdmin(msg, keyboard);
+    await sendToAdmin(msg, inlineKeyboard);
   }
 };
