@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js
+// ✅ webhookHandler.js (최종본 수정)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -8,13 +8,14 @@ const {
   clearEntries,
   getEntryInfo,
   getTimeString,
+  getLastDummyTime,
   saveBotState
 } = require("./utils");
 
 const { generateAlertMessage } = require("./AlertMessage");
 const { sendToChoi, sendToMing } = require("./botManager");
 const sendBotStatus = require("./commands/status");
-const { getTranslation } = require("./lang");
+const { getTranslation, translations } = require("./lang");
 
 const TYPE_MAP = {
   show_Support: 'showSup',
