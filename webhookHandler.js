@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (최종본 수정)
+// ✅ webhookHandler.js (최종 최적화 수정본)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -95,9 +95,10 @@ module.exports = async function webhookHandler(req, res) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
     const messageId = update.callback_query.message.message_id;
-    const timeStr = getTimeString();
 
     res.sendStatus(200);
+
+    const timeStr = getTimeString();
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       if (cmd === "choi_on") global.choiEnabled = true;
@@ -108,6 +109,8 @@ module.exports = async function webhookHandler(req, res) {
 
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr, '', chatId, messageId);
+    } else if (["lang_choi", "lang_ming", "status", "dummy_status"].includes(cmd) || cmd.startsWith("lang_")) {
+      await sendBotStatus(timeStr, cmd, chatId, messageId);
     }
 
     return;
