@@ -46,13 +46,11 @@ function formatDate(lang) {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
-  // ✅ 더미 트리거
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
   }
 
-  // ✅ 실시간 트레이딩 알림 처리
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
@@ -108,7 +106,6 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query?.message?.chat?.id;
@@ -141,7 +138,6 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
-  // ✅ 일반 메시지 (예: /status)
   if (update.message && update.message.text) {
     const chatId = update.message.chat.id;
     console.log(`💬 [일반 메시지 수신] chatId=${chatId}, text=${update.message.text}`);
@@ -152,4 +148,3 @@ module.exports = async function webhookHandler(req, res) {
 
   res.sendStatus(200);
 };
-
