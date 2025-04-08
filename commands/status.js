@@ -59,11 +59,11 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
 
   let statusMsg = `📡 <b>IS 관리자봇 패널</b>\n`;
   statusMsg += `──────────────────────\n`;
-  statusMsg += `📍 <b>현재 상태:</b> (🕐 ${timeFormatted})\n\n`;
-  statusMsg += `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (${langChoi})\n`;
-  statusMsg += `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (${langMing})\n\n`;
+  statusMsg += `📍 <b>현재 상태:</b> 🕐 <code>${timeFormatted}</code>\n\n`;
+  statusMsg += `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
+  statusMsg += `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
   statusMsg += `📅 <b>${dateFormatted}</b>\n`;
-  statusMsg += `🧪 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} ${dummyTime} ${elapsedText}\n`;
+  statusMsg += `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTime}</code> ${elapsedText}\n`;
   statusMsg += `──────────────────────`;
 
   try {
