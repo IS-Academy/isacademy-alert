@@ -1,16 +1,29 @@
 // commands/status.js
-const { sendTextToTelegram, getInlineKeyboard } = require('../utils');
+const { getTimeString } = require('../utils');
+const { sendToAdmin, inlineKeyboard } = require('../botManager');
 const config = require('../config');
+const moment = require('moment-timezone');
+const langManager = require('../langConfigManager');
 
-module.exports = async function sendBotStatus(timeStr, prefix = '') {
-  const langChoi = require('../lang').getUserLang(config.TELEGRAM_CHAT_ID);
-  const langMing = require('../lang').getUserLang(config.TELEGRAM_CHAT_ID_A);
+module.exports = async function sendBotStatus(timeStr, suffix = '') {
+  const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
+  const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+  const tz = langManager.getUserConfig(config.ADMIN_CHAT_ID)?.tz || config.DEFAULT_TIMEZONE;
+
+  const now = getTimeString(tz);
 
   const statusMsg =
-    `${prefix ? prefix + '\n' : ''}` +
-    `✅ 상태 (🕒 ${timeStr})\n` +
-    `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
-    `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
+    `📡 <b>IS 관리자 봇 상태</b>\n` +
+    `──────────────────────\n` +
+    `🕒 현재 시간: <code>${now}</code>\n` +
+    `🌍 시간대: <code>${tz}</code>\n` +
+    `🌐 최실장 언어: <code>${langChoi}</code>\n` +
+    `🌐 밍밍 언어: <code>${langMing}</code>\n` +
+    `✅ 봇 작동 상태:\n` +
+    `├ 최실장: ${global.choiEnabled ? '🟢 ON' : '🔴 OFF'}\n` +
+    `└ 밍밍: ${global.mingEnabled ? '🟢 ON' : '🔴 OFF'}\n` +
+    (suffix ? `\n${suffix}` : '') +
+    `\n──────────────────────`;
 
-  await sendTextToTelegram(statusMsg, getInlineKeyboard());
+  await sendToAdmin(statusMsg, inlineKeyboard);
 };
