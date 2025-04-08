@@ -6,6 +6,16 @@ const config = require('./config');
 
 let lastDummyTime = null;
 
+// ✅ 롱 타입 여부 판별 함수
+function isLongType(type) {
+  return ['showSup', 'isBigSup', 'Ready_showSup', 'Ready_isBigSup'].includes(type);
+}
+
+// ✅ 숏 타입 여부 판별 함수
+function isShortType(type) {
+  return ['showRes', 'isBigRes', 'Ready_showRes', 'Ready_isBigRes'].includes(type);
+}
+
 // ✅ 상태 저장 & 불러오기
 const STATE_FILE = './bot_state.json';
 
@@ -131,9 +141,12 @@ const shortEntries = {};  // 예: { "BTCUSDT.P": { "5m": [78000] } }
 
 // ✅ 진입 저장
 function addEntry(symbol, type, price, timeframe = 'default') {
-  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  if (!entryMap) return;
+
   if (!entryMap[symbol]) entryMap[symbol] = {};
   if (!entryMap[symbol][timeframe]) entryMap[symbol][timeframe] = [];
+
   const parsed = parseFloat(price);
   if (Number.isFinite(parsed)) {
     entryMap[symbol][timeframe].push(parsed);
@@ -142,13 +155,17 @@ function addEntry(symbol, type, price, timeframe = 'default') {
 
 // ✅ 청산 시 삭제
 function clearEntries(symbol, type, timeframe = 'default') {
-  const entryMap = type.includes("Support") ? longEntries : shortEntries;
-  if (entryMap[symbol]) entryMap[symbol][timeframe] = [];
+  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  if (entryMap && entryMap[symbol]) {
+    entryMap[symbol][timeframe] = [];
+  }
 }
 
 // ✅ 평균 단가 및 진입 비율 계산
 function getEntryInfo(symbol, type, timeframe = 'default') {
-  const entryMap = type.includes("Support") ? longEntries : shortEntries;
+  const entryMap = isLongType(type) ? longEntries : isShortType(type) ? shortEntries : null;
+  if (!entryMap) return { entryCount: 0, entryAvg: 'N/A' };
+
   const entries = entryMap[symbol]?.[timeframe] || [];
   const entryCount = entries.length;
   const entryAvg = entryCount > 0
@@ -156,6 +173,7 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
     : 'N/A';
   return { entryCount, entryAvg };
 }
+
 
 // ✅ 마지막 더미 수신 시간 - 메모리 기반
 function updateLastDummyTime(time) {
