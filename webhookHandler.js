@@ -53,8 +53,6 @@ module.exports = async function webhookHandler(req, res) {
       const type = TYPE_MAP[update.type] || update.type;
       const price = parseFloat(update.price) || "N/A";
 
-      console.log(`📥 [신호 수신] type=${type}, symbol=${symbol}, timeframe=${timeframe}, price=${price}, ts=${ts}`);
-
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
@@ -76,14 +74,8 @@ module.exports = async function webhookHandler(req, res) {
         lang: langMing, entryCount, entryAvg
       });
 
-      if (global.choiEnabled && msgChoi.trim()) {
-        console.log(`📤 [최실장에게 전송] lang=${langChoi}, chatId=${config.TELEGRAM_CHAT_ID}`);
-        await sendToChoi(msgChoi);
-      }
-      if (global.mingEnabled && msgMing.trim()) {
-        console.log(`📤 [밍밍에게 전송] lang=${langMing}, chatId=${config.TELEGRAM_CHAT_ID_A}`);
-        await sendToMing(msgMing);
-      }
+      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
+      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
       return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
@@ -97,14 +89,12 @@ module.exports = async function webhookHandler(req, res) {
     const chatId = update.callback_query?.message?.chat?.id;
     const messageId = update.callback_query?.message?.message_id;
 
-    console.log(`🔘 [인라인 클릭] cmd=${cmd}, chatId=${chatId}, messageId=${messageId}`);
+    res.sendStatus(200);
 
     if (!chatId) {
       console.error('❗ chatId 없음: callback_query.message.chat.id 확인 필요');
-      return res.sendStatus(400);
+      return;
     }
-
-    res.sendStatus(200);
 
     const lang = getUserLang(chatId);
     const timeStr = getTimeString();
@@ -117,7 +107,6 @@ module.exports = async function webhookHandler(req, res) {
       const [_, bot, langCode] = cmd.split("_");
       const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
       langManager.setUserLang(targetId, langCode);
-      console.log(`🌐 [언어 변경] 대상=${bot}, 언어=${langCode}`);
     }
 
     await sendBotStatus(timeStr, cmd, chatId, messageId);
@@ -126,9 +115,17 @@ module.exports = async function webhookHandler(req, res) {
 
   if (update.message && update.message.text) {
     const chatId = update.message.chat.id;
-    console.log(`💬 [일반 메시지 수신] chatId=${chatId}, text=${update.message.text}`);
+    const messageText = update.message.text.trim();
+    const timeStr = getTimeString();
+    const lower = messageText.toLowerCase();
+
     res.sendStatus(200);
-    await sendBotStatus(getTimeString(), '', chatId);
+
+    if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
+      await sendBotStatus(timeStr, '', chatId);
+    } else {
+      await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
+    }
     return;
   }
 
