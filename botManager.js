@@ -1,4 +1,4 @@
-// ✅ botManager.js
+// ✅ botManager.js 최종 수정본 (HTML 특수문자 처리 포함)
 const axios = require('axios');
 const config = require('./config');
 
@@ -16,7 +16,6 @@ const mainKeyboard = {
   resize_keyboard: true
 };
 
-// ✅ 반드시 포함되어야 할 함수
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -28,17 +27,22 @@ function getLangKeyboard(bot) {
   };
 }
 
+// ✅ HTML 특수문자 변환 필수
+function escapeHTML(text) {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
   try {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
-      text,
+      text: escapeHTML(text),
       parse_mode: 'HTML',
       reply_markup: replyMarkup || undefined
     });
   } catch (err) {
-    console.error(`❌ sendTextToBot 실패:`, err.message);
+    console.error(`❌ sendTextToBot 실패:`, err.response?.data?.description || err.message);
   }
 }
 
@@ -48,7 +52,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
-      text,
+      text: escapeHTML(text),
       parse_mode: 'HTML',
       reply_markup: replyMarkup || inlineKeyboard
     });
@@ -76,5 +80,5 @@ module.exports = {
   editMessage,
   inlineKeyboard,
   mainKeyboard,
-  getLangKeyboard // 반드시 추가되어야 함
+  getLangKeyboard
 };
