@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (최종 완성본) - /summary /pnl 통합 포함
+// ✅ webhookHandler.js - 인라인 버튼 모든 명령 즉시 응답 & 상태 업데이트 안정화
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -18,9 +18,8 @@ const {
 } = require("./utils");
 
 const {
-  sendTextToBot,
-  editMessage,
   sendToAdmin,
+  editMessage,
   sendToChoi,
   sendToMing,
   getLangKeyboard,
@@ -109,33 +108,42 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString(tz);
     const lang = getUserLang(chatId);
 
-    if (cmd === "lang_choi" || cmd === "lang_ming") {
-      const bot = cmd === "lang_choi" ? "choi" : "ming";
-      const label = bot === "choi" ? "최실장" : "밍밍";
-      await editMessage('admin', chatId, messageId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
-      return;
+    res.sendStatus(200); // ✅ 즉시 응답 후 처리
+
+    try {
+      if (cmd === "lang_choi" || cmd === "lang_ming") {
+        const bot = cmd === "lang_choi" ? "choi" : "ming";
+        const label = bot === "choi" ? "최실장" : "밍밍";
+        await editMessage('admin', chatId, messageId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
+        return;
+      }
+
+      if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
+        const [_, bot, langCode] = cmd.split("_");
+        const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+        langManager.setUserLang(targetId, langCode);
+        await sendBotStatus(timeStr, '', chatId, messageId);
+        return;
+      }
+
+      if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
+        if (cmd === "choi_on") global.choiEnabled = true;
+        if (cmd === "choi_off") global.choiEnabled = false;
+        if (cmd === "ming_on") global.mingEnabled = true;
+        if (cmd === "ming_off") global.mingEnabled = false;
+
+        saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+        await sendBotStatus(timeStr, '', chatId, messageId);
+        return;
+      }
+
+      if (["status", "dummy_status"].includes(cmd)) {
+        await sendBotStatus(timeStr, '', chatId, messageId);
+        return;
+      }
+    } catch (e) {
+      console.error('❌ 인라인 명령 처리 오류:', e.message);
     }
-
-    if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
-      const [_, bot, langCode] = cmd.split("_");
-      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-      langManager.setUserLang(targetId, langCode);
-      await sendBotStatus(timeStr, '', chatId, messageId);
-      return;
-    }
-
-    if (["status", "dummy_status", "choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      if (cmd === "choi_on") global.choiEnabled = true;
-      if (cmd === "choi_off") global.choiEnabled = false;
-      if (cmd === "ming_on") global.mingEnabled = true;
-      if (cmd === "ming_off") global.mingEnabled = false;
-
-      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr, '', chatId, messageId);
-      return;
-    }
-
-    res.sendStatus(200);
     return;
   }
 
