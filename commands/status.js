@@ -1,62 +1,53 @@
-// ✅ status.js (언어선택 버튼 포함 완성본)
+// ✅ commands/status.js (최종 리팩토링)
+
 const moment = require('moment-timezone');
 const config = require('../config');
 const langManager = require('../langConfigManager');
-const { getLangKeyboard, editMessage, inlineKeyboard } = require('../botManager');
-const { getLastDummyTime, getTimeString } = require('../utils');
+const { getLastDummyTime } = require('../utils');
+const { editMessage, sendToAdmin, getLangKeyboard, inlineKeyboard } = require('../botManager');
 
-module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+function getDayName(dayIndex, lang = 'ko') {
+  const days = {
+    ko: ['일', '월', '화', '수', '목', '금', '토'],
+    en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    zh: ['日', '一', '二', '三', '四', '五', '六'],
+    ja: ['日', '月', '火', '水', '木', '金', '土']
+  };
+  return days[lang]?.[dayIndex] || days['ko'][dayIndex];
+}
+
+module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, langOverride = null, langSelectTarget = null) {
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
   const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-
-  const now = getTimeString(tz);
+  const now = moment().tz(tz);
+  const dateStr = now.format('YY.MM.DD');
+  const timeOnly = now.format('HH:mm:ss');
+  const weekDay = getDayName(now.day(), langOverride || langChoi);
   const dummyTime = getLastDummyTime();
 
-  const showLangUI = suffix.includes('langUI');
-  const showChoiLang = suffix.includes('choi');
-  const showMingLang = suffix.includes('ming');
-
-  const dateStr = moment().tz(tz).format('YY.MM.DD (dd)');
-  const dayKor = {
-    Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토', Sun: '일'
-  }[moment().tz(tz).format('ddd')];
-  const dateLine = `📅 <b>25.${moment().tz(tz).format('MM.DD')} (${dayKor})</b>`;
-
   const statusMsg =
-    `🎯 <b>IS 관리자봇 패널</b>
-───────────────
-` +
-    `📍 현재 상태: 🌑 <code>${now}</code>
+    `🎯 <b>IS 관리자봇 패널</b>\n` +
+    `┌ <b>현재 상태:</b> 🕓 <code>${timeOnly}</code>\n` +
+    `├ 🧑‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n` +
+    `└ 👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n` +
+    `📅 <b>${dateStr}</b> (${weekDay})\n` +
+    `🛰 <b>더미 수신:</b> ${dummyTime}` +
+    (suffix ? `\n${suffix}` : '');
 
-` +
-    `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} <code>(${langChoi})</code>
-` +
-    `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} <code>(${langMing})</code>
+  const langTarget = langSelectTarget === 'choi' ? config.TELEGRAM_CHAT_ID : langSelectTarget === 'ming' ? config.TELEGRAM_CHAT_ID_A : null;
+  const langUI = langTarget ? getLangKeyboard(langSelectTarget) : null;
 
-` +
-    `${dateLine}
-` +
-    `🛰️ 더미 수신: ${dummyTime.includes('❌') ? '❌ 기록 없음' : `✅ <code>${dummyTime}</code>`}
-` +
-    (showLangUI ? `───────────────
-🌐 <b>최실장 언어 선택:</b>
-${formatLangUI('choi')}
+  const fullKeyboard = {
+    inline_keyboard: [
+      ...(langUI?.inline_keyboard || []),
+      ...inlineKeyboard.inline_keyboard
+    ]
+  };
 
-🌐 <b>밍밍 언어 선택:</b>
-${formatLangUI('ming')}
-` : '') +
-    `───────────────`;
-
-  const keyboard = inlineKeyboard;
-  await editMessage('admin', chatId, messageId, statusMsg, keyboard);
+  if (messageId) {
+    await editMessage('admin', chatId, messageId, statusMsg, fullKeyboard);
+  } else {
+    await sendToAdmin(statusMsg, inlineKeyboard);
+  }
 };
-
-function formatLangUI(bot) {
-  return [
-    { code: 'ko', label: '🇰🇷 한국어' },
-    { code: 'en', label: '🇺🇸 English' },
-    { code: 'zh', label: '🇨🇳 中文' },
-    { code: 'ja', label: '🇯🇵 日本語' }
-  ].map(lang => `<code>${lang.label}</code>`).join(' ');
-}
