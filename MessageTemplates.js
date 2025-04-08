@@ -2,11 +2,14 @@
 
 const moment = require('moment-timezone');
 const config = require('./config');
+const { translations } = require('./lang');
 
-function formatDate(ts, tz = config.DEFAULT_TIMEZONE) {
+function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const m = moment.unix(ts).tz(tz);
-  const date = m.format('YY. MM. DD. (ddd)');
-  const time = m.format('A hh:mm:ss');
+  const dayKey = m.format('ddd');
+  const dayTranslated = translations[lang]?.days?.[dayKey] || dayKey;
+  const date = m.format(`YY. MM. DD. (${dayTranslated})`);
+  const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss').replace('AM', translations[lang]?.am).replace('PM', translations[lang]?.pm);
   return { date, time };
 }
 
@@ -22,26 +25,33 @@ function getTemplate({
   leverage = config.DEFAULT_LEVERAGE,
   lang = 'ko'
 }) {
-  const { date, time } = formatDate(ts);
+  const { date, time } = formatDate(ts, config.DEFAULT_TIMEZONE, lang);
+  const labels = translations[lang]?.labels || translations['ko'].labels;
 
-  const entryInfo = entryCount > 0 ? `📊 진입 ${entryCount}% / 평균가 ${entryAvg}` : '';
-  const capTime = `🕒 포착시간:\n${date}\n${time}`;
-  const disclaimer = `⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다.`;
+  const entryInfo = entryCount > 0 ? labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg) : '';
+  const capTime = `${labels.captured}:\n${date}\n${time}`;
+  const disclaimer = labels.disclaimer_full;
 
-  switch (type) {
-    case 'showSup': return `#🩵롱 진입 📈 관점공유🩵\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`;
-    case 'showRes': return `#❤️숏 진입 📉 관점공유❤️\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`;
-    case 'isBigSup': return `#🚀강한 롱 진입 📈 관점공유🚀\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`;
-    case 'isBigRes': return `#🛸강한 숏 진입 📉 관점공유🛸\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`;
-    case 'exitLong': return `#💰롱 청산 📈 관점공유💰\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`;
-    case 'exitShort': return `#💰숏 청산 📉 관점공유💰\n\n📌 종목: ${symbol}\n⏱️ 타임프레임: ${timeframe}\n💲 가격: ${price}\n\n${capTime}\n\n${disclaimer}`;
-    case 'Ready_showSup': return `#🩵롱 대기 📉 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    case 'Ready_showRes': return `#❤️숏 대기 📉 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    case 'Ready_isBigSup': return `#🚀강한 롱 대기 📈 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    case 'Ready_isBigRes': return `#🛸강한 숏 대기 📉 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    case 'Ready_exitLong': return `#💲롱 청산 준비 📈 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    case 'Ready_exitShort': return `#💲숏 청산 준비 📉 ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${weight} / 🎲 배율: ${leverage}`;
-    default: return `⚠️알 수 없는 신호 타입입니다: ${type}`;
+  const templates = {
+    showSup: `#🩵${translations[lang]?.symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    showRes: `#❤️${translations[lang]?.symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigSup: `#🚀${translations[lang]?.symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigRes: `#🛸${translations[lang]?.symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    exitLong: `#💰${translations[lang]?.symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    exitShort: `#💰${translations[lang]?.symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo ? entryInfo + '\n' : ''}\n${capTime}\n\n${disclaimer}`,
+    Ready_showSup: `#${translations[lang]?.symbols.Ready_showSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_showRes: `#${translations[lang]?.symbols.Ready_showRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_isBigSup: `#${translations[lang]?.symbols.Ready_isBigSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_isBigRes: `#${translations[lang]?.symbols.Ready_isBigRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_exitLong: `#${translations[lang]?.symbols.Ready_exitLong} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_exitShort: `#${translations[lang]?.symbols.Ready_exitShort} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`
+  };
+
+  if (templates[type]) {
+    return templates[type];
+  } else {
+    console.warn(`⚠️ MessageTemplates: 알 수 없는 type='${type}'`);
+    return `⚠️ 알 수 없는 신호 타입입니다: ${type}`;
   }
 }
 
