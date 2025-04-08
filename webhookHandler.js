@@ -237,7 +237,7 @@ module.exports = async function webhookHandler(req, res) {
       const success = langManager.setUserLang(fromId, input);
       const msg = success
         ? langMessages.setLangSuccess[lang](input)
-        : langMessages.setLangFail[lang];
+        : langMessages.setLangFail[lang]();
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
@@ -252,7 +252,7 @@ module.exports = async function webhookHandler(req, res) {
       const success = langManager.setUserTimezone(fromId, input);
       const msg = success
         ? langMessages.setTzSuccess[lang](input)
-        : langMessages.setTzFail[lang];
+        : langMessages.setTzFail[lang]();
       await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
       return;
     }
