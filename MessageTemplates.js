@@ -3,6 +3,7 @@
 const moment = require('moment-timezone');
 const config = require('./config');
 const { translations } = require('./lang');
+const { getAllEntryInfo } = require('./utils');
 
 function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const m = moment.unix(ts).tz(tz);
@@ -11,6 +12,12 @@ function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const date = m.format(`YY. MM. DD. (${dayTranslated})`);
   const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss').replace('AM', translations[lang]?.am).replace('PM', translations[lang]?.pm);
   return { date, time };
+}
+
+function formatEntrySummary(symbol, type, lang = 'ko') {
+  const entryList = getAllEntryInfo(symbol, type);
+  if (entryList.length === 0) return '';
+  return '\n⏱️ 진입 현황:\n' + entryList.map(e => `• ${e.timeframe}min → ✅ ${e.entryCount}% / 평균가 ${e.entryAvg}`).join('\n');
 }
 
 function getTemplate({
@@ -32,14 +39,15 @@ function getTemplate({
   const entryInfo = entryCount > 0 ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}` : '';
   const capTime = `${labels.captured}:\n${date}\n${time}`;
   const disclaimer = labels.disclaimer_full;
+  const entrySummary = formatEntrySummary(symbol, type, lang);
 
   const templates = {
-    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo ? entryInfo + '\n' : ''}\n${capTime}\n\n${disclaimer}`,
+    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo ? entryInfo + '\n' : ''}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
     Ready_showSup: `${symbols.Ready_showSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
     Ready_showRes: `${symbols.Ready_showRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
     Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
