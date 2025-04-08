@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js
+// ✅ webhookHandler.js (최종 통합본 - 버튼 클릭형 구조 반영)
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -10,7 +10,9 @@ const {
   addEntry,
   clearEntries,
   getEntryInfo,
-  getTimeString
+  getTimeString,
+  getLastDummyTime,
+  saveBotState
 } = require("./utils");
 
 const {
@@ -101,17 +103,14 @@ module.exports = async function webhookHandler(req, res) {
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
-    const messageId = update.callback_query.message.message_id;
     const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
-
-    const lang = getUserLang(chatId);
-    res.sendStatus(200);
 
     if (cmd === "lang_choi" || cmd === "lang_ming") {
       const bot = cmd === "lang_choi" ? "choi" : "ming";
       const label = bot === "choi" ? "최실장" : "밍밍";
-      await editMessage("admin", chatId, messageId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
+      await sendTextToBot('admin', chatId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
+      res.sendStatus(200);
       return;
     }
 
@@ -123,18 +122,20 @@ module.exports = async function webhookHandler(req, res) {
       const result = success
         ? `✅ ${label} 봇 언어가 <b>${langCode}</b>로 설정되었습니다.`
         : `❌ 언어 설정 실패`;
-      await editMessage("admin", chatId, messageId, result);
+      await sendTextToBot('admin', chatId, result);
       await sendBotStatus(timeStr);
+      res.sendStatus(200);
       return;
     }
 
     if (cmd === "status") {
       await sendBotStatus(timeStr);
+      res.sendStatus(200);
       return;
     }
 
     if (cmd === "dummy_status") {
-      const lastDummy = require("./utils").getLastDummyTime();
+      const lastDummy = getLastDummyTime();
       const now = moment().tz(tz).format("YYYY.MM.DD (ddd) HH:mm:ss");
       const msg =
         `🔁 <b>더미 알림 수신 기록</b>\n` +
@@ -142,16 +143,17 @@ module.exports = async function webhookHandler(req, res) {
         `📥 마지막 수신 시간: <code>${lastDummy}</code>\n` +
         `🕒 현재 시간: <code>${now}</code>\n` +
         `──────────────────────`;
-      await editMessage("admin", chatId, messageId, msg, inlineKeyboard);
+      await sendToAdmin(msg);
+      res.sendStatus(200);
       return;
     }
 
-    // 봇 켜고 끄기
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
       global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
-      require("./utils").saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr);
+      res.sendStatus(200);
       return;
     }
   }
@@ -167,54 +169,37 @@ module.exports = async function webhookHandler(req, res) {
     res.sendStatus(200);
 
     if (["/help", "/도움말"].includes(command)) {
-      await sendTextToBot("admin", chatId, "🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off");
+      await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off");
       return;
     }
 
-    if (
-      ["/start", "/settings", "/setlang", "/settz"].some((cmd) => command.startsWith(cmd)) &&
-      chatId.toString() !== config.ADMIN_CHAT_ID
-    ) {
-      await sendTextToBot("admin", chatId, "⛔ 관리자 전용 명령어입니다.");
+    if (["/start", "/settings"].includes(command)) {
+      await sendToAdmin("🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>");
+      await sendBotStatus(timeStr);
+      await sendToAdmin("📋 메인 기능 메뉴입니다:", inlineKeyboard);
       return;
     }
 
-    if (command.startsWith("/setlang")) {
+    if (["/setlang"].some((cmd) => command.startsWith(cmd))) {
       const input = command.split(" ")[1];
       await handleSetLang(chatId, input, lang, timeStr);
       return;
     }
 
-    if (command.startsWith("/settz")) {
+    if (["/settz"].some((cmd) => command.startsWith(cmd))) {
       const input = command.split(" ")[1];
       await handleSetTz(chatId, input, lang, timeStr);
       return;
     }
 
-    if (["/start", "/settings"].includes(command)) {
-      await sendTextToBot("admin", chatId, "🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>");
-      await sendBotStatus(timeStr);
-      await sendTextToBot("admin", chatId, "🌐 <b>최실장 봇의 언어를 선택하세요:</b>", getLangKeyboard("choi"));
-      await sendTextToBot("admin", chatId, "🌐 <b>밍밍 봇의 언어를 선택하세요:</b>", getLangKeyboard("ming"));
-      return;
-    }
-
     if (chatId.toString() === config.ADMIN_CHAT_ID) {
       switch (command) {
-        case "/choi_on":
-          global.choiEnabled = true;
-          break;
-        case "/choi_off":
-          global.choiEnabled = false;
-          break;
-        case "/ming_on":
-          global.mingEnabled = true;
-          break;
-        case "/ming_off":
-          global.mingEnabled = false;
-          break;
+        case "/choi_on": global.choiEnabled = true; break;
+        case "/choi_off": global.choiEnabled = false; break;
+        case "/ming_on": global.mingEnabled = true; break;
+        case "/ming_off": global.mingEnabled = false; break;
       }
-      require("./utils").saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr, `${command} 처리 완료`);
       return;
     }
