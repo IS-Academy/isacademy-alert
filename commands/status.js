@@ -1,4 +1,5 @@
-// ✅ status.js 최종 수정본
+// ✅ status.js
+
 const { editMessage, inlineKeyboard, getLangKeyboard } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
