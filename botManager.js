@@ -16,6 +16,18 @@ const mainKeyboard = {
   resize_keyboard: true
 };
 
+// ✅ 반드시 포함되어야 할 함수
+function getLangKeyboard(bot) {
+  return {
+    inline_keyboard: [[
+      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
+      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
+      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
+      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
+    ]]
+  };
+}
+
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
   try {
@@ -43,10 +55,8 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
   } catch (err) {
     const errorMsg = err.response?.data?.description || '';
     if (errorMsg.includes('message is not modified')) {
-      // ✅ 메시지 변경사항 없으면 무시
       console.log('🔹 editMessage: 메시지 변경 없음.');
     } else if (errorMsg.includes('message to edit not found')) {
-      // ✅ 메시지 없으면 재발송
       console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
       await sendTextToBot(botType, chatId, text, replyMarkup);
     } else {
@@ -66,5 +76,5 @@ module.exports = {
   editMessage,
   inlineKeyboard,
   mainKeyboard,
-  getLangKeyboard
+  getLangKeyboard // 반드시 추가되어야 함
 };
