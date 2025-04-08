@@ -1,7 +1,7 @@
-// ✅ status.js (키보드 정상 출력 + 빠른 응답 개선 + 한국어 요일 지원)
+// ✅ status.js - 언어선택 버튼 포함한 상태 메시지 통합 (키보드 유지)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
-const { editMessage, inlineKeyboard, sendToAdmin } = require('../botManager');
+const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
 const config = require('../config');
 const langManager = require('../langConfigManager');
 const moment = require('moment-timezone');
@@ -20,6 +20,12 @@ function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
   return now.format(`YYYY.MM.DD (${label[day]}) HH:mm:ss`);
 }
 
+function getLangButtonsInline(bot) {
+  return getLangKeyboard(bot).inline_keyboard[0]
+    .map(btn => `<code>${btn.text}</code>`) // 보기용 코드박스로 강조
+    .join(' ');
+}
+
 module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   try {
     const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
@@ -30,6 +36,9 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     const now = getFormattedNow(lang, tz);
     const dummyTime = getLastDummyTime();
 
+    const langChoiBtns = getLangButtonsInline('choi');
+    const langMingBtns = getLangButtonsInline('ming');
+
     const msg =
       `📡 <b>IS 관리자 봇 상태</b>\n` +
       `──────────────────────\n` +
@@ -39,6 +48,8 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
       `🌐 밍밍 언어: <code>${langMing}</code>\n` +
       `✅ 봇 작동 상태:\n├ 최실장: ${global.choiEnabled ? '🟢 ON' : '🔴 OFF'}\n└ 밍밍: ${global.mingEnabled ? '🟢 ON' : '🔴 OFF'}\n` +
       `\n🔁 더미 알림 수신: <code>${dummyTime}</code>` +
+      `\n──────────────────────\n` +
+      `🌐 <b>최실장 언어 선택:</b>\n${langChoiBtns}\n\n🌐 <b>밍밍 언어 선택:</b>\n${langMingBtns}` +
       (suffix ? `\n\n${suffix}` : '') +
       `\n──────────────────────`;
 
