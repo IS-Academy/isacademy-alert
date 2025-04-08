@@ -13,7 +13,7 @@ const {
 } = require("./utils");
 
 const { generateAlertMessage } = require("./AlertMessage");
-const { sendToChoi, sendToMing } = require("./botManager");
+const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 const { getTranslation, translations } = require("./lang");
 
@@ -46,18 +46,22 @@ function formatDate(lang) {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
+  // ✅ 더미 트리거
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
   }
 
+  // ✅ 실시간 트레이딩 알림 처리
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
       const symbol = update.symbol || "Unknown";
-      const timeframe = update.timeframe.replace(/<[^>]*>/g, '') || "⏳";
+      const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = TYPE_MAP[update.type] || update.type;
       const price = parseFloat(update.price) || "N/A";
+
+      console.log(`📥 [신호 수신] type=${type}, symbol=${symbol}, timeframe=${timeframe}, price=${price}, ts=${ts}`);
 
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
@@ -73,7 +77,7 @@ module.exports = async function webhookHandler(req, res) {
 
       const generateMsg = (lang) => {
         const symbolText = getTranslation(lang, 'symbols', type);
-        const labels = translations[lang].labels;
+        const labels = translations[lang]?.labels;
 
         if (type.startsWith('Ready_')) {
           return `${symbolText} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', config.DEFAULT_WEIGHT)} / ${labels.leverage.replace('{leverage}', config.DEFAULT_LEVERAGE)}`;
@@ -88,20 +92,34 @@ module.exports = async function webhookHandler(req, res) {
       const msgChoi = generateMsg(langChoi);
       const msgMing = generateMsg(langMing);
 
-      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
-      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
+      if (global.choiEnabled && msgChoi.trim()) {
+        console.log(`📤 [최실장에게 전송] lang=${langChoi}, chatId=${config.TELEGRAM_CHAT_ID}`);
+        await sendToChoi(msgChoi);
+      }
+      if (global.mingEnabled && msgMing.trim()) {
+        console.log(`📤 [밍밍에게 전송] lang=${langMing}, chatId=${config.TELEGRAM_CHAT_ID_A}`);
+        await sendToMing(msgMing);
+      }
 
       return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
-      console.error("❌ 텔레그램 전송 실패:", err.message);
+      console.error("❌ 텔레그램 전송 실패:", err.stack || err.message);
       return res.status(500).send("서버 오류");
     }
   }
 
+  // ✅ 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
-    const chatId = update.callback_query.message.chat.id;
-    const messageId = update.callback_query.message.message_id;
+    const chatId = update.callback_query?.message?.chat?.id;
+    const messageId = update.callback_query?.message?.message_id;
+
+    console.log(`🔘 [인라인 클릭] cmd=${cmd}, chatId=${chatId}, messageId=${messageId}`);
+
+    if (!chatId) {
+      console.error('❗ chatId 없음: callback_query.message.chat.id 확인 필요');
+      return res.sendStatus(400);
+    }
 
     res.sendStatus(200);
 
@@ -116,15 +134,17 @@ module.exports = async function webhookHandler(req, res) {
       const [_, bot, langCode] = cmd.split("_");
       const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
       langManager.setUserLang(targetId, langCode);
+      console.log(`🌐 [언어 변경] 대상=${bot}, 언어=${langCode}`);
     }
 
     await sendBotStatus(timeStr, cmd, chatId, messageId);
-
     return;
   }
 
+  // ✅ 일반 메시지 (예: /status)
   if (update.message && update.message.text) {
     const chatId = update.message.chat.id;
+    console.log(`💬 [일반 메시지 수신] chatId=${chatId}, text=${update.message.text}`);
     res.sendStatus(200);
     await sendBotStatus(getTimeString(), '', chatId);
     return;
@@ -132,3 +152,4 @@ module.exports = async function webhookHandler(req, res) {
 
   res.sendStatus(200);
 };
+
