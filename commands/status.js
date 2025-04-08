@@ -1,7 +1,7 @@
-// ✅ status.js (UI 개선 최종본: 요일 노출, 년도 25, TZ 제거, 언어선택 UI 메시지 내 출력)
+// ✅ status.js (최종 수정: 언어선택 UI가 메시지 내 포함되도록 editMessage 활용 개선)
 
 const { getTimeString, getLastDummyTime } = require('../utils');
-const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
+const { editMessage, inlineKeyboard, sendToAdmin } = require('../botManager');
 const config = require('../config');
 const langManager = require('../langConfigManager');
 const moment = require('moment-timezone');
@@ -24,7 +24,8 @@ function getFormattedNow(lang = 'ko', tz = 'Asia/Seoul') {
 }
 
 function getLangButtonsInline(bot) {
-  return getLangKeyboard(bot).inline_keyboard[0].map(btn => btn.text).join('  ');
+  const keyboard = require('../botManager').getLangKeyboard(bot);
+  return keyboard.inline_keyboard[0].map(btn => btn.text).join('  ');
 }
 
 module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false) {
