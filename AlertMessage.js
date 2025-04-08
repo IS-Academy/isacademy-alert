@@ -3,6 +3,19 @@
 const config = require('./config');
 const moment = require('moment-timezone');
 
+// HTML escape 유틸 함수
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, function (s) {
+    return ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[s];
+  });
+}
+
 // ✅ 간단한 대기 메시지 (축약형, generateAlertMessage와 통일된 메시지명 사용)
 function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko') {
   const translations = {
@@ -74,12 +87,11 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
 
   const tfStr = `${timeframe}⏱️`;
   const infoLine = `${label.symbol}: ${symbol}\n${label.weight}: ${weight} / ${label.leverage}: ${leverage}`;
-  let message = `${signal} ${tfStr}\n\n${infoLine}`;
-  return message;
+  return `${signal} ${tfStr}\n\n${infoLine}`;
 }
 
 // ✅ 알림 메시지 생성
-function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = 'N/A', entryLimit = config.MAX_ENTRY_PERCENT }) {
+function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = null, entryLimit = config.MAX_ENTRY_PERCENT, htmlEscape = false }) {
   const translations = {
     ko: {
       symbols: {
@@ -112,8 +124,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
       days: {
         Mon: "월", Tue: "화", Wed: "수", Thu: "목", Fri: "금", Sat: "토", Sun: "일"
       },
-      am: "오전",
-      pm: "오후"
+      am: "오전", pm: "오후"
     },
     en: {
       symbols: {
@@ -146,8 +157,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
       days: {
         Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat", Sun: "Sun"
       },
-      am: "AM",
-      pm: "PM"
+      am: "AM", pm: "PM"
     },
     zh: {
       symbols: {
@@ -180,8 +190,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
       days: {
         Mon: "周一", Tue: "周二", Wed: "周三", Thu: "周四", Fri: "周五", Sat: "周六", Sun: "周日"
       },
-      am: "上午",
-      pm: "下午"
+      am: "上午", pm: "下午"
     },
     ja: {
       symbols: {
@@ -214,8 +223,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
       days: {
         Mon: "月", Tue: "火", Wed: "水", Thu: "木", Fri: "金", Sat: "土", Sun: "日"
       },
-      am: "午前",
-      pm: "午後"
+      am: "午前", pm: "午後"
     }
   };
 
@@ -227,52 +235,52 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   const timestamp = Number(ts) || Math.floor(Date.now() / 1000);
   const time = moment.unix(timestamp).tz(timezone);
   const dayKey = time.format('ddd');
-  const dayTranslated = dict.days?.[dayKey] || dayKey;
-  const ampm = time.format('A') === 'AM' ? dict.am || 'AM' : dict.pm || 'PM';
+  const ampm = time.format('A') === 'AM' ? dict.am : dict.pm;
 
-  const dateFormatted = time.format(`YY. MM. DD. (${dayTranslated})`);
-  const clockFormatted = lang === 'ko'
-    ? `${ampm} ${time.format('hh:mm:ss')}`
-    : time.format('hh:mm:ss A');
+  const dateFormatted = time.format(`YY. MM. DD. (${dict.days?.[dayKey] || dayKey})`);
+  const clockFormatted = lang === 'ko' ? `${ampm} ${time.format('hh:mm:ss')}` : time.format('hh:mm:ss A');
 
-  const entryTypes = ['show_Support', 'show_Resistance', 'is_Big_Support', 'is_Big_Resistance', 'exitLong', 'exitShort'];
-  const waitTypes = ['Ready_Support', 'Ready_Resistance', 'Ready_is_Big_Support', 'Ready_is_Big_Resistance'];
+  const entryTypes = ['showSup', 'showRes', 'isBigSup', 'isBigRes', 'exitLong', 'exitShort'];
+  const waitTypes = ['Ready_showSup', 'Ready_showRes', 'Ready_isBigSup', 'Ready_isBigRes'];
   const prepareTypes = ['Ready_exitLong', 'Ready_exitShort'];
+
+  const isEntry = entryTypes.includes(type);
+  const isWait = waitTypes.includes(type);
+  const isPrepare = prepareTypes.includes(type);
+
+  // HTML 이스케이프 적용
+  const safe = (str) => htmlEscape ? escapeHTML(str) : str;
 
   let msg = 'ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ\n';
   msg += `${signal}\n\n`;
-  msg += `${L.symbol}: ${symbol}\n`;
-  msg += `${L.timeframe}: ${timeframe}\n`;
+  msg += `${L.symbol}: ${safe(symbol)}\n`;
+  msg += `${L.timeframe}: ${safe(timeframe)}\n`;
 
-  if (entryTypes.includes(type) && price !== 'N/A') {
-    msg += `${L.price}: ${price}\n`;
+  if (isEntry && price !== 'N/A') {
+    msg += `${L.price}: ${safe(price)}\n`;
   }
 
-  if (entryTypes.includes(type) && entryCount > 0) {
+  if (isEntry && entryCount > 0) {
     const entryText = L.entryInfo
       .replace('{entryCount}', entryCount)
-      .replace('{entryAvg}', avgEntry);
+      .replace('{entryAvg}', avgEntry || 'N/A');
     msg += `${entryText}\n`;
     if (entryCount >= entryLimit) {
       msg += `${L.entryLimitReached}\n`;
     }
   }
 
-  if (waitTypes.includes(type)) {
+  if (isWait) {
     msg += `${L.weight}\n${L.leverage}\n`;
   }
 
-  if (entryTypes.includes(type)) {
+  if (isEntry) {
     msg += `\n${L.captured}:\n${dateFormatted}\n${clockFormatted}\n`;
   }
 
-  if (entryTypes.includes(type) || prepareTypes.includes(type)) {
-    msg += `\n${L.disclaimer_full}`;
-  } else {
-    msg += `\n${L.disclaimer_short}`;
-  }
-
+  msg += `\n${(isEntry || isPrepare) ? L.disclaimer_full : L.disclaimer_short}`;
   msg += '\nㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ';
+
   return msg;
 }
 
