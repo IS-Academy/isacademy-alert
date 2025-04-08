@@ -1,12 +1,15 @@
 // ✅ index.js
 
 require('dotenv').config();
+
+// ✅ 모듈 불러오기
 const express = require('express');
 const bodyParser = require('body-parser');
 const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const { loadBotState } = require('./utils');
 
+// ✅ 앱 초기화
 const app = express();
 const PORT = process.env.PORT || 3000;
 
