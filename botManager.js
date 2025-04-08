@@ -16,26 +16,53 @@ const mainKeyboard = {
   resize_keyboard: true
 };
 
-async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
+async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
+  const token = config.ADMIN_BOT_TOKEN;
   try {
-    const token = config.ADMIN_BOT_TOKEN;
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup || undefined
+    });
+  } catch (err) {
+    console.error(`❌ sendTextToBot 실패:`, err.message);
+  }
+}
+
+async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
+  const token = config.ADMIN_BOT_TOKEN;
+  try {
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
       parse_mode: 'HTML',
-      reply_markup: replyMarkup || inlineKeyboard // 확실한 기본값 설정
+      reply_markup: replyMarkup || inlineKeyboard
     });
   } catch (err) {
-    if (!err.response?.data?.description.includes("message is not modified"))
-      console.error(`❌ edit 실패:`, err.stack || err.message);
+    const errorMsg = err.response?.data?.description || '';
+    if (errorMsg.includes('message is not modified')) {
+      // ✅ 메시지 변경사항 없으면 무시
+      console.log('🔹 editMessage: 메시지 변경 없음.');
+    } else if (errorMsg.includes('message to edit not found')) {
+      // ✅ 메시지 없으면 재발송
+      console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
+      await sendTextToBot(botType, chatId, text, replyMarkup);
+    } else {
+      console.error(`❌ editMessage 실패:`, errorMsg);
+    }
   }
 }
 
+const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
+const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
+const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
+
 module.exports = {
-  sendToAdmin: (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard),
-  sendToChoi: (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text),
-  sendToMing: (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text),
+  sendToAdmin,
+  sendToChoi,
+  sendToMing,
   editMessage,
   inlineKeyboard,
   mainKeyboard
