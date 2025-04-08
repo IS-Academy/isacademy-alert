@@ -8,19 +8,13 @@ const {
   clearEntries,
   getEntryInfo,
   getTimeString,
-  getLastDummyTime,
   saveBotState
 } = require("./utils");
 
-const {
-  generateAlertMessage,
-  getWaitingMessage,
-  generateSummaryMessage,
-  generatePnLMessage
-} = require("./AlertMessage");
-
+const { generateAlertMessage } = require("./AlertMessage");
 const { sendToChoi, sendToMing } = require("./botManager");
 const sendBotStatus = require("./commands/status");
+const { getTranslation } = require("./lang");
 
 const TYPE_MAP = {
   show_Support: 'showSup',
@@ -30,15 +24,15 @@ const TYPE_MAP = {
   Ready_show_Support: 'Ready_showSup',
   Ready_show_Resistance: 'Ready_showRes',
   Ready_is_Big_Support: 'Ready_isBigSup',
-  Ready_is_Big_Resistance: 'Ready_isBigRes'
+  Ready_is_Big_Resistance: 'Ready_isBigRes',
+  Ready_exitLong: 'Ready_exitLong',
+  Ready_exitShort: 'Ready_exitShort',
+  exitLong: 'exitLong',
+  exitShort: 'exitShort'
 };
 
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
-}
-
-function getUserTimezone(chatId) {
-  return langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
 }
 
 module.exports = async function webhookHandler(req, res) {
@@ -53,7 +47,7 @@ module.exports = async function webhookHandler(req, res) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
       const symbol = update.symbol || "Unknown";
-      const timeframe = update.timeframe.replace(/<[^>]*>/g, '') || "⏳";  // HTML 태그 제거
+      const timeframe = update.timeframe.replace(/<[^>]*>/g, '') || "⏳";
       const type = TYPE_MAP[update.type] || update.type;
       const price = parseFloat(update.price) || "N/A";
 
@@ -69,18 +63,22 @@ module.exports = async function webhookHandler(req, res) {
 
       const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
-      // ✅ Ready 타입에 따른 메시지 포맷을 정확히 구성
-      const msgChoi = type.startsWith("Ready_")
-        ? `#💲${type.includes('Sup') ? '롱 청산 준비📈' : '숏 청산 준비📉'} ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${config.DEFAULT_WEIGHT}% / 🎲 배율: ${config.DEFAULT_LEVERAGE}×`
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, entryAvg });
+      const generateMsg = (lang) => {
+        const symbolText = getTranslation(lang, 'symbols', type);
+        const labels = translations[lang].labels;
 
-      const msgMing = type.startsWith("Ready_")
-        ? `#💲${type.includes('Sup') ? '롱 청산 준비📈' : '숏 청산 준비📉'} ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${config.DEFAULT_WEIGHT}% / 🎲 배율: ${config.DEFAULT_LEVERAGE}×`
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg });
+        if (type.startsWith('Ready_')) {
+          return `${symbolText} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', config.DEFAULT_WEIGHT)} / ${labels.leverage.replace('{leverage}', config.DEFAULT_LEVERAGE)}`;
+        }
 
-      // ✅ 콘솔로그로 최종메시지 확인
-      console.log("[msgChoi]", msgChoi);
-      console.log("[msgMing]", msgMing);
+        return generateAlertMessage({
+          type, symbol, timeframe, price, ts,
+          lang, entryCount, entryAvg
+        });
+      };
+
+      const msgChoi = generateMsg(langChoi);
+      const msgMing = generateMsg(langMing);
 
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi, { parse_mode: 'HTML' });
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing, { parse_mode: 'HTML' });
@@ -96,25 +94,21 @@ module.exports = async function webhookHandler(req, res) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
     const messageId = update.callback_query.message.message_id;
-    const timeStr = getTimeString(getUserTimezone(chatId));
+    const timeStr = getTimeString();
 
     res.sendStatus(200);
 
-    if (cmd === "lang_choi" || cmd === "lang_ming") {
-      await sendBotStatus(timeStr, cmd, chatId, messageId);
-    } else if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
-      const [_, bot, langCode] = cmd.split("_");
-      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-      langManager.setUserLang(targetId, langCode);
-      await sendBotStatus(timeStr, '', chatId, messageId);
-    } else if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on";
-      global.mingEnabled = cmd === "ming_on";
+    if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
+      if (cmd === "choi_on") global.choiEnabled = true;
+      else if (cmd === "choi_off") global.choiEnabled = false;
+
+      if (cmd === "ming_on") global.mingEnabled = true;
+      else if (cmd === "ming_off") global.mingEnabled = false;
+
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr, '', chatId, messageId);
-    } else if (["status", "dummy_status"].includes(cmd)) {
-      await sendBotStatus(timeStr, '', chatId, messageId);
     }
+
     return;
   }
 
