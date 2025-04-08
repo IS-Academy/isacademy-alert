@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (최종 완성)
+// ✅ webhookHandler.js (최종 수정 완료)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -105,21 +105,20 @@ module.exports = async function webhookHandler(req, res) {
 
     res.sendStatus(200);
 
+    const lang = getUserLang(chatId);
     const timeStr = getTimeString();
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
       global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr, '', chatId, messageId);
-    } else if (["lang_choi", "lang_ming", "status", "dummy_status"].includes(cmd) || cmd.startsWith("lang_")) {
-      if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
-        const [_, bot, langCode] = cmd.split("_");
-        const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-        langManager.setUserLang(targetId, langCode);
-      }
-      await sendBotStatus(timeStr, cmd, chatId, messageId);
+    } else if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
+      const [_, bot, langCode] = cmd.split("_");
+      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+      langManager.setUserLang(targetId, langCode);
     }
+
+    await sendBotStatus(timeStr, cmd, chatId, messageId);
 
     return;
   }
