@@ -17,7 +17,24 @@ function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
 function formatEntrySummary(symbol, type, lang = 'ko') {
   const entryList = getAllEntryInfo(symbol, type);
   if (entryList.length === 0) return '';
-  return '\n⏱️ 진입 현황:\n' + entryList.map(e => `• ${e.timeframe}min → ✅ ${e.entryCount}% / 평균가 ${e.entryAvg}`).join('\n');
+  return '\n' + (translations[lang]?.labels.entrySummary || '⏱️ 진입 현황:') + '\n' + entryList.map(e => {
+    const line = translations[lang]?.labels.entryInfoByTF || "• {tf}min → ✅ {percent}% / 평균가 {avg}";
+    return line.replace('{tf}', e.timeframe).replace('{percent}', e.entryCount).replace('{avg}', e.entryAvg);
+  }).join('\n');
+}
+
+function generatePnLLine(price, entryAvg, entryCount, lang = 'ko') {
+  const avg = parseFloat(entryAvg);
+  const cur = parseFloat(price);
+  const percent = parseFloat(entryCount);
+  if (!avg || !cur || !percent) return '';
+
+  const pnl = ((cur - avg) / avg * 100).toFixed(2);
+  const capital = ((pnl * percent) / 100).toFixed(2);
+
+  const isProfit = parseFloat(pnl) >= 0;
+  const line = isProfit ? translations[lang]?.labels?.pnlLineProfit : translations[lang]?.labels?.pnlLineLoss;
+  return line.replace('{pnl}', pnl).replace('{capital}', capital);
 }
 
 function getTemplate({
@@ -37,6 +54,7 @@ function getTemplate({
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
 
   const entryInfo = entryCount > 0 ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}` : '';
+  const pnlLine = (type === 'exitLong' || type === 'exitShort') ? generatePnLLine(price, entryAvg, entryCount, lang) : '';
   const capTime = `${labels.captured}:\n${date}\n${time}`;
   const disclaimer = labels.disclaimer_full;
   const entrySummary = formatEntrySummary(symbol, type, lang);
@@ -46,8 +64,8 @@ function getTemplate({
     showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
     isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
     isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
-    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
-    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo ? entryInfo + '\n' : ''}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
+    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}${entrySummary}\n\n${capTime}\n\n${disclaimer}`,
     Ready_showSup: `${symbols.Ready_showSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
     Ready_showRes: `${symbols.Ready_showRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
     Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
