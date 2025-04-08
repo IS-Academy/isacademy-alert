@@ -1,4 +1,4 @@
-// ✅ status.js (최종 수정: 언어선택 UI가 무조건 메시지 안에 보이도록 텍스트 강제 삽입)
+// ✅ status.js (언어선택 이후 UI 사라지고, 메인 상태 유지되도록 showLangUI 조절)
 
 const { getLastDummyTime } = require('../utils');
 const { editMessage, inlineKeyboard, sendToAdmin, getLangKeyboard } = require('../botManager');
@@ -28,7 +28,7 @@ function getLangListText(bot) {
   return kb.inline_keyboard[0].map(btn => btn.text).join(' '); // 넓은 공백
 }
 
-module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false) {
+module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, showLangUI = false, langTarget = null) {
   try {
     const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
     const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
@@ -37,9 +37,11 @@ module.exports = async function sendBotStatus(timeStr = '', suffix = '', chatId 
     const now = getFormattedNow(lang, tz);
     const dummyTime = getLastDummyTime();
 
-    const langSection = showLangUI ? `\n──────────────────────\n` +
-      `🌐 <b>최실장 언어 선택:</b>\n${getLangListText('choi')}\n\n` +
-      `🌐 <b>밍밍 언어 선택:</b>\n${getLangListText('ming')}` : '';
+    let langSection = '';
+    if (showLangUI && langTarget) {
+      const label = langTarget === 'choi' ? '최실장' : '밍밍';
+      langSection = `\n──────────────────────\n🌐 <b>${label} 언어 선택:</b>\n${getLangListText(langTarget)}\n`;
+    }
 
     const msg =
       `🎯 <b>IS 관리자봇 패널</b>\n` +
