@@ -1,5 +1,4 @@
 // ✅ webhookHandler.js
-// ✅ webhookHandler.js (최종 수정본)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -54,12 +53,9 @@ module.exports = async function webhookHandler(req, res) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
       const symbol = update.symbol || "Unknown";
-      const timeframe = update.timeframe || "⏳";
+      const timeframe = update.timeframe.replace(/<[^>]*>/g, '') || "⏳";  // HTML 태그 제거
       const type = TYPE_MAP[update.type] || update.type;
       const price = parseFloat(update.price) || "N/A";
-
-      console.log("[Webhook 수신 데이터]", update);
-      console.log("[Mapped Type]", type);
 
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
@@ -73,19 +69,21 @@ module.exports = async function webhookHandler(req, res) {
 
       const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
+      // ✅ Ready 타입에 따른 메시지 포맷을 정확히 구성
       const msgChoi = type.startsWith("Ready_")
-        ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langChoi)
+        ? `#💲${type.includes('Sup') ? '롱 청산 준비📈' : '숏 청산 준비📉'} ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${config.DEFAULT_WEIGHT}% / 🎲 배율: ${config.DEFAULT_LEVERAGE}×`
         : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, entryAvg });
 
       const msgMing = type.startsWith("Ready_")
-        ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langMing)
+        ? `#💲${type.includes('Sup') ? '롱 청산 준비📈' : '숏 청산 준비📉'} ${timeframe}⏱️\n\n📌 종목: ${symbol}\n🗝️ 비중: ${config.DEFAULT_WEIGHT}% / 🎲 배율: ${config.DEFAULT_LEVERAGE}×`
         : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg });
 
+      // ✅ 콘솔로그로 최종메시지 확인
       console.log("[msgChoi]", msgChoi);
       console.log("[msgMing]", msgMing);
 
-      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
-      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
+      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi, { parse_mode: 'HTML' });
+      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing, { parse_mode: 'HTML' });
 
       return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
@@ -94,7 +92,6 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ callback_query (버튼 클릭 처리)
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
@@ -111,8 +108,8 @@ module.exports = async function webhookHandler(req, res) {
       langManager.setUserLang(targetId, langCode);
       await sendBotStatus(timeStr, '', chatId, messageId);
     } else if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
-      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
+      global.choiEnabled = cmd === "choi_on";
+      global.mingEnabled = cmd === "ming_on";
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
       await sendBotStatus(timeStr, '', chatId, messageId);
     } else if (["status", "dummy_status"].includes(cmd)) {
