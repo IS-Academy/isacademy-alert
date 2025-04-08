@@ -1,4 +1,5 @@
 // ✅ webhookHandler.js
+// ✅ webhookHandler.js (최종 수정본)
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -57,6 +58,9 @@ module.exports = async function webhookHandler(req, res) {
       const type = TYPE_MAP[update.type] || update.type;
       const price = parseFloat(update.price) || "N/A";
 
+      console.log("[Webhook 수신 데이터]", update);
+      console.log("[Mapped Type]", type);
+
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
@@ -77,8 +81,11 @@ module.exports = async function webhookHandler(req, res) {
         ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langMing)
         : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg });
 
-      if (global.choiEnabled) await sendToChoi(msgChoi);
-      if (global.mingEnabled) await sendToMing(msgMing);
+      console.log("[msgChoi]", msgChoi);
+      console.log("[msgMing]", msgMing);
+
+      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
+      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
       return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
