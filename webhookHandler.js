@@ -1,14 +1,9 @@
-// ✅ webhookHandler.js (최종 정리본)
-
+// ✅ webhookHandler.js
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const {
-  generateAlertMessage,
-  getWaitingMessage,
-  generateSummaryMessage,
-  generatePnLMessage,
   addEntry,
   clearEntries,
   getEntryInfo,
@@ -18,12 +13,16 @@ const {
 } = require("./utils");
 
 const {
+  generateAlertMessage,
+  getWaitingMessage,
+  generateSummaryMessage,
+  generatePnLMessage
+} = require("./AlertMessage"); // ⚠️ 수정됨 (이전 utils에서 잘못 임포트)
+
+const {
   sendToAdmin,
-  editMessage,
   sendToChoi,
-  sendToMing,
-  getLangKeyboard,
-  inlineKeyboard
+  sendToMing
 } = require("./botManager");
 
 const handleSetLang = require("./commands/setlang");
@@ -52,21 +51,18 @@ function getUserTimezone(chatId) {
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
-  // ✅ 더미 헬스체크
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
     return;
   }
 
-  // ✅ 트레이딩뷰 알림 처리
   if (update.symbol || update.type) {
     try {
-      const alert = update;
-      const ts = Number(alert.ts) || Math.floor(Date.now() / 1000);
-      const symbol = alert.symbol || "Unknown";
-      const timeframe = alert.timeframe || "⏳";
-      const type = TYPE_MAP[alert.type] || alert.type;
-      const price = parseFloat(alert.price) || "N/A";
+      const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
+      const symbol = update.symbol || "Unknown";
+      const timeframe = update.timeframe || "⏳";
+      const type = TYPE_MAP[update.type] || update.type;
+      const price = parseFloat(update.price) || "N/A";
 
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
@@ -91,119 +87,16 @@ module.exports = async function webhookHandler(req, res) {
       if (global.choiEnabled) await sendToChoi(msgChoi);
       if (global.mingEnabled) await sendToMing(msgMing);
 
-      if (!res.headersSent) res.status(200).send("✅ 텔레그램 전송 성공");
+      return res.status(200).send("✅ 텔레그램 전송 성공");
     } catch (err) {
       console.error("❌ 텔레그램 전송 실패:", err.message);
-      if (!res.headersSent) res.status(500).send("서버 오류");
+      return res.status(500).send("서버 오류");
     }
-    return;
   }
 
-// ✅ 인라인 버튼 처리
-if (update.callback_query) {
-  const cmd = update.callback_query.data;
-  const chatId = update.callback_query.message.chat.id;
-  const messageId = update.callback_query.message.message_id;
-  const tz = getUserTimezone(chatId);
-  const timeStr = getTimeString(tz);
-
-  res.sendStatus(200); // ✅ 즉시 응답
-
-  try {
-    if (cmd === "lang_choi" || cmd === "lang_ming") {
-      await sendBotStatus(timeStr, cmd, chatId, messageId); // lang UI 표시
-      return;
-    }
-
-    if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
-      const [_, bot, langCode] = cmd.split("_");
-      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-      langManager.setUserLang(targetId, langCode);
-
-      await sendBotStatus(timeStr, '', chatId, messageId); // lang UI 닫고 기본상태 복귀
-      return;
-    }
-
-    if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
-      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
-      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-
-      await sendBotStatus(timeStr, '', chatId, messageId); // 상태 즉각 반영
-      return;
-    }
-
-    if (["status", "dummy_status"].includes(cmd)) {
-      await sendBotStatus(timeStr, '', chatId, messageId); // 상태 재표시
-      return;
-    }
-  } catch (e) {
-    console.error('❌ 인라인 명령 처리 오류:', e.message);
-  }
-  return;
-}
-
-
-  // ✅ 텍스트 명령어 처리
-  if (update.message && update.message.text) {
-    const command = update.message.text.trim();
-    const chatId = update.message.chat.id;
-    const lang = getUserLang(chatId);
-    const tz = getUserTimezone(chatId);
-    const timeStr = getTimeString(tz);
-
+  if (update.callback_query || update.message) {
     res.sendStatus(200);
-
-    if (["/help", "/도움말"].includes(command)) {
-      await sendToAdmin("🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off /summary /pnl");
-      return;
-    }
-
-    if (["/start", "/settings"].includes(command)) {
-      await sendBotStatus(timeStr);
-      return;
-    }
-
-    if (command.startsWith("/setlang")) {
-      const input = command.split(" ")[1];
-      await handleSetLang(chatId, input, lang, timeStr);
-      return;
-    }
-
-    if (command.startsWith("/settz")) {
-      const input = command.split(" ")[1];
-      await handleSetTz(chatId, input, lang, timeStr);
-      return;
-    }
-
-    if (command === "/summary") {
-      const entryList = require("./utils").getAllEntries?.() || [];
-      const summary = generateSummaryMessage(entryList, lang);
-      await sendToAdmin(summary);
-      return;
-    }
-
-    if (command.startsWith("/pnl")) {
-      const args = command.split(" ");
-      const symbol = args[1] || "BTCUSDT.P";
-      const pnl = parseFloat(args[2] || 0);
-      const avg = args[3] || 'N/A';
-      const msg = generatePnLMessage({ symbol, pnlPercent: pnl, entryAvg: avg, lang });
-      await sendToAdmin(msg);
-      return;
-    }
-
-    if (chatId.toString() === config.ADMIN_CHAT_ID) {
-      switch (command) {
-        case "/choi_on": global.choiEnabled = true; break;
-        case "/choi_off": global.choiEnabled = false; break;
-        case "/ming_on": global.mingEnabled = true; break;
-        case "/ming_off": global.mingEnabled = false; break;
-      }
-      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr);
-      return;
-    }
+    return sendBotStatus(getTimeString(), '', update.callback_query?.message.chat.id || update.message.chat.id, update.callback_query?.message.message_id);
   }
 
   res.sendStatus(200);
