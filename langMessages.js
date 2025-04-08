@@ -1,4 +1,5 @@
 // langMessages.js
+
 const DISPLAY_LANG = {
   ko: '한국어',
   en: 'English',
@@ -6,12 +7,16 @@ const DISPLAY_LANG = {
   ja: '日本語'
 };
 
+function getDisplayLang(lang) {
+  return DISPLAY_LANG[lang] || lang;
+}
+
 module.exports = {
   setLangSuccess: {
-    ko: (lang) => `✅ 언어가 <b>${DISPLAY_LANG[lang] || lang}</b>로 설정되었습니다.`,
-    en: (lang) => `✅ Language set to <b>${DISPLAY_LANG[lang] || lang}</b>.`,
-    zh: (lang) => `✅ 语言已设置为 <b>${DISPLAY_LANG[lang] || lang}</b>。`,
-    ja: (lang) => `✅ 言語が <b>${DISPLAY_LANG[lang] || lang}</b> に設定されました。`
+    ko: (lang) => `✅ 언어가 <b>${getDisplayLang(lang)}</b>로 설정되었습니다.`,
+    en: (lang) => `✅ Language set to <b>${getDisplayLang(lang)}</b>.`,
+    zh: (lang) => `✅ 语言已设置为 <b>${getDisplayLang(lang)}</b>。`,
+    ja: (lang) => `✅ 言語が <b>${getDisplayLang(lang)}</b> に設定されました。`
   },
 
   setLangFail: {
