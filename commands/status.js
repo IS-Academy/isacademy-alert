@@ -19,8 +19,9 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
     ? moment(lastDummy).tz(tz).format('YY.MM.DD (dd) HH:mm:ss')
     : '기록 없음';
 
-  const showLangSelectChoi = suffix === 'lang_choi';
-  const showLangSelectMing = suffix === 'lang_ming';
+  const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
+                   suffix === 'lang_ming' ? getLangKeyboard('ming') :
+                   inlineKeyboard;
 
   let statusMsg = `🎯 <b>IS 관리자봇 패널</b>\n`;
   statusMsg += `📍 <b>현재 상태:</b> 🌖 <code>${timeFormatted}</code>\n\n`;
@@ -29,9 +30,5 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   statusMsg += `📅 <b>${dateFormatted}</b>\n`;
   statusMsg += `🛰 <b>더미 수신:</b> ${lastDummy !== '❌ 기록 없음' ? '✅' : '❌'} <code>${dummyTime}</code>\n`;
 
-  const keyboard = showLangSelectChoi ? getLangKeyboard('choi')
-    : showLangSelectMing ? getLangKeyboard('ming')
-    : inlineKeyboard;
-
   await editMessage('admin', chatId, messageId, statusMsg, keyboard);
-}
+};
