@@ -2,8 +2,16 @@
 const fs = require('fs');
 const path = './langConfig.json';
 
+// ✅ langConfig.json이 존재하지 않을 경우 기본 파일 생성
+function ensureLangConfigFile() {
+  if (!fs.existsSync(path)) {
+    saveLangConfig({});
+  }
+}
+
 // ✅ 초기 로드
 function loadLangConfig() {
+  ensureLangConfigFile();
   try {
     const data = fs.readFileSync(path, 'utf8');
     return JSON.parse(data);
@@ -13,8 +21,13 @@ function loadLangConfig() {
   }
 }
 
+// ✅ 저장
 function saveLangConfig(data) {
-  fs.writeFileSync(path, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(path, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('❌ langConfig 저장 실패:', err.message);
+  }
 }
 
 // ✅ 처음 한 번 로드
