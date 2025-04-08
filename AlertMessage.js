@@ -256,14 +256,14 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   msg += `${L.symbol}: ${safe(symbol)}\n`;
   msg += `${L.timeframe}: ${safe(timeframe)}\n`;
 
-  if (isEntry && price !== 'N/A') {
-    msg += `${L.price}: ${safe(price)}\n`;
+  if (isEntry && price !== null) {
+    msg += `${L.price}: ${safe(Number(price).toLocaleString())}\n`;
   }
 
   if (isEntry && entryCount > 0) {
     const entryText = L.entryInfo
       .replace('{entryCount}', entryCount)
-      .replace('{entryAvg}', avgEntry || 'N/A');
+      .replace('{entryAvg}', entryAvg !== null ? Number(entryAvg).toLocaleString() : 'N/A')
     msg += `${entryText}\n`;
     if (entryCount >= entryLimit) {
       msg += `${L.entryLimitReached}\n`;
