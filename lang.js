@@ -1,4 +1,69 @@
 // lang.js
+
+  const translations = {
+    ko: {
+      symbols: {
+        Ready_showSup: "#🩵롱 대기 📈",
+        Ready_showRes: "#❤️숏 대기 📉",
+        Ready_isBigSup: "#🚀강한 롱 대기 📈",
+        Ready_isBigRes: "#🛸강한 숏 대기 📉",
+        Ready_exitLong: "#💲롱 청산 준비 📈",
+        Ready_exitShort: "#💲숏 청산 준비 📉"
+      },
+      labels: {
+        symbol: "📌 종목",
+        weight: "🗝️ 비중",
+        leverage: "🎲 배율"
+      }
+    },
+    en: {
+      symbols: {
+        Ready_showSup: "#🩵Long Setup 📈",
+        Ready_showRes: "#❤️Short Setup 📉",
+        Ready_isBigSup: "#🚀Strong Long Setup 📈",
+        Ready_isBigRes: "#🛸Strong Short Setup 📉",
+        Ready_exitLong: "#💲Exit Long Ready 📈",
+        Ready_exitShort: "#💲Exit Short Ready 📉"
+      },
+      labels: {
+        symbol: "📌 Symbol",
+        weight: "🗝️ Weight",
+        leverage: "🎲 Leverage"
+      }
+    },
+    zh: {
+      symbols: {
+        Ready_showSup: "#🩵做多准备 📈",
+        Ready_showRes: "#❤️做空准备 📉",
+        Ready_isBigSup: "#🚀强烈做多准备 📈",
+        Ready_isBigRes: "#🛸强烈做空准备 📉",
+        Ready_exitLong: "#💲平多准备 📈",
+        Ready_exitShort: "#💲平空准备 📉"
+      },
+      labels: {
+        symbol: "📌 币种",
+        weight: "🗝️ 仓位",
+        leverage: "🎲 杠杆"
+      }
+    },
+    ja: {
+      symbols: {
+        Ready_showSup: "#🩵ロング準備 📈",
+        Ready_showRes: "#❤️ショート準備 📉",
+        Ready_isBigSup: "#🚀強ロング準備 📈",
+        Ready_isBigRes: "#🛸強ショート準備 📉",
+        Ready_exitLong: "#💲ロング利確準備 📈",
+        Ready_exitShort: "#💲ショート利確準備 📉"
+      },
+      labels: {
+        symbol: "📌 シンボル",
+        weight: "🗝️ 比率",
+        leverage: "🎲 レバレッジ"
+      }
+    }
+  };
+
+
 const translations = {
   ko: {
     symbols: {
