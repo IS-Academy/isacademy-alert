@@ -1,3 +1,4 @@
+// ✅ status.js
 const { sendToAdmin, inlineKeyboard, getLangKeyboard } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
