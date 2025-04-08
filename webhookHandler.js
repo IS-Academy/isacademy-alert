@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js (최종 통합본 - 버튼 클릭형 구조 반영)
+// ✅ webhookHandler.js (통합 상태 메시지 기반 최종본)
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -103,59 +103,37 @@ module.exports = async function webhookHandler(req, res) {
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
+    const messageId = update.callback_query.message.message_id;
     const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
 
     if (cmd === "lang_choi" || cmd === "lang_ming") {
       const bot = cmd === "lang_choi" ? "choi" : "ming";
       const label = bot === "choi" ? "최실장" : "밍밍";
-      await sendTextToBot('admin', chatId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
-      res.sendStatus(200);
+      await editMessage('admin', chatId, messageId, `🌐 ${label} 봇의 언어를 선택하세요:`, getLangKeyboard(bot));
       return;
     }
 
     if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
       const [_, bot, langCode] = cmd.split("_");
       const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-      const success = langManager.setUserLang(targetId, langCode);
-      const label = bot === "choi" ? "최실장" : "밍밍";
-      const result = success
-        ? `✅ ${label} 봇 언어가 <b>${langCode}</b>로 설정되었습니다.`
-        : `❌ 언어 설정 실패`;
-      await sendTextToBot('admin', chatId, result);
-      await sendBotStatus(timeStr);
-      res.sendStatus(200);
+      langManager.setUserLang(targetId, langCode);
+      await sendBotStatus(timeStr, '', chatId, messageId); // 상태창 덮어쓰기
       return;
     }
 
-    if (cmd === "status") {
-      await sendBotStatus(timeStr);
-      res.sendStatus(200);
-      return;
-    }
+    if (["status", "dummy_status", "choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
+      if (cmd === "choi_on") global.choiEnabled = true;
+      if (cmd === "choi_off") global.choiEnabled = false;
+      if (cmd === "ming_on") global.mingEnabled = true;
+      if (cmd === "ming_off") global.mingEnabled = false;
 
-    if (cmd === "dummy_status") {
-      const lastDummy = getLastDummyTime();
-      const now = moment().tz(tz).format("YYYY.MM.DD (ddd) HH:mm:ss");
-      const msg =
-        `🔁 <b>더미 알림 수신 기록</b>\n` +
-        `──────────────────────\n` +
-        `📥 마지막 수신 시간: <code>${lastDummy}</code>\n` +
-        `🕒 현재 시간: <code>${now}</code>\n` +
-        `──────────────────────`;
-      await sendToAdmin(msg);
-      res.sendStatus(200);
-      return;
-    }
-
-    if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
-      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr);
-      res.sendStatus(200);
+      await sendBotStatus(timeStr, '', chatId, messageId); // 상태창 갱신
       return;
     }
+
+    return res.sendStatus(200);
   }
 
   // ✅ 텍스트 명령어 처리
@@ -174,9 +152,7 @@ module.exports = async function webhookHandler(req, res) {
     }
 
     if (["/start", "/settings"].includes(command)) {
-      await sendToAdmin("🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>");
-      await sendBotStatus(timeStr);
-      await sendToAdmin("📋 메인 기능 메뉴입니다:", inlineKeyboard);
+      await sendBotStatus(timeStr); // 상태 메시지 1개로 처리
       return;
     }
 
@@ -200,7 +176,7 @@ module.exports = async function webhookHandler(req, res) {
         case "/ming_off": global.mingEnabled = false; break;
       }
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-      await sendBotStatus(timeStr, `${command} 처리 완료`);
+      await sendBotStatus(timeStr);
       return;
     }
   }
