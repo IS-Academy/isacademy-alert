@@ -26,7 +26,8 @@ const translations = {
       entryInfoByTF: "• {tf}min → ✅ {percent}% / 평균가 {avg}",
       pnlLineProfit: "📈수익률 {pnl}% / 원금대비 {capital}%",
       pnlLineLoss: "📉수익률 {pnl}% / 원금대비 {capital}%",
-      entryLimitReached: "⚠️ 롱 포지션 포화 상태입니다.",
+      entryLimitReachedLong: "⚠️ 롱 포지션 포화 상태입니다.",
+      entryLimitReachedShort: "⚠️ 숏 포지션 포화 상태입니다.",
       captured: "🕒 포착시간",
       weight: "🗝️ 비중: {weight}",
       leverage: "🎲 배율: {leverage}",
@@ -64,7 +65,8 @@ const translations = {
       entryInfoByTF: "• {tf}min → ✅ {percent}% / Avg {avg}",
       pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
       pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%"      
-      entryLimitReached: "⚠️ Long position is saturated.",
+      entryLimitReachedLong: "⚠️ Long position is saturated.",
+      entryLimitReachedShort: "⚠️ Short position is saturated."
       captured: "🕒 Captured At",
       weight: "🗝️ Weight: {weight}",
       leverage: "🎲 Leverage: {leverage}",
@@ -101,8 +103,12 @@ const translations = {
       timeframe: "⏱️ 周期",
       price: "💲 价格",
       entryInfo: "📊 已进场 {entryCount}% / 均价 {entryAvg}",
-      
-      entryLimitReached: "⚠️ 多头持仓已饱和。",
+      entrySummary: "⏱️ 入场概况:",
+      entryInfoByTF: "• {tf}分钟 → ✅ {percent}% / 均价 {avg}",
+      pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
+      pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
+      entryLimitReachedLong: "⚠️ 多头持仓已饱和。",
+      entryLimitReachedShort: "⚠️ 空头持仓已饱和。"      
       captured: "🕒 捕捉时间",
       weight: "🗝️ 仓位: {weight}",
       leverage: "🎲 杠杆: {leverage}",
@@ -140,7 +146,8 @@ const translations = {
       entryInfoByTF: "• {tf}分 → ✅ {percent}% / 平均価格 {avg}",
       pnlLineProfit: "📈利益率 {pnl}% / 元本比 {capital}%",
       pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%"      
-      entryLimitReached: "⚠️ ロングポジションが飽和状態です。",
+      entryLimitReachedLong: "⚠️ ロングポジションが飽和状態です。",
+      entryLimitReachedShort: "⚠️ ショートポジションが飽和状態です。"
       captured: "🕒 検出時間",
       weight: "🗝️ 比率: {weight}",
       leverage: "🎲 レバレッジ: {leverage}",
