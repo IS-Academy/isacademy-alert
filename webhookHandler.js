@@ -17,16 +17,9 @@ const {
   getWaitingMessage,
   generateSummaryMessage,
   generatePnLMessage
-} = require("./AlertMessage"); // ⚠️ 수정됨 (이전 utils에서 잘못 임포트)
+} = require("./AlertMessage");
 
-const {
-  sendToAdmin,
-  sendToChoi,
-  sendToMing
-} = require("./botManager");
-
-const handleSetLang = require("./commands/setlang");
-const handleSetTz = require("./commands/settz");
+const { sendToChoi, sendToMing } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 
 const TYPE_MAP = {
@@ -94,9 +87,38 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  if (update.callback_query || update.message) {
+  // ✅ callback_query (버튼 클릭 처리)
+  if (update.callback_query) {
+    const cmd = update.callback_query.data;
+    const chatId = update.callback_query.message.chat.id;
+    const messageId = update.callback_query.message.message_id;
+    const timeStr = getTimeString(getUserTimezone(chatId));
+
     res.sendStatus(200);
-    return sendBotStatus(getTimeString(), '', update.callback_query?.message.chat.id || update.message.chat.id, update.callback_query?.message.message_id);
+
+    if (cmd === "lang_choi" || cmd === "lang_ming") {
+      await sendBotStatus(timeStr, cmd, chatId, messageId);
+    } else if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
+      const [_, bot, langCode] = cmd.split("_");
+      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+      langManager.setUserLang(targetId, langCode);
+      await sendBotStatus(timeStr, '', chatId, messageId);
+    } else if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
+      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
+      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
+      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+      await sendBotStatus(timeStr, '', chatId, messageId);
+    } else if (["status", "dummy_status"].includes(cmd)) {
+      await sendBotStatus(timeStr, '', chatId, messageId);
+    }
+    return;
+  }
+
+  if (update.message && update.message.text) {
+    const chatId = update.message.chat.id;
+    res.sendStatus(200);
+    await sendBotStatus(getTimeString(), '', chatId);
+    return;
   }
 
   res.sendStatus(200);
