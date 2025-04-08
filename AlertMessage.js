@@ -16,8 +16,26 @@ function escapeHTML(str) {
   });
 }
 
+// ✅ 타입 매핑 (기본 타입 ➜ 줄임 타입)
+const TYPE_MAP = {
+  show_Support: 'showSup',
+  show_Resistance: 'showRes',
+  is_Big_Support: 'isBigSup',
+  is_Big_Resistance: 'isBigRes',
+  Ready_show_Support: 'Ready_showSup',
+  Ready_show_Resistance: 'Ready_showRes',
+  Ready_is_Big_Support: 'Ready_isBigSup',
+  Ready_is_Big_Resistance: 'Ready_isBigRes'
+};
+
+function normalizeType(type) {
+  return TYPE_MAP[type] || type;
+}
+
 // ✅ 간단한 대기 메시지 (축약형, generateAlertMessage와 통일된 메시지명 사용)
 function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko') {
+  const normalizedType = normalizeType(type);
+
   const translations = {
     ko: {
       symbols: {
@@ -83,7 +101,7 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
 
   const dict = translations[lang] || translations.ko;
   const label = dict.labels;
-  const signal = dict.symbols[type] || '#❓Unknown Signal';
+  const signal = dict.symbols[normalizedType] || '#❓Unknown Signal';
 
   const tfStr = `${timeframe}⏱️`;
   const infoLine = `${label.symbol}: ${symbol}\n${label.weight}: ${weight} / ${label.leverage}: ${leverage}`;
@@ -92,6 +110,8 @@ function getWaitingMessage(type, symbol, timeframe, weight, leverage, lang = 'ko
 
 // ✅ 알림 메시지 생성
 function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lang = 'ko', ts = null, timezone = 'Asia/Seoul', entryCount = 0, entryAvg = null, entryLimit = config.MAX_ENTRY_PERCENT, htmlEscape = false }) {
+  const normalizedType = normalizeType(type);
+
   const translations = {
     ko: {
       symbols: {
@@ -228,7 +248,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   };
 
   const dict = translations[lang] || translations.ko;
-  const signal = dict.symbols[type] || '#📢알 수 없는 신호';
+  const signal = dict.symbols[normalizedType] || '#📢알 수 없는 신호';
   const L = dict.labels;
 
   // 날짜 처리
@@ -244,9 +264,9 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   const waitTypes = ['Ready_showSup', 'Ready_showRes', 'Ready_isBigSup', 'Ready_isBigRes'];
   const prepareTypes = ['Ready_exitLong', 'Ready_exitShort'];
 
-  const isEntry = entryTypes.includes(type);
-  const isWait = waitTypes.includes(type);
-  const isPrepare = prepareTypes.includes(type);
+  const isEntry = entryTypes.includes(normalizedType);
+  const isWait = waitTypes.includes(normalizedType);
+  const isPrepare = prepareTypes.includes(normalizedType);
 
   // HTML 이스케이프 적용
   const safe = (str) => htmlEscape ? escapeHTML(str) : str;
@@ -263,7 +283,7 @@ function generateAlertMessage({ type, symbol, timeframe, price, date, clock, lan
   if (isEntry && entryCount > 0) {
     const entryText = L.entryInfo
       .replace('{entryCount}', entryCount)
-      .replace('{entryAvg}', entryAvg && !isNaN(entryAvg) ? Number(entryAvg).toLocaleString() : 'N/A')
+      .replace('{entryAvg}', entryAvg && !isNaN(entryAvg) ? Number(entryAvg).toLocaleString() : 'N/A');
     msg += `${entryText}\n`;
     if (entryCount >= entryLimit) {
       msg += `${L.entryLimitReached}\n`;
@@ -288,3 +308,4 @@ module.exports = {
   generateAlertMessage,
   getWaitingMessage
 };
+
