@@ -1,14 +1,13 @@
 // ✅ webhookHandler.js
-const dummyHandler = require('./dummyHandler');
 const axios = require('axios');
 const moment = require('moment-timezone');
 const config = require('./config');
+const dummyHandler = require('./dummyHandler');
 const langManager = require('./langConfigManager');
-const langMessages = require('./langMessages');
+const { getUserLang } = require('./lang');
 const {
   generateAlertMessage,
   getWaitingMessage,
-  sendToMingBot,
   sendTextToTelegram,
   editTelegramMessage,
   saveBotState,
@@ -17,18 +16,16 @@ const {
   getReplyKeyboard,
   getTzKeyboard,
   getLastDummyTime,
+  getTimeString,
+  getEntryInfo,
   addEntry,
-  clearEntries,
-  getEntryInfo
+  clearEntries
 } = require('./utils');
 
-const {
-  DEFAULT_WEIGHT,
-  DEFAULT_LEVERAGE,
-  MAX_ENTRY_PERCENT
-} = require('./config');
-
-const LANGUAGE_MAP = { ko: 'ko', en: 'en', zh: 'zh-cn', ja: 'ja' };
+// 명령어 모듈
+const handleSetLang = require('./commands/setlang');
+const handleSetTz = require('./commands/settz');
+const sendBotStatus = require('./commands/status');
 
 // ✅ 줄임 타입 매핑
 const TYPE_MAP = {
@@ -42,59 +39,50 @@ const TYPE_MAP = {
   Ready_is_Big_Resistance: 'Ready_isBigRes'
 };
 
-// ✅ 사용자 ID로 언어 가져오기 (기본값은 'ko')
-function getUserLang(chatId) {
-  const lang = langManager.getUserConfig(chatId)?.lang;
-  return Object.keys(LANGUAGE_MAP).includes(lang) ? lang : 'ko';
-}
-
 function getUserTimezone(chatId) {
-  return langManager.getUserConfig(chatId)?.tz || 'Asia/Seoul';
-}
-
-function getTimeString(timezone = 'Asia/Seoul') {
-  return moment().tz(timezone).format('HH:mm:ss');
+  return langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
 }
 
 module.exports = async function webhookHandler(req, res) {
   const update = req.body;
 
-  // ✅ 0. 더미 헬스체크 핸들링
+  // ✅ 더미 핸들링
   if (req.originalUrl === '/dummy') {
     await dummyHandler(req, res);
     return;
   }
 
-  // ✅ 1. 알림 메시지 처리 우선
+  // ✅ 트레이딩뷰 웹훅 메시지 수신
   if (update.symbol || update.type) {
     try {
       const alert = update;
-      const ts = Number.isFinite(Number(alert.ts)) ? Number(alert.ts) : Math.floor(Date.now() / 1000);
+      const ts = Number(alert.ts) || Math.floor(Date.now() / 1000);
       const symbol = alert.symbol || 'Unknown';
       const timeframe = alert.timeframe || '⏳';
-      let type = alert.type || '📢';
-      type = TYPE_MAP[type] || type; // ← 줄임 타입으로 매핑 적용
+      let type = TYPE_MAP[alert.type] || alert.type;
+
       const parsedPrice = parseFloat(alert.price);
       const price = Number.isFinite(parsedPrice) ? parsedPrice.toFixed(2) : 'N/A';
+
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-      if ([ 'showSup', 'showRes', 'isBigSup', 'isBigRes' ].includes(type)) {
+      if (['showSup', 'showRes', 'isBigSup', 'isBigRes'].includes(type)) {
         addEntry(symbol, type, parsedPrice, timeframe);
       }
-      if ([ 'exitLong', 'exitShort' ].includes(type)) {
+      if (['exitLong', 'exitShort'].includes(type)) {
         clearEntries(symbol, type, timeframe);
       }
 
       const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
 
       const msgChoi = type.startsWith('Ready_')
-        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langChoi)
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, entryAvg, entryLimit: MAX_ENTRY_PERCENT });
+        ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langChoi)
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount, entryAvg });
 
       const msgMing = type.startsWith('Ready_')
-        ? getWaitingMessage(type, symbol, timeframe, DEFAULT_WEIGHT, DEFAULT_LEVERAGE, langMing)
-        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg, entryLimit: MAX_ENTRY_PERCENT });
+        ? getWaitingMessage(type, symbol, timeframe, config.DEFAULT_WEIGHT, config.DEFAULT_LEVERAGE, langMing)
+        : generateAlertMessage({ type, symbol, timeframe, price, ts, lang: langMing, entryCount, entryAvg });
 
       if (global.choiEnabled) {
         await axios.post(`https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -120,7 +108,7 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
-  // ✅ 2. 인라인 버튼 처리
+  // ✅ 인라인 버튼 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query.message.chat.id;
@@ -149,79 +137,60 @@ module.exports = async function webhookHandler(req, res) {
         : `❌ 언어 설정에 실패했습니다.`;
 
       await editTelegramMessage(chatId, messageId, reply);
-
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-      const statusMsg =
-        `✅ 상태 (🕒 ${timeStr})\n` +
-        `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
-        `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
-
-      await sendTextToTelegram(statusMsg, getInlineKeyboard());
+      await sendBotStatus(timeStr);
       return;
     }
 
-    switch (cmd) {
-      case 'choi_on': global.choiEnabled = true; break;
-      case 'choi_off': global.choiEnabled = false; break;
-      case 'ming_on': global.mingEnabled = true; break;
-      case 'ming_off': global.mingEnabled = false; break;
-    }
+    if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(cmd)) {
+      global.choiEnabled = cmd === 'choi_on' ? true : global.choiEnabled;
+      global.choiEnabled = cmd === 'choi_off' ? false : global.choiEnabled;
+      global.mingEnabled = cmd === 'ming_on' ? true : global.mingEnabled;
+      global.mingEnabled = cmd === 'ming_off' ? false : global.mingEnabled;
 
-    if ([ 'choi_on', 'choi_off', 'ming_on', 'ming_off' ].includes(cmd)) {
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
+      await sendBotStatus(timeStr);
+      return;
     }
 
-    if (cmd === 'status' || cmd.includes('_on') || cmd.includes('_off')) {
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-      const statusMsg =
-        `✅ 상태 (🕒 ${timeStr})\n` +
-        `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
-        `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
-      await editTelegramMessage(chatId, messageId, statusMsg, getInlineKeyboard());
+    if (cmd === 'status') {
+      await sendBotStatus(timeStr);
       return;
     }
 
     if (cmd === 'dummy_status') {
-      const tz = getUserTimezone(chatId);
-      const timeStr = getTimeString(tz);
       const lastDummy = getLastDummyTime();
       const nowFormatted = moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
-
       const msg =
         `🔁 <b>더미 알림 수신 기록</b>\n` +
         `──────────────────────\n` +
         `📥 마지막 수신 시간: <code>${lastDummy}</code>\n` +
         `🕒 현재 시간: <code>${nowFormatted}</code>\n` +
         `──────────────────────`;
-
       await editTelegramMessage(chatId, messageId, msg, getInlineKeyboard());
       return;
     }
   }
 
-  // ✅ 3. 텍스트 명령어 처리
+  // ✅ 텍스트 명령어 처리
   if (update.message && update.message.text) {
     const command = update.message.text.trim();
-    const fromId = update.message.chat.id;
-    const lang = getUserLang(fromId);
-    const tz = getUserTimezone(fromId);
+    const chatId = update.message.chat.id;
+    const lang = getUserLang(chatId);
+    const tz = getUserTimezone(chatId);
     const timeStr = getTimeString(tz);
 
     res.sendStatus(200);
 
     // ✅ /help, /도움말 처리 (모든 사용자 허용)
     if (['/help', '/도움말'].includes(command)) {
-      const helpMsg = '🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off';
-      await sendTextToTelegram(helpMsg);
+      await sendTextToTelegram('🛠 명령어: /start /setlang /settz /choi_on /choi_off /ming_on /ming_off');
       return;
     }
 
     // ✅ 관리자 전용 명령어 차단 (도움말 제외)
-    if (      
+    if (
       ['/start', '/settings', '/setlang', '/settz'].some(cmd => command.startsWith(cmd)) &&
-      fromId.toString() !== config.ADMIN_CHAT_ID
+      chatId.toString() !== config.ADMIN_CHAT_ID
     ) {
       await sendTextToTelegram('⛔ 관리자 전용 명령어입니다.');
       return;
@@ -230,108 +199,36 @@ module.exports = async function webhookHandler(req, res) {
     // ✅ 언어 설정
     if (command.startsWith('/setlang')) {
       const input = command.split(' ')[1];
-      if (!input) {
-        await sendTextToTelegram('🌐 언어를 선택해주세요:', getReplyKeyboard('lang'));
-        return;
-      }
-      const success = langManager.setUserLang(fromId, input);
-      const msg = success
-        ? langMessages.setLangSuccess[lang](input)
-        : langMessages.setLangFail[lang]();
-      await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
+      await handleSetLang(chatId, input, lang, timeStr);
       return;
     }
 
     // ✅ 타임존 설정
     if (command.startsWith('/settz')) {
       const input = command.split(' ')[1];
-      if (!input) {
-        await sendTextToTelegram('🕒 타임존을 선택해주세요:', getTzKeyboard());
-        return;
-      }
-      const success = langManager.setUserTimezone(fromId, input);
-      const msg = success
-        ? langMessages.setTzSuccess[lang](input)
-        : langMessages.setTzFail[lang]();
-      await sendTextToTelegram(`${msg} (🕒 ${timeStr})`);
+      await handleSetTz(chatId, input, lang, timeStr);
       return;
     }
 
     // ✅ 관리자 패널
     if (['/start', '/settings'].includes(command)) {
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-      const statusMsg =
-        `🧬 <b>IS 관리자봇 패널</b>\n` +
-        `────────────────────\n` +
-        `📍 현재 상태 (🕒 <b>${timeStr}</b>)\n\n` +
-        `👨‍💼 최실장: ${global.choiEnabled ? '✅ <b>ON</b>' : '⛔ <b>OFF</b>'} <code>(${langChoi})</code>\n` +
-        `👩‍🚀 밍밍: ${global.mingEnabled ? '✅ <b>ON</b>' : '⛔ <b>OFF</b>'} <code>(${langMing})</code>\n` +
-        `────────────────────`;
-      const welcomeMsg = `🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>\n`;
-
-      await sendTextToTelegram(`${welcomeMsg}${statusMsg}`, getInlineKeyboard());
+      await sendTextToTelegram('🤖 <b>IS 관리자봇에 오신 것을 환영합니다!</b>');
+      await sendBotStatus(timeStr);
       await sendTextToTelegram('🌐 <b>최실장 봇의 언어를 선택하세요:</b>', getLangKeyboard('choi'));
       await sendTextToTelegram('🌐 <b>밍밍 봇의 언어를 선택하세요:</b>', getLangKeyboard('ming'));
       return;
     }
 
     // ✅ 관리자 명령어 확장
-    if (fromId.toString() === config.ADMIN_CHAT_ID) {
-      const replyMap = {
-        '/start': {
-          ko: '🤖 IS 관리자봇에 오신 것을 환영합니다!',
-          en: '🤖 Welcome to IS Admin Bot!',
-          zh: '🤖 欢迎使用 IS 管理员机器人！',
-          ja: '🤖 IS管理ボットへようこそ！'
-        },
-        '/help': {
-          ko: '🛠 명령어: /최실장켜 /최실장꺼 /최실장상태 /밍밍켜 /밍밍꺼 /밍밍상태',
-          en: '🛠 Commands: /choi_on /choi_off /choi_status /ming_on /ming_off /ming_status',
-          zh: '🛠 命令: /choi_on /choi_off /choi_status /ming_on /ming_off /ming_status',
-          ja: '🛠 コマンド: /choi_on /choi_off /choi_status /ming_on /ming_off /ming_status'
-        }
-      };
-
-      const langStartMsg = replyMap['/start'][lang];
-      const langHelpMsg = replyMap['/help'][lang];
-
+    if (chatId.toString() === config.ADMIN_CHAT_ID) {
       switch (command) {
-        case '/start':
-        case '/settings':
-          const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-          const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-          const statusMsg =
-            `✅ 상태 (🕒 ${timeStr})\n` +
-            `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'} (${langChoi})\n` +
-            `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'} (${langMing})`;
-          await sendTextToTelegram(`${langStartMsg}\n\n${statusMsg}`, getInlineKeyboard());
-          return;
-
-        case '/help':
-        case '/도움말':
-          await sendTextToTelegram(langHelpMsg);
-          return;
-
         case '/choi_on': global.choiEnabled = true; break;
         case '/choi_off': global.choiEnabled = false; break;
         case '/ming_on': global.mingEnabled = true; break;
         case '/ming_off': global.mingEnabled = false; break;
       }
-
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-
-      if (command.includes('status')) {
-        const statusMsg =
-          `✅ 상태 (🕒 ${timeStr})\n` +
-          `최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'}\n` +
-          `밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`;
-        await sendTextToTelegram(statusMsg);
-      } else {
-        const statusMsg =
-          `${command} 처리 완료 (🕒 ${timeStr})\n최실장: ${global.choiEnabled ? '✅ ON' : '⛔ OFF'}, 밍밍: ${global.mingEnabled ? '✅ ON' : '⛔ OFF'}`;
-        await sendTextToTelegram(statusMsg);
-      }
+      await sendBotStatus(timeStr, `${command} 처리 완료`);
       return;
     }
   }
