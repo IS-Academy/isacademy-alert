@@ -24,6 +24,19 @@ const inlineKeyboard = {
   ]
 };
 
+const mainKeyboard = {
+  keyboard: [
+    ['🌐 최실장 언어선택', '🌐 밍밍 언어선택'],
+    ['📡 상태 확인', '🔁 더미 상태']
+  ],
+  resize_keyboard: true
+};
+
+async function sendToAdmin(text, replyMarkup = mainKeyboard) {
+  await sendTextToBot('admin', config.ADMIN_CHAT_ID, text, replyMarkup);
+}
+
+
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
