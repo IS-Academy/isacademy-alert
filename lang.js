@@ -17,5 +17,6 @@ function getTranslation(lang, section, key) {
 module.exports = {
   translations,
   getUserLang,
-  getTranslation
+  getTranslation,
+  get
 };
