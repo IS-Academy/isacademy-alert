@@ -2,40 +2,39 @@
 
 // ✅ 환경설정 로드 (.env)
 require('dotenv').config();
-const path = require('path');
 
 // ✅ 모듈 불러오기
-const { sendTelegramAlert } = require('./modules/alertSender');
-const { fetchMarketData } = require('./modules/fetcher');
-const { getStrategyResult } = require('./strategies/basicStrategy');
+const express = require('express');
+const bodyParser = require('body-parser');
+const dummyHandler = require('./dummyHandler');
+const webhookHandler = require('./webhookHandler');
+const { loadBotState } = require('./utils');
 
-// 실행 주기 (ms)
-const INTERVAL = process.env.FETCH_INTERVAL
-  ? parseInt(process.env.FETCH_INTERVAL, 10)
-  : 10000;
+// ✅ 앱 초기화
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-async function runBot() {
-  try {
-    console.log(`[START] Bot started at ${new Date().toISOString()}`);
+// ✅ 전역 봇 상태 로드
+const { choiEnabled, mingEnabled } = loadBotState();
+global.choiEnabled = choiEnabled;
+global.mingEnabled = mingEnabled;
 
-    const marketData = await fetchMarketData();
-    if (!marketData) {
-      console.warn('[WARN] No market data received.');
-      return;
-    }
+// ✅ JSON 파싱 미들웨어
+app.use(bodyParser.json());
 
-    const result = getStrategyResult(marketData);
-    if (!result || !result.shouldAlert) {
-      console.log('[INFO] No alert needed.');
-      return;
-    }
+// ✅ 라우팅 설정
+// 📡 더미 수신 엔드포인트
+app.use('/dummy', dummyHandler);
 
-    await sendTelegramAlert(result.message);
-    console.log('[SUCCESS] Alert sent via Telegram');
-  } catch (error) {
-    console.error('[ERROR] Unexpected issue in runBot:', error);
-  }
-}
+// 📬 트레이딩뷰 웹훅 수신
+app.post('/webhook', webhookHandler);
 
-// 일정 주기로 실행
-setInterval(runBot, INTERVAL);
+// ✅ 헬스체크용 루트 엔드포인트
+app.get('/', (req, res) => {
+  res.send('✅ IS Academy Webhook 서버 작동 중입니다.');
+});
+
+// ✅ 서버 시작
+app.listen(PORT, () => {
+  console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
+});
