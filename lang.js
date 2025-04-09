@@ -14,6 +14,10 @@ function getTranslation(lang, section, key) {
   return translations[userLang]?.[section]?.[key] || '';
 }
 
+function get(lang = 'ko') {
+  return translations[lang] || translations['ko'];
+}
+
 module.exports = {
   translations,
   getUserLang,
