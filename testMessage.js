@@ -1,6 +1,4 @@
-// testMessage.js
-
-const { formatSignalMessage } = require('./handlers/messageTemplateManager');
+const { formatSignalMessage } = require('./handlers/messageTemplateManagerMock');
 
 const testData = {
   symbol: 'BTCUSDT.P',
@@ -18,4 +16,3 @@ langs.forEach(lang => {
   console.log(`\n===== [${lang.toUpperCase()}] 메시지 출력 =====\n`);
   console.log(message);
 });
-
