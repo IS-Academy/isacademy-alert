@@ -46,27 +46,104 @@ function getTemplate({
 
   const entryInfo = entryCount > 0 ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}` : '';
   const pnlLine = (type === 'exitLong' || type === 'exitShort') ? generatePnLLine(price, entryAvg, entryCount, lang) : '';
-  const capTime = `${labels.captured}:\n${date}\n${time}`;
+  const capTime = `${labels.captured}:
+${date}
+${time}`;
   const disclaimer = labels.disclaimer_full;
 
-  // ✅ 단일 타임프레임 진입 정보만 출력
   const singleEntryLine = (entryCount > 0 && entryAvg !== 'N/A')
-    ? `\n${labels.entrySummary}\n• ${timeframe} → ✅ ${entryCount}% / 평균가 ${entryAvg}`
+    ? `
+${labels.entrySummary}
+• ${timeframe} → ✅ ${entryCount}% / 평균가 ${entryAvg}`
     : '';
 
   const templates = {
-    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}${singleEntryLine}\n\n${capTime}\n\n${disclaimer}`,
-    Ready_showSup: `${symbols.Ready_showSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
-    Ready_showRes: `${symbols.Ready_showRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
-    Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
-    Ready_isBigRes: `${symbols.Ready_isBigRes} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
-    Ready_exitLong: `${symbols.Ready_exitLong} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
-    Ready_exitShort: `${symbols.Ready_exitShort} ${timeframe}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`
+    showSup: `${symbols.showSup}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    showRes: `${symbols.showRes}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    isBigSup: `${symbols.isBigSup}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    isBigRes: `${symbols.isBigRes}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    exitLong: `${symbols.exitLong}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}
+${pnlLine}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    exitShort: `${symbols.exitShort}
+
+${labels.symbol}: ${symbol}
+${labels.timeframe}: ${timeframe}
+${labels.price}: ${price}
+${entryInfo}
+${pnlLine}${singleEntryLine}
+
+${capTime}
+
+${disclaimer}`,
+    Ready_showSup: `${symbols.Ready_showSup} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_showRes: `${symbols.Ready_showRes} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_isBigRes: `${symbols.Ready_isBigRes} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_exitLong: `${symbols.Ready_exitLong} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+    Ready_exitShort: `${symbols.Ready_exitShort} ${timeframe}⏱️
+
+${labels.symbol}: ${symbol}
+${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`
   };
 
   if (templates[type]) {
