@@ -10,7 +10,9 @@ function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const dayKey = m.format('ddd');
   const dayTranslated = translations[lang]?.days?.[dayKey] || dayKey;
   const date = m.format(`YY. MM. DD. (${dayTranslated})`);
-  const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss').replace('AM', translations[lang]?.am).replace('PM', translations[lang]?.pm);
+  const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss')
+    .replace('AM', translations[lang]?.am)
+    .replace('PM', translations[lang]?.pm);
   return { date, time };
 }
 
@@ -44,8 +46,12 @@ function getTemplate({
   const labels = translations[lang]?.labels || translations['ko'].labels;
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
 
-  const entryInfo = entryCount > 0 ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}` : '';
-  const pnlLine = (type === 'exitLong' || type === 'exitShort') ? generatePnLLine(price, entryAvg, entryCount, lang) : '';
+  const entryInfo = entryCount > 0
+    ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}`
+    : '';
+  const pnlLine = (type === 'exitLong' || type === 'exitShort')
+    ? generatePnLLine(price, entryAvg, entryCount, lang)
+    : '';
   const capTime = `${labels.captured}:
 ${date}
 ${time}`;
