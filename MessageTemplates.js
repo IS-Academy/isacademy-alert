@@ -57,19 +57,13 @@ ${date}
 ${time}`;
   const disclaimer = labels.disclaimer_full;
 
-  const singleEntryLine = (entryCount > 0 && entryAvg !== 'N/A')
-    ? `
-${labels.entrySummary}
-• ${timeframe} → ✅ ${entryCount}% / 평균가 ${entryAvg}`
-    : '';
-
   const templates = {
     showSup: `${symbols.showSup}
 
 ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
-${entryInfo}${singleEntryLine}
+${entryInfo}
 
 ${capTime}
 
@@ -79,7 +73,7 @@ ${disclaimer}`,
 ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
-${entryInfo}${singleEntryLine}
+${entryInfo}
 
 ${capTime}
 
@@ -89,7 +83,7 @@ ${disclaimer}`,
 ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
-${entryInfo}${singleEntryLine}
+${entryInfo}
 
 ${capTime}
 
@@ -99,7 +93,7 @@ ${disclaimer}`,
 ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
-${entryInfo}${singleEntryLine}
+${entryInfo}
 
 ${capTime}
 
@@ -110,7 +104,7 @@ ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
 ${entryInfo}
-${pnlLine}${singleEntryLine}
+${pnlLine}
 
 ${capTime}
 
@@ -121,7 +115,7 @@ ${labels.symbol}: ${symbol}
 ${labels.timeframe}: ${timeframe}
 ${labels.price}: ${price}
 ${entryInfo}
-${pnlLine}${singleEntryLine}
+${pnlLine}
 
 ${capTime}
 
