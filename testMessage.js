@@ -1,3 +1,5 @@
+// VSCODE에서  //< node testMessage.js > 명령어 입력하여 테스트
+
 const { getTemplate } = require('./MessageTemplates');
 
 const testData = {
