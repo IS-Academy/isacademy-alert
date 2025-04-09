@@ -1,6 +1,7 @@
 // ✅ MessageTemplates.test.js
+
 const { getTemplate } = require('../MessageTemplates');
-const { get } = require('./lang-test');
+const { translations } = require('../lang');
 
 const testData = {
   type: 'exitShort',
@@ -15,7 +16,9 @@ const testData = {
 const langs = ['ko', 'en', 'zh', 'jp'];
 
 langs.forEach(lang => {
+  // 실전 방식 그대로 적용
   const message = getTemplate({ ...testData, lang });
   console.log(`\n===== [${lang.toUpperCase()}] 메시지 출력 =====\n`);
   console.log(message);
 });
+
