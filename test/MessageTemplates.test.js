@@ -1,3 +1,4 @@
+// ✅ MessageTemplates.test.js
 const { getTemplate } = require('../MessageTemplates');
 const { get } = require('./lang-test');
 
