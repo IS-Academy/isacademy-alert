@@ -1,7 +1,7 @@
 const ko = require('./locales/ko');
 const en = require('./locales/en');
 const zh = require('./locales/zh');
-const ja = require('./locales/jp');
+const jp = require('./locales/jp');
 
 const translations = { ko, en, zh, jp };
 
