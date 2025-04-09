@@ -1,4 +1,5 @@
 // testMessage.js
+
 const { formatSignalMessage } = require('./handlers/messageTemplateManager');
 
 const testData = {
@@ -17,3 +18,4 @@ langs.forEach(lang => {
   console.log(`\n===== [${lang.toUpperCase()}] 메시지 출력 =====\n`);
   console.log(message);
 });
+
