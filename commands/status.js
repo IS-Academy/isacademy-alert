@@ -1,15 +1,21 @@
-// ✅👇 status.js
+// ✅👇 commands/status.js
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
-const { getLastDummyTime, setAdminMessageId, getAdminMessageId } = require('../utils');
+const { 
+  getLastDummyTime, 
+  setAdminMessageId, 
+  getAdminMessageId, 
+  getTimeString, 
+  loadBotState 
+} = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 
 const cache = new Map();
 
-module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -19,6 +25,9 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
     return;
   }
   cache.set(key, nowTime);
+
+  // 봇 활성화 상태 로드
+  const { choiEnabled, mingEnabled } = loadBotState();
 
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
@@ -42,8 +51,8 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   let statusMsg = `📡 <b>IS 관리자봇 패널</b>\n`;
   statusMsg += `──────────────────────\n`;
   statusMsg += `📍 <b>현재 상태:</b> 🕐 <code>${timeFormatted}</code>\n\n`;
-  statusMsg += `👨‍💼 최실장: ${global.choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
-  statusMsg += `👩‍💼 밍밍: ${global.mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
+  statusMsg += `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
+  statusMsg += `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
   statusMsg += `📅 <b>${dateFormatted}</b>\n`;
   statusMsg += `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTime}</code> ${elapsedText}\n`;
   statusMsg += `──────────────────────`;
@@ -60,12 +69,16 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
 
     if (sent && sent.data && sent.data.result) {
       setAdminMessageId(sent.data.result.message_id);
+      console.log("✅ adminMessageId 업데이트 완료:", sent.data.result.message_id);
+    } else {
+      console.warn('⚠️ 메시지 결과 없음');
     }
   } catch (err) {
     console.error('⚠️ 메시지 수정 실패:', err.message || err);
     const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
     if (sent && sent.data && sent.data.result) {
       setAdminMessageId(sent.data.result.message_id);
+      console.log("✅ adminMessageId 신규 생성 완료:", sent.data.result.message_id);
     }
   }
 };
