@@ -5,12 +5,14 @@ const config = require("./config");
 const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
-const { getTimeString } = require('./utils'); 
+
+// 정확한 함수 위치에서 import
+const { getLastDummyTime, getTimeString } = require('./utils');
+
 const {
   addEntry,
   clearEntries,
   getEntryInfo,
-  getLastDummyTime,
   saveBotState
 } = require("./entryManager");
 
@@ -46,7 +48,6 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
-  // ✅ long_table / short_table 분리 처리
   if (["long_table", "short_table"].includes(update.type)) {
     await handleTableWebhook(update);
     return res.status(200).send("✅ 테이블 전송됨");
@@ -124,11 +125,10 @@ module.exports = async function webhookHandler(req, res) {
     const chatId = update.message.chat.id;
     const messageText = update.message.text.trim();
     const timeStr = getTimeString();
-    const lower = messageText.toLowerCase();
 
     res.sendStatus(200);
 
-    if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
+    if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(messageText.toLowerCase())) {
       await sendBotStatus(timeStr, '', chatId);
     } else {
       await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
