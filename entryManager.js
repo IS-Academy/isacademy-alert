@@ -1,4 +1,4 @@
-// entryManager.js
+// ✅👇 entryManager.js
 const entries = { long: {}, short: {} };
 
 function addEntry(symbol, type, price, timeframe = 'default') {
