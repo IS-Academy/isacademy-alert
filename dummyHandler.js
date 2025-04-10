@@ -12,6 +12,9 @@ module.exports = async function dummyHandler(req, res) {
   console.log('✅ [더미 수신] 시간:', displayTime);
   updateLastDummyTime(nowIso);
 
+  // 👇 인라인 키보드 없이 메시지만 업데이트
+  await sendToAdmin(statusMsg, null);
+
   // ✅ 필요 시 관리자에게 메시지 발송 (주석 해제 가능)
   // await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
 
