@@ -39,7 +39,7 @@ function generatePnLLine(price, entryAvg, entryCount, lang = 'ko') {
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
   const valid = parseFloat(entryCount) && parseFloat(entryAvg);
   if (!valid) {
-    return '📊 진입 비율/평균가 정보 없음 또는 계산 불가';
+    return '📊 진입 비율 정보 없음 / 평균가 계산 불가';
   }
 
   const labels = translations[lang]?.labels || translations['ko'].labels;
