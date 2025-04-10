@@ -1,15 +1,15 @@
-// ✅ webhookHandler.js
+// ✅👇 webhookHandler.js
 
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
+const { getTimeString } = require('./utils'); 
 const {
   addEntry,
   clearEntries,
   getEntryInfo,
-  getTimeString,
   getLastDummyTime,
   saveBotState
 } = require("./entryManager");
