@@ -1,4 +1,4 @@
-// ✅ botManager.js
+// ✅👇 botManager.js
 
 const axios = require('axios');
 const config = require('./config');
