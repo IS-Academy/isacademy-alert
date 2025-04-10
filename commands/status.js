@@ -27,7 +27,6 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   cache.set(key, nowTime);
 
   const { choiEnabled, mingEnabled } = loadBotState();
-
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
   const userLang = langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -47,43 +46,30 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
                    suffix === 'lang_ming' ? getLangKeyboard('ming') : inlineKeyboard;
 
-  let statusMsg = `📡 <b>IS 관리자봇 패널</b>\n`;
-  statusMsg += `──────────────────────\n`;
-  statusMsg += `📍 <b>현재 상태:</b> 🕐 <code>${timeFormatted}</code>\n\n`;
-  statusMsg += `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n`;
-  statusMsg += `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n`;
-  statusMsg += `📅 <b>${dateFormatted}</b>\n`;
-  statusMsg += `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTime}</code> ${elapsedText}\n`;
-  statusMsg += `──────────────────────`;
+  const statusMsg = `📡 <b>IS 관리자봇 패널</b>\n──────────────────────\n📍 <b>현재 상태:</b> 🕐 <code>${timeFormatted}</code>\n\n👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)\n👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)\n\n📅 <b>${dateFormatted}</b>\n🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTime}</code> ${elapsedText}\n──────────────────────`;
 
   try {
-    const existingMessageId = messageId || getAdminMessageId();
-
     let sent;
+    const existingMessageId = messageId || getAdminMessageId();
 
     if (existingMessageId) {
       sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-      if (sent && sent.data && sent.data.result) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log("✅ 메시지 수정 완료");
-      } else {
-        throw new Error('메시지 수정 결과 없음');
-      }
-    } else {
-      // 최초 메시지 전송 시도
+    } 
+
+    if (!sent?.data?.result) {
       sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, { parse_mode: 'HTML' });
-      if (sent && sent.data && sent.data.result) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log("✅ 최초 상태 메시지 전송 완료");
-      } else {
-        throw new Error('최초 메시지 전송 결과 없음');
-      }
     }
 
-    return sent; // ✅ 반환값 명확히 추가
+    if (sent?.data?.result?.message_id) {
+      setAdminMessageId(sent.data.result.message_id);
+      console.log('✅ 관리자 패널 메시지 전송 및 ID 저장 완료');
+    } else {
+      console.warn('⚠️ 관리자 패널 메시지 전송 결과 없음');
+    }
+
+    return sent;
   } catch (err) {
-    console.warn('⚠️ 메시지 처리 실패:', err.message);
+    console.error('❌ 관리자 패널 메시지 처리 실패:', err.message);
     return null;
   }
 };
-
