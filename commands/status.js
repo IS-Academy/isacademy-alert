@@ -1,6 +1,6 @@
 // ✅👇 commands/status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard } = require('../botManager');
+const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
@@ -59,8 +59,10 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   try {
     const existingMessageId = messageId || getAdminMessageId();
 
+    let sent;
+
     if (existingMessageId) {
-      const sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
       if (sent && sent.data && sent.data.result) {
         setAdminMessageId(sent.data.result.message_id);
         console.log("✅ 메시지 수정 완료");
@@ -68,10 +70,19 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
         throw new Error('메시지 수정 결과 없음');
       }
     } else {
-      throw new Error('⚠️ 저장된 adminMessageId가 없음, 최초 메시지 생성 필요');
+      // 최초 메시지 전송 시도
+      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, { parse_mode: 'HTML' });
+      if (sent && sent.data && sent.data.result) {
+        setAdminMessageId(sent.data.result.message_id);
+        console.log("✅ 최초 상태 메시지 전송 완료");
+      } else {
+        throw new Error('최초 메시지 전송 결과 없음');
+      }
     }
+
+    return sent; // ✅ 반환값 명확히 추가
   } catch (err) {
     console.warn('⚠️ 메시지 처리 실패:', err.message);
+    return null;
   }
 };
-
