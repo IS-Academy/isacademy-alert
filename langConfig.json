@@ -1,3 +1,5 @@
+// ✅👇 langConfig.json
+
 {
   "123456789": { "lang": "en", "tz": "America/New_York" },
   "987654321": { "lang": "zh", "tz": "Asia/Shanghai" }
