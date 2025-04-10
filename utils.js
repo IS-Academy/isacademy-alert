@@ -126,13 +126,8 @@ function getTimeString(tz = 'Asia/Seoul') {
 
 let adminMessageId = null;
 
-function setAdminMessageId(id) {
-  adminMessageId = id;
-}
-
-function getAdminMessageId() {
-  return adminMessageId;
-}
+function setAdminMessageId(id) { adminMessageId = id; }
+function getAdminMessageId() { return adminMessageId; }
 
 module.exports = {
   replaceTemplate,
