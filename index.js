@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const { loadBotState } = require('./utils');
+const { sendToAdmin } = require('./botManager');
 
 // ✅ 앱 초기화
 const app = express();
@@ -30,11 +31,19 @@ app.use('/dummy', dummyHandler);
 app.post('/webhook', webhookHandler);
 
 // ✅ 헬스체크용 루트 엔드포인트
-app.get('/', (req, res) => {
-  res.send('✅ IS Academy Webhook 서버 작동 중입니다.');
-});
+app.get('/', (req, res) => res.send('✅ IS Academy Webhook 서버 작동 중입니다.'));
 
-// ✅ 서버 시작
-app.listen(PORT, () => {
+// ✅ 서버 시작시 관리자에게 명확히 '/start' 메시지 전송 (초기화)
+app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
+  try {
+    const sent = await sendToAdmin("/start");
+    if (sent?.data?.result) {
+      console.log('✅ 관리자 패널 초기화 완료');
+    } else {
+      console.error('❌ 관리자 패널 초기화 메시지 전송 실패: 메시지 결과 없음');
+    }
+  } catch (err) {
+    console.error('❌ 관리자 패널 초기화 오류:', err.message);
+  }
 });
