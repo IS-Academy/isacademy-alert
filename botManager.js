@@ -88,5 +88,6 @@ module.exports = {
   editMessage,
   inlineKeyboard,
   mainKeyboard,
-  getLangKeyboard
+  getLangKeyboard,
+  sendTextToBot
 };
