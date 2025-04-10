@@ -34,16 +34,30 @@ app.post('/webhook', webhookHandler);
 app.get('/', (req, res) => res.send('✅ IS Academy Webhook 서버 작동 중입니다.'));
 
 // ✅ 서버 시작시 관리자에게 명확히 '/start' 메시지 전송 (초기화)
-app.listen(PORT, async () => {
-  console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
+const axios = require('axios');
+const config = require('./config');
+
+async function initAdminPanel() {
+  const ADMIN_CHAT_ID = config.ADMIN_CHAT_ID; // admin chat id (반드시 확인 후 .env에 추가)
+  const ADMIN_BOT_TOKEN = config.ADMIN_BOT_TOKEN; // admin bot token (.env에 이미 존재)
+  
+  const url = `https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage`;
+  
   try {
-    const sent = await sendToAdmin("/start");
-    if (sent?.data?.result) {
-      console.log('✅ 관리자 패널 초기화 완료');
+    const res = await axios.post(url, {
+      chat_id: ADMIN_CHAT_ID,
+      text: "/start",
+    });
+
+    if (res.data.ok) {
+      console.log("✅ 관리자 패널 초기화 완료");
     } else {
-      console.error('❌ 관리자 패널 초기화 메시지 전송 실패: 메시지 결과 없음');
+      throw new Error("메시지 결과 없음");
     }
   } catch (err) {
-    console.error('❌ 관리자 패널 초기화 오류:', err.message);
+    console.error("❌ 관리자 패널 초기화 메시지 전송 실패:", err.message);
   }
-});
+}
+
+// 서버 시작 직후 바로 실행
+initAdminPanel();
