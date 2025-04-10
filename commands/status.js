@@ -34,8 +34,13 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
 
   const dayTranslated = translations[userLang]?.days[now.format('ddd')] || now.format('ddd');
-  const dummyMoment = moment(getLastDummyTime()).isValid() ? moment(getLastDummyTime()).tz(tz) : null;
+
+  const lastDummy = getLastDummyTime();
+  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
+
+  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
+  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
   const statusMsg = [
     `📡 <b>IS 관리자봇 패널</b>`,
@@ -46,7 +51,7 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
     `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)`,
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
-    `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyMoment ? dummyMoment.format('YY.MM.DD HH:mm:ss') : '기록 없음'}</code> ${elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : ''}`,
+    `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
     `──────────────────────`
   ].join('\n');
 
