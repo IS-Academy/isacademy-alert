@@ -28,7 +28,7 @@ function getLangKeyboard(bot) {
   };
 }
 
-async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
+async function sendTextToBot(botType, chatId, text) {
   let token;
 
   if (botType === 'choi') {
@@ -45,15 +45,14 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup || undefined
+      parse_mode: 'HTML'
     });
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
   }
 }
 
-async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
+async function editMessage(botType, chatId, messageId, text) {
   const token = config.ADMIN_BOT_TOKEN;
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
   try {
@@ -61,8 +60,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
       chat_id: chatId,
       message_id: messageId,
       text,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup || inlineKeyboard
+      parse_mode: 'HTML'
     });
   } catch (err) {
     const errorMsg = err.response?.data?.description || '';
@@ -70,7 +68,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
       console.log('🔹 editMessage: 메시지 변경 없음.');
     } else if (errorMsg.includes('message to edit not found')) {
       console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
-      await sendTextToBot(botType, chatId, text, replyMarkup);
+      await sendTextToBot(botType, chatId, text);
     } else {
       console.error(`❌ editMessage 실패:`, errorMsg);
     }
