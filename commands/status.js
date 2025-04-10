@@ -67,22 +67,22 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
         setAdminMessageId(sent.data.result.message_id);
         console.log("✅ 메시지 수정 완료");
       } else {
-        throw new Error('메시지 수정 결과 없음');
+        // 명확한 오류 로깅만, 중복메시지 전송 방지
+        console.warn('⚠️ 메시지 수정 응답에 result 없음');
       }
     } else {
-      // 최초 메시지 전송 시도
       sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, { parse_mode: 'HTML' });
       if (sent && sent.data && sent.data.result) {
         setAdminMessageId(sent.data.result.message_id);
         console.log("✅ 최초 상태 메시지 전송 완료");
       } else {
-        throw new Error('최초 메시지 전송 결과 없음');
+        console.warn('⚠️ 최초 메시지 전송 응답에 result 없음');
       }
     }
 
-    return sent; // ✅ 반환값 명확히 추가
+    return sent;
   } catch (err) {
-    console.warn('⚠️ 메시지 처리 실패:', err.message);
+    console.error('❌ 메시지 처리 예외:', err.message);
     return null;
   }
 };
