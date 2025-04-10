@@ -22,21 +22,6 @@ const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 const { getTranslation, translations } = require("./lang");
 
-const TYPE_MAP = {
-  show_Support: 'showSup',
-  show_Resistance: 'showRes',
-  is_Big_Support: 'isBigSup',
-  is_Big_Resistance: 'isBigRes',
-  Ready_show_Support: 'Ready_showSup',
-  Ready_show_Resistance: 'Ready_showRes',
-  Ready_is_Big_Support: 'Ready_isBigSup',
-  Ready_is_Big_Resistance: 'Ready_isBigRes',
-  Ready_exitLong: 'Ready_exitLong',
-  Ready_exitShort: 'Ready_exitShort',
-  exitLong: 'exitLong',
-  exitShort: 'exitShort'
-};
-
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
 }
@@ -60,7 +45,7 @@ module.exports = async function webhookHandler(req, res) {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
       const symbol = update.symbol || "Unknown";
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
-      const type = TYPE_MAP[update.type] || update.type;
+      const type = update.type;
       const price = parseFloat(update.price) || "N/A";
 
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
