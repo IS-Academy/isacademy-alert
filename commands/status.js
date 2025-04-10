@@ -50,13 +50,19 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
 
   try {
     const existingMessageId = messageId || getAdminMessageId();
-    const sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-    
+    let sent;
+
+    if (existingMessageId) {
+      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+    } else {
+      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
+    }
+
     if (sent && sent.data && sent.data.result) {
       setAdminMessageId(sent.data.result.message_id);
     }
   } catch (err) {
-    console.warn('🧯 editMessage 실패, 새 메시지 발송 시도');
+    console.error('⚠️ 메시지 수정 실패:', err.message || err);
     const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
     if (sent && sent.data && sent.data.result) {
       setAdminMessageId(sent.data.result.message_id);
