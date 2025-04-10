@@ -15,7 +15,7 @@ const moment = require('moment-timezone');
 
 const cache = new Map();
 
-module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, retry = false) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -62,29 +62,37 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
 
     if (existingMessageId) {
       sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-      if (!(sent && sent.data && sent.data.result)) {
+      if (sent && sent.data && sent.data.result) {
+        setAdminMessageId(sent.data.result.message_id);
+        console.log("✅ 메시지 수정 완료 (messageId 업데이트됨)");
+      } else {
         throw new Error('메시지 수정 결과 없음');
       }
-      setAdminMessageId(sent.data.result.message_id);
     } else {
       sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
       if (sent && sent.data && sent.data.result) {
         setAdminMessageId(sent.data.result.message_id);
+        console.log("✅ 신규 메시지 전송 완료 (messageId 저장됨)");
       } else {
         throw new Error('신규 메시지 전송 결과 없음');
       }
     }
-
-    console.log("✅ adminMessageId 정상 업데이트:", getAdminMessageId());
   } catch (err) {
-    console.warn('⚠️ 메시지 수정 실패:', err.message);
-    // 메시지 수정 실패 시 새로운 메시지 발송
-    const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
-    if (sent && sent.data && sent.data.result) {
-      setAdminMessageId(sent.data.result.message_id);
-      console.log("✅ 메시지 수정 실패 후 신규 메시지 전송 성공:", getAdminMessageId());
+    console.warn('⚠️ 메시지 처리 실패:', err.message);
+
+    // 재시도는 최대 1회만 허용
+    if (!retry) {
+      console.log('🔄 메시지 1회 재전송 시도 중...');
+      const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
+      if (sent && sent.data && sent.data.result) {
+        setAdminMessageId(sent.data.result.message_id);
+        console.log("✅ 재시도 메시지 전송 성공 (messageId 저장됨)");
+      } else {
+        console.error('❌ 재시도 메시지 전송 실패:', sent?.data || '응답 없음');
+      }
     } else {
-      console.error('❌ 신규 메시지 전송마저 실패:', sent?.data || '응답 없음');
+      console.error('❌ 재시도 이미 수행됨. 추가 재전송 없음.');
     }
   }
 };
+
