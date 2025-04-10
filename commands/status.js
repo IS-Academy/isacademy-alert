@@ -1,6 +1,6 @@
 // ✅👇 status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot, sendToAdmin } = require('../botManager');
+const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const { getLastDummyTime, setAdminMessageId, getAdminMessageId } = require('../utils');
@@ -14,7 +14,10 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
-  if (cache.get(key) === nowTime) return;
+  if (cache.get(key) === nowTime) {
+    console.log('⚠️ 상태 메시지 중복 생략');
+    return;
+  }
   cache.set(key, nowTime);
 
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
@@ -33,7 +36,8 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
   const elapsedText = dummyMoment ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
-  const keyboard = inlineKeyboard;
+  const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
+                   suffix === 'lang_ming' ? getLangKeyboard('ming') : inlineKeyboard;
 
   let statusMsg = `📡 <b>IS 관리자봇 패널</b>\n`;
   statusMsg += `──────────────────────\n`;
@@ -54,15 +58,14 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
       sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
     }
 
-    if (sent && sent.data && sent.data.result) setAdminMessageId(sent.data.result.message_id);
+    if (sent && sent.data && sent.data.result) {
+      setAdminMessageId(sent.data.result.message_id);
+    }
   } catch (err) {
+    console.error('⚠️ 메시지 수정 실패:', err.message || err);
     const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
-    if (sent && sent.data && sent.data.result) setAdminMessageId(sent.data.result.message_id);
+    if (sent && sent.data && sent.data.result) {
+      setAdminMessageId(sent.data.result.message_id);
+    }
   }
 };
-
-(async () => {
-  const initMsg = "📡 <b>IS 관리자봇 패널</b>\n서버 재시작 완료. 상태 초기화.";
-  const sent = await sendToAdmin(initMsg);
-  if (sent?.data?.result) setAdminMessageId(sent.data.result.message_id);
-})();
