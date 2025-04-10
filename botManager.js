@@ -20,10 +20,10 @@ const mainKeyboard = {
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
-      { text: '🇰🇷 한국어', callback_data: lang_${bot}_ko },
-      { text: '🇺🇸 English', callback_data: lang_${bot}_en },
-      { text: '🇨🇳 中文', callback_data: lang_${bot}_zh },
-      { text: '🇯🇵 日本語', callback_data: lang_${bot}_ja }
+      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
+      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
+      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
+      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
     ]]
   };
 }
@@ -75,16 +75,16 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
   try {
     const token = getBotToken(botType);
-    await axios.post(https://api.telegram.org/bot${token}/editMessageText, {
+    await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
       parse_mode: 'HTML',
-      reply_markup: replyMarkup?.inline_keyboard ? replyMarkup : { inline_keyboard: [] }
+      reply_markup: replyMarkup || { inline_keyboard: [] } // ✅ 안정적인 기본값 제공
     });
   } catch (err) {
     const ignore = err.response?.data?.description?.includes("message is not modified");
-    if (!ignore) console.error(❌ ${botType} edit 실패:, err.stack || err.message);
+    if (!ignore) console.error(`❌ ${botType} edit 실패:`, err.stack || err.message);
   }
 }
 
