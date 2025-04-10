@@ -1,4 +1,4 @@
-// ✅👇 langMessages.js
+// ✅ langMessages.js
 
 const DISPLAY_LANG = {
   ko: '한국어',

@@ -8,9 +8,6 @@ const config = require('./config');
 
 const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
 
-let adminMessageId = null;
-let lastDummyTime = null;
-
 // ✅ 템플릿 치환
 function replaceTemplate(str, values = {}) {
   return str.replace(/\{(.*?)\}/g, (_, key) => values[key] ?? `{${key}}`);
@@ -44,6 +41,7 @@ function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
   const parsed = parseFloat(price);
   if (!Number.isFinite(parsed)) return;
 
+  // ✅ 현재 진입 개수 확인
   const currentCount = entryMap[symbol][timeframe].length;
   const currentPercent = currentCount + 1; // 1회 = 1%
 
@@ -52,7 +50,7 @@ function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
     const warning = getTranslation(lang, 'labels', key);
     if (global.choiEnabled) sendToChoi(warning);
     if (global.mingEnabled) sendToMing(warning);
-    return;
+    return; // 포화 상태이면 진입하지 않음
   }
 
   entryMap[symbol][timeframe].push(parsed);
@@ -78,6 +76,7 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
   return { entryCount, entryAvg };
 }
 
+// ✅ 전체 타임프레임 진입 요약 (for 메시지)
 function getAllEntryInfo(symbol, type) {
   const entryMap = getEntryMapByType(type);
   if (!entryMap || !entryMap[symbol]) return [];
@@ -94,7 +93,9 @@ function getAllEntryInfo(symbol, type) {
     .sort((a, b) => parseInt(a.timeframe) - parseInt(b.timeframe));
 }
 
-// ✅ 더미 타임 관리
+// ✅ 더미 타임
+let lastDummyTime = null;
+
 function updateLastDummyTime(time = new Date().toISOString()) {
   lastDummyTime = time;
 }
@@ -119,17 +120,18 @@ function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// ✅ 관리자 패널 메시지 관리
+function getTimeString(tz = 'Asia/Seoul') {
+  return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
+}
+
+let adminMessageId = null;
+
 function setAdminMessageId(id) {
   adminMessageId = id;
 }
 
 function getAdminMessageId() {
   return adminMessageId;
-}
-
-function getTimeString(tz = 'Asia/Seoul') {
-  return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
 }
 
 module.exports = {
