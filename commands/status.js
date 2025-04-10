@@ -1,6 +1,6 @@
 // ✅👇 commands/status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
+const { editMessage, inlineKeyboard, getLangKeyboard } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
@@ -15,7 +15,7 @@ const moment = require('moment-timezone');
 
 const cache = new Map();
 
-module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, retry = false) {
+module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -58,41 +58,20 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
 
   try {
     const existingMessageId = messageId || getAdminMessageId();
-    let sent;
 
     if (existingMessageId) {
-      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+      const sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
       if (sent && sent.data && sent.data.result) {
         setAdminMessageId(sent.data.result.message_id);
-        console.log("✅ 메시지 수정 완료 (messageId 업데이트됨)");
+        console.log("✅ 메시지 수정 완료");
       } else {
         throw new Error('메시지 수정 결과 없음');
       }
     } else {
-      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
-      if (sent && sent.data && sent.data.result) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log("✅ 신규 메시지 전송 완료 (messageId 저장됨)");
-      } else {
-        throw new Error('신규 메시지 전송 결과 없음');
-      }
+      throw new Error('⚠️ 저장된 adminMessageId가 없음, 최초 메시지 생성 필요');
     }
   } catch (err) {
     console.warn('⚠️ 메시지 처리 실패:', err.message);
-
-    // 재시도는 최대 1회만 허용
-    if (!retry) {
-      console.log('🔄 메시지 1회 재전송 시도 중...');
-      const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
-      if (sent && sent.data && sent.data.result) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log("✅ 재시도 메시지 전송 성공 (messageId 저장됨)");
-      } else {
-        console.error('❌ 재시도 메시지 전송 실패:', sent?.data || '응답 없음');
-      }
-    } else {
-      console.error('❌ 재시도 이미 수행됨. 추가 재전송 없음.');
-    }
   }
 };
 
