@@ -12,9 +12,6 @@ module.exports = async function dummyHandler(req, res) {
   console.log('✅ [더미 수신] 시간:', displayTime);
   updateLastDummyTime(nowIso);
 
-  // ✅ 관리자봇 상태 자동 갱신 (더미 수신 시)
-  await sendBotStatus(getTimeString());
-
   // ✅ 필요 시 관리자에게 메시지 발송 (주석 해제 가능)
   // await sendTextToTelegram(`🔁 더미 웹훅 수신!\n🕒 ${now}`);
 
