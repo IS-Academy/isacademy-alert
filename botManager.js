@@ -1,8 +1,6 @@
-// ✅ botManager.js
 const axios = require('axios');
 const config = require('./config');
 
-// 🔧 키보드 정의
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
@@ -17,89 +15,54 @@ const mainKeyboard = {
   resize_keyboard: true
 };
 
-function getLangKeyboard(bot) {
-  return {
-    inline_keyboard: [[
-      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
-      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
-      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
-      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
-    ]]
-  };
-}
-
-function getTzKeyboard() {
-  return {
-    keyboard: [
-      ['Asia/Seoul', 'Asia/Tokyo'],
-      ['UTC', 'America/New_York']
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: true
-  };
-}
-
-// 🔧 전송기
-function getBotToken(botType) {
-  switch (botType) {
-    case 'choi': return config.TELEGRAM_BOT_TOKEN;
-    case 'ming': return config.TELEGRAM_BOT_TOKEN_A;
-    case 'admin': return config.ADMIN_BOT_TOKEN;
-    default: throw new Error(Unknown botType: ${botType});
-  }
-}
-
-function getChatId(botType) {
-  switch (botType) {
-    case 'choi': return config.TELEGRAM_CHAT_ID;
-    case 'ming': return config.TELEGRAM_CHAT_ID_A;
-    case 'admin': return config.ADMIN_CHAT_ID;
-    default: throw new Error(Unknown botType: ${botType});
-  }
-}
-
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
+  const token = config.ADMIN_BOT_TOKEN;
   try {
-    const token = getBotToken(botType);
-    await axios.post(https://api.telegram.org/bot${token}/sendMessage, {
+    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
       parse_mode: 'HTML',
       reply_markup: replyMarkup || undefined
     });
   } catch (err) {
-    console.error(❌ ${botType} 전송 실패:, err.stack || err.message);
+    console.error(`❌ sendTextToBot 실패:`, err.message);
   }
 }
 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
+  const token = config.ADMIN_BOT_TOKEN;
   try {
-    const token = getBotToken(botType);
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
       parse_mode: 'HTML',
-      reply_markup: replyMarkup || { inline_keyboard: [] } // ✅ 안정적인 기본값 제공
+      reply_markup: replyMarkup || inlineKeyboard
     });
   } catch (err) {
-    const ignore = err.response?.data?.description?.includes("message is not modified");
-    if (!ignore) console.error(`❌ ${botType} edit 실패:`, err.stack || err.message);
+    const errorMsg = err.response?.data?.description || '';
+    if (errorMsg.includes('message is not modified')) {
+      // ✅ 메시지 변경사항 없으면 무시
+      console.log('🔹 editMessage: 메시지 변경 없음.');
+    } else if (errorMsg.includes('message to edit not found')) {
+      // ✅ 메시지 없으면 재발송
+      console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
+      await sendTextToBot(botType, chatId, text, replyMarkup);
+    } else {
+      console.error(`❌ editMessage 실패:`, errorMsg);
+    }
   }
 }
 
-// 단축 함수
-const sendToChoi = (text, keyboard = null) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, keyboard);
-const sendToMing = (text, keyboard = null) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, keyboard);
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
+const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
+const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
 module.exports = {
-  sendTextToBot,
-  editMessage,
+  sendToAdmin,
   sendToChoi,
   sendToMing,
-  sendToAdmin,
-  getLangKeyboard,
-  getTzKeyboard,
-  inlineKeyboard
+  editMessage,
+  inlineKeyboard,
+  mainKeyboard
 };
