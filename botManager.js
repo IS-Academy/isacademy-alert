@@ -45,7 +45,8 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
-      parse_mode: 'HTML'
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup || undefined
     });
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
@@ -76,7 +77,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
   }
 }
 
-const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
+const sendToAdmin = (text) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
