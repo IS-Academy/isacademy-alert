@@ -1,4 +1,5 @@
-// utils.js
+// ✅👇 utils.js
+
 const fs = require('fs');
 const moment = require('moment-timezone');
 
@@ -15,9 +16,20 @@ function saveBotState(state) {
   fs.writeFileSync('./bot_state.json', JSON.stringify(state, null, 2));
 }
 
+// 추가 (복원된 코드)
+function loadBotState() {
+  try {
+    const raw = fs.readFileSync('./bot_state.json');
+    return JSON.parse(raw);
+  } catch {
+    return { choiEnabled: true, mingEnabled: true };
+  }
+}
+
 module.exports = {
   setAdminMessageId,
   getAdminMessageId,
   getTimeString,
-  saveBotState
+  saveBotState,
+  loadBotState, // ✅ 추가
 };
