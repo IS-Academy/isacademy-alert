@@ -68,11 +68,8 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
 
   try {
     await editMessage('admin', chatId, messageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-    if (messageId) await pinMessage(chatId, messageId);
   } catch (err) {
     console.warn('🧯 editMessage 실패, 새 메시지 발송 시도');
-    const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
-    const newMessageId = sent?.data?.result?.message_id;
-    if (newMessageId) await pinMessage(chatId, newMessageId);
+    await sendTextToBot('admin', chatId, statusMsg, keyboard);
   }
 };
