@@ -1,22 +1,17 @@
-// ✅ status.js
-
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
-const { getLastDummyTime } = require('../utils');
+const { getLastDummyTime, setAdminMessageId, getAdminMessageId } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 
 const cache = new Map();
 
-// (메시지 고정 pinMessage 함수는 삭제됨)
-
 module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
-  
-  // 캐시된 시간과 동일하면 메시지 생략
+
   if (cache.get(key) === nowTime) {
     console.log('⚠️ 상태 메시지 중복 생략');
     return;
@@ -52,9 +47,17 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   statusMsg += `──────────────────────`;
 
   try {
-    await editMessage('admin', chatId, messageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+    const existingMessageId = messageId || getAdminMessageId();
+    const sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+    
+    if (sent && sent.data && sent.data.result) {
+      setAdminMessageId(sent.data.result.message_id);
+    }
   } catch (err) {
     console.warn('🧯 editMessage 실패, 새 메시지 발송 시도');
-    await sendTextToBot('admin', chatId, statusMsg, keyboard);
+    const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
+    if (sent && sent.data && sent.data.result) {
+      setAdminMessageId(sent.data.result.message_id);
+    }
   }
 };
