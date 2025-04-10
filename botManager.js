@@ -64,5 +64,6 @@ module.exports = {
   sendToMing,
   editMessage,
   inlineKeyboard,
-  mainKeyboard
+  mainKeyboard,
+  getLangKeyboard
 };
