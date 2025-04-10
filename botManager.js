@@ -3,6 +3,7 @@
 const axios = require('axios');
 const config = require('./config');
 
+// 텔레그램 키보드 정의
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
@@ -10,11 +11,6 @@ const inlineKeyboard = {
     [{ text: '🌐 최실장 언어선택', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }],
     [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }]
   ]
-};
-
-const mainKeyboard = {
-  keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
-  resize_keyboard: true
 };
 
 function getLangKeyboard(bot) {
@@ -28,7 +24,8 @@ function getLangKeyboard(bot) {
   };
 }
 
-async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
+// ✅ 키보드, 고정 메시지 기능 모두 제거한 순수 메시지 전송
+async function sendTextToBot(botType, chatId, text) {
   let token;
 
   if (botType === 'choi') {
@@ -44,38 +41,15 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup || undefined
+      parse_mode: 'HTML'
     });
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
   }
 }
 
-async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
-  const token = config.ADMIN_BOT_TOKEN;
-  try {
-    await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
-      chat_id: chatId,
-      message_id: messageId,
-      text,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup || inlineKeyboard
-    });
-  } catch (err) {
-    const errorMsg = err.response?.data?.description || '';
-    if (errorMsg.includes('message is not modified')) {
-      console.log('🔹 editMessage: 메시지 변경 없음.');
-    } else if (errorMsg.includes('message to edit not found')) {
-      console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
-      await sendTextToBot(botType, chatId, text, replyMarkup);
-    } else {
-      console.error(`❌ editMessage 실패:`, errorMsg);
-    }
-  }
-}
-
-const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
+// 🧩 모듈 내보내기 (editMessage 제거됨)
+const sendToAdmin = (text) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
@@ -83,8 +57,6 @@ module.exports = {
   sendToAdmin,
   sendToChoi,
   sendToMing,
-  editMessage,
   inlineKeyboard,
-  mainKeyboard,
   getLangKeyboard
 };
