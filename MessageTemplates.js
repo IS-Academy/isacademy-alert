@@ -20,14 +20,30 @@ function generatePnLLine(price, entryAvg, entryCount, lang = 'ko') {
   const avg = parseFloat(entryAvg);
   const cur = parseFloat(price);
   const percent = parseFloat(entryCount);
-  if (!avg || !cur || !percent) return '';
+
+  if (!avg || !cur || !percent) {
+    return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
+  }
 
   const pnl = ((cur - avg) / avg * 100).toFixed(2);
   const capital = ((pnl * percent) / 100).toFixed(2);
-
   const isProfit = parseFloat(pnl) >= 0;
-  const line = isProfit ? translations[lang]?.labels?.pnlLineProfit : translations[lang]?.labels?.pnlLineLoss;
+
+  const line = isProfit
+    ? translations[lang]?.labels?.pnlLineProfit
+    : translations[lang]?.labels?.pnlLineLoss;
+
   return line.replace('{pnl}', pnl).replace('{capital}', capital);
+}
+
+function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
+  const valid = parseFloat(entryCount) && parseFloat(entryAvg);
+  if (!valid) {
+    return '📊 진입 비율/평균가 정보 없음 또는 계산 불가';
+  }
+
+  const labels = translations[lang]?.labels || translations['ko'].labels;
+  return `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}`;
 }
 
 function getTemplate({
@@ -46,15 +62,11 @@ function getTemplate({
   const labels = translations[lang]?.labels || translations['ko'].labels;
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
 
-  const entryInfo = entryCount > 0
-    ? `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}`
-    : '';
+  const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
     ? generatePnLLine(price, entryAvg, entryCount, lang)
     : '';
-  const capTime = `${labels.captured}:
-${date}
-${time}`;
+  const capTime = `${labels.captured}:\n${date}\n${time}`;
   const disclaimer = labels.disclaimer_full;
 
   const templates = {
