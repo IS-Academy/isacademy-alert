@@ -1,3 +1,5 @@
+// ✅👇 status.js
+
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
