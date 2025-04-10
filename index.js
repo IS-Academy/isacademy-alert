@@ -1,4 +1,4 @@
-// ✅ index.js
+// ✅👇 index.js
 
 // ✅ 환경설정 로드 (.env)
 require('dotenv').config();
