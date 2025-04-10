@@ -10,6 +10,10 @@ const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const { loadBotState } = require('./utils');
 const { sendToAdmin } = require('./botManager');
+const axios = require('axios');
+const config = require('./config');
+const sendBotStatus = require('./commands/status');
+const { getTimeString } = require('./utils');
 
 // ✅ 앱 초기화
 const app = express();
@@ -33,23 +37,27 @@ app.post('/webhook', webhookHandler);
 // ✅ 헬스체크용 루트 엔드포인트
 app.get('/', (req, res) => res.send('✅ IS Academy Webhook 서버 작동 중입니다.'));
 
-// ✅ 서버 시작시 관리자에게 명확히 '/start' 메시지 전송 (초기화)
-const axios = require('axios');
-const config = require('./config');
-
+// ✅ 서버 시작시 관리자 패널 자동 초기화 (상태 메시지 전송 및 키보드 생성)
 async function initAdminPanel() {
-  const ADMIN_CHAT_ID = config.ADMIN_CHAT_ID; // admin chat id (반드시 확인 후 .env에 추가)
-  const ADMIN_BOT_TOKEN = config.ADMIN_BOT_TOKEN; // admin bot token (.env에 이미 존재)
-  
+  const ADMIN_CHAT_ID = config.ADMIN_CHAT_ID;
+  const ADMIN_BOT_TOKEN = config.ADMIN_BOT_TOKEN;
+
   const url = `https://api.telegram.org/bot${ADMIN_BOT_TOKEN}/sendMessage`;
   
+  const statusMsg = "📡 <b>IS 관리자봇 패널</b>\n서버가 시작되었습니다. 관리자 패널이 초기화됩니다.";
+  
   try {
-    const res = await axios.post(url, {
+    // ✅ 초기 메시지 전송 (패널 생성 메시지)
+    const response = await axios.post(url, {
       chat_id: ADMIN_CHAT_ID,
-      text: "/start",
+      text: statusMsg,
+      parse_mode: 'HTML',
     });
 
-    if (res.data.ok) {
+    // ✅ 메시지 전송 성공 시 실제 패널 생성 (inline keyboard 메시지 전송)
+    if (response.data.ok) {
+      const timeStr = getTimeString();
+      await sendBotStatus(timeStr, '', ADMIN_CHAT_ID);
       console.log("✅ 관리자 패널 초기화 완료");
     } else {
       throw new Error("메시지 결과 없음");
@@ -61,3 +69,8 @@ async function initAdminPanel() {
 
 // 서버 시작 직후 바로 실행
 initAdminPanel();
+
+// ✅ 서버 시작
+app.listen(PORT, () => {
+  console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
+});
