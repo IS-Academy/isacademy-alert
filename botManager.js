@@ -28,7 +28,7 @@ function getLangKeyboard(bot) {
   };
 }
 
-async function sendTextToBot(botType, chatId, text) {
+async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
   let token;
 
   if (botType === 'choi') {
@@ -70,14 +70,14 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
       console.log('🔹 editMessage: 메시지 변경 없음.');
     } else if (errorMsg.includes('message to edit not found')) {
       console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
-      await sendTextToBot(botType, chatId, text);
+      await sendTextToBot(botType, chatId, text, replyMarkup);
     } else {
       console.error(`❌ editMessage 실패:`, errorMsg);
     }
   }
 }
 
-const sendToAdmin = (text) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text);
+const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
