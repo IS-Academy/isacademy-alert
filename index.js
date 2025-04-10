@@ -10,6 +10,7 @@ const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const { loadBotState, setAdminMessageId } = require('./utils');
 const { sendToAdmin } = require('./botManager');
+const sendBotStatus = require('./commands/status');
 
 // ✅ 앱 초기화
 const app = express();
@@ -24,29 +25,33 @@ global.mingEnabled = mingEnabled;
 app.use(bodyParser.json());
 
 // ✅ 라우팅 설정
-// 📡 더미 수신 엔드포인트
 app.use('/dummy', dummyHandler);
-
-// 📬 트레이딩뷰 웹훅 수신
 app.post('/webhook', webhookHandler);
 
-// ✅ 헬스체크용 루트 엔드포인트
+// ✅ 루트 헬스체크
 app.get('/', (req, res) => {
   res.send('✅ IS Academy Webhook 서버 작동 중입니다.');
 });
 
-// ✅ 서버 시작
+// ✅ 서버 시작 및 자동 /start 명령어 실행
 app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
 
-  // ✅ 서버 시작 후 자동으로 관리자 채팅에 초기 패널 활성화
-  const statusMsg = "📡 <b>IS 관리자봇 패널</b>\n서버가 시작되었습니다. /start 명령이 자동실행됩니다.";
-  
+  const fakeUpdate = {
+    message: {
+      chat: { id: process.env.ADMIN_CHAT_ID },
+      text: '/start'
+    }
+  };
+
   try {
-    const sent = await sendToAdmin(statusMsg);
-    if (sent?.data?.result) setAdminMessageId(sent.data.result.message_id);
-    console.log('✅ 관리자 패널 자동 초기화 완료');
+    // /start 명령어와 같은 효과를 내도록 webhookHandler 호출
+    await webhookHandler({ body: fakeUpdate }, { sendStatus: () => {} });
+    console.log('✅ 관리자 패널 (/start) 자동 초기화 완료');
   } catch (err) {
     console.error('❌ 관리자 패널 초기화 실패:', err);
+    const errorMsg = "📡 <b>IS 관리자봇 패널</b>\n서버가 시작되었습니다만, 자동 초기화가 실패했습니다.";
+    const sent = await sendToAdmin(errorMsg);
+    if (sent?.data?.result) setAdminMessageId(sent.data.result.message_id);
   }
 });
