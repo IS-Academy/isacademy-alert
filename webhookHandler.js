@@ -1,4 +1,4 @@
-// ✅ webhookHandler.js
+// ✅👇 webhookHandler.js
 
 const moment = require("moment-timezone");
 const config = require("./config");
@@ -6,13 +6,16 @@ const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
 const {
-  addEntry,
-  clearEntries,
-  getEntryInfo,
   getTimeString,
   getLastDummyTime,
   saveBotState
 } = require("./utils");
+
+const {
+  addEntry,
+  clearEntries,
+  getEntryInfo
+} = require('./entryManager'); // ✅ 명확한 entryManager.js 연결
 
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
@@ -138,3 +141,4 @@ module.exports = async function webhookHandler(req, res) {
 
   res.sendStatus(200);
 };
+
