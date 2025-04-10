@@ -1,3 +1,5 @@
+// ✅ botManager.js
+
 const axios = require('axios');
 const config = require('./config');
 
@@ -15,7 +17,6 @@ const mainKeyboard = {
   resize_keyboard: true
 };
 
-// ✅ 반드시 포함되어야 할 함수
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -28,7 +29,18 @@ function getLangKeyboard(bot) {
 }
 
 async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
-  const token = config.ADMIN_BOT_TOKEN;
+  let token;
+
+  if (botType === 'choi') {
+    token = config.TELEGRAM_BOT_TOKEN;
+  } else if (botType === 'ming') {
+    token = config.TELEGRAM_BOT_TOKEN_A;
+  } else {
+    token = config.ADMIN_BOT_TOKEN;
+  }
+
+  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}, message="${text?.slice?.(0, 30)}..."`);
+
   try {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
@@ -37,12 +49,13 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
       reply_markup: replyMarkup || undefined
     });
   } catch (err) {
-    console.error(`❌ sendTextToBot 실패:`, err.message);
+    console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
   }
 }
 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
   const token = config.ADMIN_BOT_TOKEN;
+  console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
   try {
     await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
@@ -75,5 +88,5 @@ module.exports = {
   editMessage,
   inlineKeyboard,
   mainKeyboard,
-  getLangKeyboard // 반드시 추가되어야 함
+  getLangKeyboard
 };
