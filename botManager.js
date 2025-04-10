@@ -28,7 +28,7 @@ function getLangKeyboard(bot) {
   };
 }
 
-async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
+async function sendTextToBot(botType, chatId, text, null) {
   let token;
 
   if (botType === 'choi') {
@@ -70,7 +70,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null)
       console.log('🔹 editMessage: 메시지 변경 없음.');
     } else if (errorMsg.includes('message to edit not found')) {
       console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
-      await sendTextToBot(botType, chatId, text, replyMarkup);
+      await sendTextToBot(botType, chatId, text, null);
     } else {
       console.error(`❌ editMessage 실패:`, errorMsg);
     }
