@@ -8,7 +8,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
-const { loadBotState } = require('./utils');
+const { loadBotState, setAdminMessageId } = require('./utils');
+const { sendToAdmin } = require('./botManager');
 
 // ✅ 앱 초기화
 const app = express();
@@ -35,6 +36,17 @@ app.get('/', (req, res) => {
 });
 
 // ✅ 서버 시작
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
+
+  // ✅ 서버 시작 후 자동으로 관리자 채팅에 초기 패널 활성화
+  const statusMsg = "📡 <b>IS 관리자봇 패널</b>\n서버가 시작되었습니다. /start 명령이 자동실행됩니다.";
+  
+  try {
+    const sent = await sendToAdmin(statusMsg);
+    if (sent?.data?.result) setAdminMessageId(sent.data.result.message_id);
+    console.log('✅ 관리자 패널 자동 초기화 완료');
+  } catch (err) {
+    console.error('❌ 관리자 패널 초기화 실패:', err);
+  }
 });
