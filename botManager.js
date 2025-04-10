@@ -45,8 +45,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
     await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup || undefined
+      parse_mode: 'HTML'
     });
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
