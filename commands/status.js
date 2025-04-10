@@ -3,12 +3,12 @@
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
-const { 
-  getLastDummyTime, 
-  setAdminMessageId, 
-  getAdminMessageId, 
-  getTimeString, 
-  loadBotState 
+const {
+  getLastDummyTime,
+  setAdminMessageId,
+  getAdminMessageId,
+  getTimeString,
+  loadBotState
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
@@ -26,7 +26,6 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   }
   cache.set(key, nowTime);
 
-  // 봇 활성화 상태 로드
   const { choiEnabled, mingEnabled } = loadBotState();
 
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
@@ -63,22 +62,29 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
 
     if (existingMessageId) {
       sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
+      if (!(sent && sent.data && sent.data.result)) {
+        throw new Error('메시지 수정 결과 없음');
+      }
+      setAdminMessageId(sent.data.result.message_id);
     } else {
       sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
+      if (sent && sent.data && sent.data.result) {
+        setAdminMessageId(sent.data.result.message_id);
+      } else {
+        throw new Error('신규 메시지 전송 결과 없음');
+      }
     }
 
-    if (sent && sent.data && sent.data.result) {
-      setAdminMessageId(sent.data.result.message_id);
-      console.log("✅ adminMessageId 업데이트 완료:", sent.data.result.message_id);
-    } else {
-      console.warn('⚠️ 메시지 결과 없음');
-    }
+    console.log("✅ adminMessageId 정상 업데이트:", getAdminMessageId());
   } catch (err) {
-    console.error('⚠️ 메시지 수정 실패:', err.message || err);
+    console.warn('⚠️ 메시지 수정 실패:', err.message);
+    // 메시지 수정 실패 시 새로운 메시지 발송
     const sent = await sendTextToBot('admin', chatId, statusMsg, keyboard);
     if (sent && sent.data && sent.data.result) {
       setAdminMessageId(sent.data.result.message_id);
-      console.log("✅ adminMessageId 신규 생성 완료:", sent.data.result.message_id);
+      console.log("✅ 메시지 수정 실패 후 신규 메시지 전송 성공:", getAdminMessageId());
+    } else {
+      console.error('❌ 신규 메시지 전송마저 실패:', sent?.data || '응답 없음');
     }
   }
 };
