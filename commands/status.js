@@ -6,29 +6,16 @@ const config = require('../config');
 const { getLastDummyTime } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const axios = require('axios');
 
 const cache = new Map();
 
-async function pinMessage(chatId, messageId) {
-  const token = config.ADMIN_BOT_TOKEN;
-  try {
-    await axios.post(`https://api.telegram.org/bot${token}/pinChatMessage`, {
-      chat_id: chatId,
-      message_id: messageId,
-      disable_notification: true
-    });
-    console.log('📌 메시지 고정 완료');
-  } catch (err) {
-    console.warn('⚠️ 메시지 고정 실패:', err.response?.data || err.message);
-  }
-}
+// (메시지 고정 pinMessage 함수는 삭제됨)
 
 module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
-
+  
   // 캐시된 시간과 동일하면 메시지 생략
   if (cache.get(key) === nowTime) {
     console.log('⚠️ 상태 메시지 중복 생략');
@@ -49,13 +36,11 @@ module.exports = async function sendBotStatus(timeStr, suffix = '', chatId = con
   const lastDummy = getLastDummyTime();
   const dummyMoment = lastDummy && lastDummy !== '❌ 기록 없음' ? moment.tz(lastDummy, tz) : null;
   const dummyTime = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
-
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
   const elapsedText = dummyMoment ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
   const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
-                   suffix === 'lang_ming' ? getLangKeyboard('ming') :
-                   inlineKeyboard;
+                   suffix === 'lang_ming' ? getLangKeyboard('ming') : inlineKeyboard;
 
   let statusMsg = `📡 <b>IS 관리자봇 패널</b>\n`;
   statusMsg += `──────────────────────\n`;
