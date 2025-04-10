@@ -28,51 +28,63 @@ function getLangKeyboard(bot) {
   };
 }
 
-async function sendTextToBot(botType, chatId, text, replyMarkup = null) {
-  let token;
+async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
+  const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
+                botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
+                config.ADMIN_BOT_TOKEN;
 
-  if (botType === 'choi') {
-    token = config.TELEGRAM_BOT_TOKEN;
-  } else if (botType === 'ming') {
-    token = config.TELEGRAM_BOT_TOKEN_A;
-  } else {
-    token = config.ADMIN_BOT_TOKEN;
-  }
-
-  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}, message="${text?.slice?.(0, 30)}..."`);
+  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}`);
 
   try {
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
-      parse_mode: 'HTML',
+      parse_mode: options.parse_mode || 'HTML',
       reply_markup: replyMarkup || undefined
     });
+
+    if (!response.data.ok) {
+      throw new Error(`Telegram 응답 오류: ${response.data.error_code} - ${response.data.description}`);
+    }
+
+    return response;
   } catch (err) {
-    console.error(`❌ sendTextToBot 실패 (botType=${botType}, chatId=${chatId}):`, err.response?.data || err.message);
+    console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
+    throw err; // 반드시 에러를 상위로 전달
   }
 }
 
-async function editMessage(botType, chatId, messageId, text, replyMarkup = null) {
+async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
+
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
+
   try {
-    await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
-      parse_mode: 'HTML',
+      parse_mode: options.parse_mode || 'HTML',
       reply_markup: replyMarkup || inlineKeyboard
     });
+
+    if (!response.data.ok) {
+      throw new Error(`Telegram 수정 응답 오류: ${response.data.error_code} - ${response.data.description}`);
+    }
+
+    return response;
   } catch (err) {
-    const errorMsg = err.response?.data?.description || '';
+    const errorMsg = err.response?.data?.description || err.message;
+
     if (errorMsg.includes('message is not modified')) {
-      console.log('🔹 editMessage: 메시지 변경 없음.');
+      console.log('🔹 editMessage: 변경 사항 없음');
+      return { data: { result: true } }; // 이 경우는 오류가 아님.
     } else if (errorMsg.includes('message to edit not found')) {
-      console.log('🔹 editMessage: 기존 메시지 없음, 새 메시지 발송.');
-      await sendTextToBot(botType, chatId, text, replyMarkup);
+      console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
+      return await sendTextToBot(botType, chatId, text, replyMarkup, options);
     } else {
-      console.error(`❌ editMessage 실패:`, errorMsg);
+      console.error('❌ editMessage 실패:', errorMsg);
+      throw err; // 명확한 에러는 전달
     }
   }
 }
