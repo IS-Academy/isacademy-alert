@@ -45,3 +45,4 @@ console.log("✅ index.js 실행 시작");
 app.get("/test", (req, res) => {
   res.send("✅ /test는 잘 작동됨");
 });
+console.log("✅ captureApi 라우터 내용 확인:", captureApi.stack);
