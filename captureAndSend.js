@@ -1,6 +1,4 @@
-// ✅👇 captureAndSend.js
-
-// ✅ 최종 개선된 captureAndSend.js (timeout 문제 개선 버전)
+// ✅ 최종 탐지 우회 코드 captureAndSend.js
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -41,11 +39,21 @@ if (!CAPTURE_TYPES.includes(type)) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720 });
 
+  // 🚨 봇 탐지 우회 옵션 추가 (필수적!)
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.69 Safari/537.36"
+  );
+  await page.evaluateOnNewDocument(() => {
+    delete navigator.__proto__.webdriver;
+  });
+  await page.setExtraHTTPHeaders({
+    "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7"
+  });
+
   try {
-    // ✅ 빠른 로딩 옵션으로 변경
     await page.goto("https://kr.tradingview.com/accounts/signin/", {
       waitUntil: "domcontentloaded",
-      timeout: 60000 // 60초로 여유 있게 설정
+      timeout: 60000
     });
 
     await page.waitForSelector('button[class*="emailButton"]', { visible: true });
@@ -57,24 +65,18 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.waitForSelector("#id_password", { visible: true });
     await page.type("#id_password", TV_PASSWORD, { delay: 50 });
 
-    // 로그인 버튼 클릭 및 로그인 확인
     await Promise.all([
       page.click("button[class*='submitButton']"),
       page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60000 })
     ]);
 
-    // 프로필 아이콘으로 로그인 확정 체크
     await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
     console.log("✅ 로그인 성공 확인됨");
 
-    // 차트 페이지로 이동 및 빠른 로딩 체크
     await page.goto(chartUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
-
-    // 차트 요소 명확하게 체크
     await page.waitForSelector(".chart-markup-table, canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // 광고 제거
     const popupCloseBtn = await page.$("div[role='dialog'] button[aria-label='Close']");
     if (popupCloseBtn) {
       await popupCloseBtn.click();
@@ -87,10 +89,8 @@ if (!CAPTURE_TYPES.includes(type)) {
       console.log("🧼 하단 배너 제거 완료");
     }
 
-    // 이미지 캡처
     const buffer = await page.screenshot({ type: "png" });
 
-    // 텔레그램 전송
     if (choiEnabled) {
       const form = new FormData();
       form.append("chat_id", TELEGRAM_CHAT_ID);
