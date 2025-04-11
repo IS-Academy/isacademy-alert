@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (로딩 없이 차트 흐름만 따라가는 최종 버전)
+// ✅👇 captureAndSend.js (세션 인증 확인 + 상태 체크 로그 포함 최종 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -22,6 +22,8 @@ if (!chartUrl) {
 
 const choiEnabled = global.choiEnabled ?? true;
 const mingEnabled = global.mingEnabled ?? true;
+console.log("🧠 상태 체크:", { choiEnabled, mingEnabled });
+
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
   console.log("📵 이미지 캡처 대상이 아님 → 종료");
@@ -52,14 +54,14 @@ if (!CAPTURE_TYPES.includes(type)) {
 
     await page.click("button[class*='submitButton']");
 
-    // ✅ 로그인 후 자연스러운 흐름 확보
-    await page.waitForTimeout(1000);
-    console.log("✅ 로그인 입력 후 흐름 유지됨");
+    // ✅ 세션 인증 확인용 홈 이동 + 사용자 메뉴 확인
+    await page.goto("https://www.tradingview.com", { waitUntil: "networkidle2" });
+    await page.waitForSelector("button[aria-label='Open user menu']", { timeout: 10000 });
+    console.log("✅ 세션 인증 및 로그인 확인됨");
 
     await page.goto(chartUrl, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(3000); // 차트 초기 렌더 대기
+    await page.waitForTimeout(3000);
 
-    // ✅ 광고 닫기 시도
     try {
       const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
       if (popup) {
