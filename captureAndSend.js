@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (광고 2개 닫기 + 밍밍 OFF 반영 + timeout 제거 최적화)
+// ✅👇 captureAndSend.js (waitForNavigation 제거 + 로그인 후 요소 대기 방식 적용)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -22,7 +22,6 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-// ✅ 관리자 상태값 로드
 const { choiEnabled, mingEnabled } = loadBotState();
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
@@ -51,20 +50,19 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.waitForSelector("input#id_password");
     await page.type("input#id_password", TV_PASSWORD, { delay: 30 });
 
-    await Promise.all([
-      page.click("button[class*='submitButton']"),
-      page.waitForNavigation({ waitUntil: "networkidle0" })
-    ]);
+    await page.click("button[class*='submitButton']");
 
+    // ✅ 로그인 후 URL 변경 또는 특정 요소 등장 대기
+    await page.waitForFunction(() => location.href.includes("/"), { timeout: 15000 });
     console.log("✅ 트레이딩뷰 로그인 성공");
+
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
 
-    // ✅ 광고 닫기 처리 (중앙 팝업 + 좌측 하단 배너)
     try {
-      const closePopup = await page.$("div[role='dialog'] button[aria-label='Close']");
-      if (closePopup) {
-        await closePopup.click();
-        console.log("🧹 중앙 광고 팝업 닫힘");
+      const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
+      if (popup) {
+        await popup.click();
+        console.log("🧹 광고 팝업 닫힘");
       }
     } catch {}
 
