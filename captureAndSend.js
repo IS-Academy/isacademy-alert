@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (form 로딩까지 대기 포함한 안정화 버전)
+// ✅👇 captureAndSend.js (입력창 id 기반 셀렉터로 강화)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -58,9 +58,8 @@ if (!CAPTURE_TYPES.includes(type)) {
       if (emailBtn) emailBtn.click();
     });
 
-    await page.waitForSelector("form[action='/accounts/login/']", { timeout: 15000 });
-    await page.waitForSelector("input[name='username']", { timeout: 15000 });
-    await page.type("input[name='username']", TV_EMAIL, { delay: 50 });
+    await page.waitForSelector("input#id_username", { timeout: 15000 });
+    await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
     await page.waitForSelector("input[name='password']", { timeout: 15000 });
     await page.type("input[name='password']", TV_PASSWORD, { delay: 50 });
