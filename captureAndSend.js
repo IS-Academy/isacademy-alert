@@ -1,4 +1,4 @@
-// ✅ 최종 정확한 2단계 로그인 처리 코드 (새로 작성)
+// ✅ 최종 완벽 해결 코드 (AJAX 로그인 정확 처리)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -44,47 +44,37 @@ if (!CAPTURE_TYPES.includes(type)) {
   });
 
   try {
-    // ✅ 로그인 페이지 접속
-    await page.goto("https://kr.tradingview.com/accounts/signin/", {
-      waitUntil: "networkidle2", timeout: 60000
-    });
+    // ✅ 로그인 페이지로 이동
+    await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2" });
 
-    // ✅ 1단계: 이메일 버튼 클릭 (정확한 텍스트 기준)
-    await page.waitForXPath("//span[contains(text(),'이메일')]", { visible: true, timeout: 30000 });
+    // ✅ 이메일 버튼 클릭
+    await page.waitForXPath("//span[contains(text(),'이메일')]", { visible: true });
     const [emailButton] = await page.$x("//span[contains(text(),'이메일')]");
-    if (emailButton) await emailButton.click();
-    else throw new Error("1단계 이메일 버튼 클릭 실패");
+    await emailButton.click();
 
-    // ✅ 2단계: 아이디 입력
-    await page.waitForSelector("input#id_username", { visible: true, timeout: 30000 });
-    await page.type("input#id_username", TV_EMAIL, { delay: 50 });
+    // ✅ 아이디 입력
+    await page.waitForSelector("#id_username", { visible: true });
+    await page.type("#id_username", TV_EMAIL, { delay: 30 });
 
-    // ✅ 2단계: 비밀번호 입력
-    await page.waitForSelector("input#id_password", { visible: true, timeout: 30000 });
-    await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
+    // ✅ 비밀번호 입력
+    await page.waitForSelector("#id_password", { visible: true });
+    await page.type("#id_password", TV_PASSWORD, { delay: 30 });
 
-    // ✅ 2단계: 최종 로그인 버튼 클릭 (텍스트로 정확히 클릭)
-    await page.waitForXPath("//button[contains(., '로그인')]", { visible: true, timeout: 30000 });
+    // ✅ 로그인 버튼 클릭 (AJAX 처리이므로 waitForNavigation 삭제)
+    await page.waitForXPath("//button[contains(., '로그인')]", { visible: true });
     const [loginButton] = await page.$x("//button[contains(., '로그인')]");
-    if (loginButton) {
-      await Promise.all([
-        loginButton.click(),
-        page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 })
-      ]);
-    } else throw new Error("2단계 로그인 버튼 클릭 실패");
+    await loginButton.click();
 
-    // ✅ 로그인 완료 확인 (프로필 아이콘)
+    // ✅ AJAX 로그인 처리 명확히 체크 (프로필 아이콘 기준으로 로그인 확인)
     await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
-    console.log("✅ 로그인 성공 확인됨");
+    console.log("✅ AJAX 로그인 완료 확실히 확인됨");
 
-    // ✅ 차트 페이지 이동
+    // ✅ 로그인 완료 후 차트 페이지 이동
     await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
-
-    // ✅ 차트 로딩 확인
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // ✅ 광고 있으면 제거
+    // ✅ 광고 제거
     const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
     if (popup) {
       await popup.click();
@@ -97,7 +87,7 @@ if (!CAPTURE_TYPES.includes(type)) {
       console.log("🧼 하단 배너 제거 완료");
     }
 
-    // ✅ 차트 스크린샷 캡처
+    // ✅ 차트 캡처
     const buffer = await page.screenshot({ type: "png" });
 
     // ✅ 텔레그램 전송 함수
@@ -113,16 +103,12 @@ if (!CAPTURE_TYPES.includes(type)) {
       });
     };
 
-    // ✅ 최실장 봇 전송
     await sendTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, buffer);
     console.log("✅ 최실장 이미지 전송 완료");
 
-    // ✅ 밍밍 봇 전송
     if (process.env.MINGMING_ENABLED === "true") {
       await sendTelegram(TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A, buffer);
       console.log("✅ 밍밍 이미지 전송 완료");
-    } else {
-      console.log("⛔ 밍밍 봇 비활성화 상태 – 이미지 전송 스킵됨");
     }
 
   } catch (err) {
