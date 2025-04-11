@@ -18,15 +18,15 @@ global.mingEnabled = mingEnabled;
 
 app.use(bodyParser.json());
 
-// ✅ 먼저 라우트 핸들러 등록 순서 정리
+// ✅ 라우트 등록
 app.use('/dummy', dummyHandler);
 app.post('/webhook', webhookHandler);
 app.use('/capture', captureApi);
 
-// ✅ 마지막에 기본 루트 등록 (덮어쓰기 방지)
+// ✅ 기본 루트
 app.get('/', (req, res) => res.send('✅ IS Academy Webhook 서버 작동 중입니다.'));
 
-// ✅ 서버 시작 시 관리자 패널 자동 초기화
+// ✅ 관리자 패널 초기화
 async function initAdminPanel() {
   const sent = await sendBotStatus();
   if (sent && sent.data && sent.data.result) {
@@ -42,7 +42,3 @@ app.listen(PORT, async () => {
 });
 
 console.log("✅ index.js 실행 시작");
-app.get("/test", (req, res) => {
-  res.send("✅ /test는 잘 작동됨");
-});
-console.log("✅ captureApi 라우터 내용 확인:", captureApi.stack);
