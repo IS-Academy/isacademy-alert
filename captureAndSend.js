@@ -1,4 +1,4 @@
-// ✅ 최종 완벽 해결 코드 (AJAX 로그인 정확 처리)
+// ✅🚀 최종 진단 가능한 전체코드 (오류 시 스크린샷 전송)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -44,37 +44,29 @@ if (!CAPTURE_TYPES.includes(type)) {
   });
 
   try {
-    // ✅ 로그인 페이지로 이동
     await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2" });
 
-    // ✅ 이메일 버튼 클릭
     await page.waitForXPath("//span[contains(text(),'이메일')]", { visible: true });
     const [emailButton] = await page.$x("//span[contains(text(),'이메일')]");
     await emailButton.click();
 
-    // ✅ 아이디 입력
     await page.waitForSelector("#id_username", { visible: true });
     await page.type("#id_username", TV_EMAIL, { delay: 30 });
 
-    // ✅ 비밀번호 입력
     await page.waitForSelector("#id_password", { visible: true });
     await page.type("#id_password", TV_PASSWORD, { delay: 30 });
 
-    // ✅ 로그인 버튼 클릭 (AJAX 처리이므로 waitForNavigation 삭제)
     await page.waitForXPath("//button[contains(., '로그인')]", { visible: true });
     const [loginButton] = await page.$x("//button[contains(., '로그인')]");
     await loginButton.click();
 
-    // ✅ AJAX 로그인 처리 명확히 체크 (프로필 아이콘 기준으로 로그인 확인)
     await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
     console.log("✅ AJAX 로그인 완료 확실히 확인됨");
 
-    // ✅ 로그인 완료 후 차트 페이지 이동
     await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // ✅ 광고 제거
     const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
     if (popup) {
       await popup.click();
@@ -87,10 +79,8 @@ if (!CAPTURE_TYPES.includes(type)) {
       console.log("🧼 하단 배너 제거 완료");
     }
 
-    // ✅ 차트 캡처
     const buffer = await page.screenshot({ type: "png" });
 
-    // ✅ 텔레그램 전송 함수
     const sendTelegram = async (token, chatId, imageBuffer) => {
       const form = new FormData();
       form.append("chat_id", chatId);
@@ -113,6 +103,19 @@ if (!CAPTURE_TYPES.includes(type)) {
 
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);
+
+    // 🚨 오류 진단용: 현재 화면 상태를 스크린샷으로 전송
+    const buffer = await page.screenshot({ type: "png" });
+    const form = new FormData();
+    form.append("chat_id", TELEGRAM_CHAT_ID);
+    form.append("photo", buffer, {
+      filename: `error_${Date.now()}.png`,
+      contentType: "image/png"
+    });
+    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, form, {
+      headers: form.getHeaders()
+    });
+    console.log("⚠️ 오류 화면 스크린샷 전송됨");
   } finally {
     await browser.close();
   }
