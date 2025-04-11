@@ -1,19 +1,17 @@
-// ✅ 최종 수정 (정확한 버튼 클릭 방식)
+// ✅🚀 최종 완벽한 신규 작성 captureAndSend.js
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
 
-const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
-const TV_EMAIL = process.env.TV_EMAIL;
-const TV_PASSWORD = process.env.TV_PASSWORD;
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const TELEGRAM_BOT_TOKEN_A = process.env.TELEGRAM_BOT_TOKEN_A;
-const TELEGRAM_CHAT_ID_A = process.env.TELEGRAM_CHAT_ID_A;
+const {
+  BROWSERLESS_TOKEN, TV_EMAIL, TV_PASSWORD,
+  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
+  TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A
+} = process.env;
 
-const interval = process.argv.find(arg => arg.includes("--interval="))?.split("=")[1] || "1";
-const type = process.argv.find(arg => arg.includes("--type="))?.split("=")[1] || "unknown";
+const interval = process.argv.find(a => a.startsWith("--interval="))?.split("=")[1] || "1";
+const type = process.argv.find(a => a.startsWith("--type="))?.split("=")[1] || "unknown";
 const chartUrl = process.env[`TV_CHART_URL_${interval}`];
 
 if (!chartUrl) {
@@ -21,8 +19,6 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-const choiEnabled = global.choiEnabled ?? true;
-const mingEnabled = global.mingEnabled ?? true;
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
   console.log("📵 이미지 캡처 대상이 아님 → 종료");
@@ -47,68 +43,80 @@ if (!CAPTURE_TYPES.includes(type)) {
     delete navigator.__proto__.webdriver;
   });
 
-  await page.setExtraHTTPHeaders({
-    "Accept-Language": "ko-KR,ko;q=0.9"
-  });
-
   try {
-    await page.goto("https://kr.tradingview.com/accounts/signin/", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000
-    });
+    // ✅ TradingView 로그인 페이지 이동
+    await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2", timeout: 60000 });
 
-    // ✅ 명확한 이메일 로그인 버튼 클릭 (한글 텍스트 기반)
-    await page.waitForSelector('button', { visible: true, timeout: 30000 });
-    await page.evaluate(() => {
-      [...document.querySelectorAll('button')]
-        .find(button => button.innerText.includes('이메일로 계속하기'))
-        .click();
-    });
+    // ✅ 이메일 로그인 버튼 클릭 (명확히 한글 텍스트 기반)
+    await page.waitForSelector('button', { visible: true });
+    const emailBtn = await page.$x("//button[contains(text(), '이메일로 계속하기')]");
+    if (emailBtn.length > 0) await emailBtn[0].click();
+    else throw new Error("이메일 로그인 버튼이 없습니다.");
 
-    await page.waitForSelector("#id_username", { visible: true, timeout: 30000 });
+    // ✅ 이메일 입력
+    await page.waitForSelector("#id_username", { visible: true });
     await page.type("#id_username", TV_EMAIL, { delay: 50 });
 
-    await page.waitForSelector("#id_password", { visible: true, timeout: 30000 });
+    // ✅ 비밀번호 입력
+    await page.waitForSelector("#id_password", { visible: true });
     await page.type("#id_password", TV_PASSWORD, { delay: 50 });
 
+    // ✅ 로그인 버튼 클릭
     await Promise.all([
-      page.click("button[class*='submitButton']"),
-      page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60000 })
+      page.click("button[type='submit']"),
+      page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 })
     ]);
 
+    // ✅ 프로필 아이콘으로 로그인 체크
     await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
     console.log("✅ 로그인 성공 확인됨");
 
-    await page.goto(chartUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
+    // ✅ 차트 페이지 이동
+    await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
+
+    // ✅ 차트 로딩 체크
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    const buffer = await page.screenshot({ type: "png" });
-
-    if (choiEnabled) {
-      const form = new FormData();
-      form.append("chat_id", TELEGRAM_CHAT_ID);
-      form.append("photo", buffer, {
-        filename: `chart_${interval}min.png`,
-        contentType: "image/png"
-      });
-      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, form, {
-        headers: form.getHeaders()
-      });
-      console.log("✅ 최실장 이미지 전송 완료");
+    // ✅ 광고 있으면 닫기
+    const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
+    if (popup) {
+      await popup.click();
+      console.log("🧹 광고 팝업 닫힘");
     }
 
-    if (mingEnabled) {
-      const formA = new FormData();
-      formA.append("chat_id", TELEGRAM_CHAT_ID_A);
-      formA.append("photo", buffer, {
+    const bottomBanner = await page.$("div[class*='layout__area--bottom']");
+    if (bottomBanner) {
+      await page.evaluate(el => el.remove(), bottomBanner);
+      console.log("🧼 하단 배너 제거 완료");
+    }
+
+    // ✅ 차트 스크린샷
+    const buffer = await page.screenshot({ type: "png" });
+
+    // ✅ 텔레그램 전송 함수
+    const sendTelegram = async (token, chatId, imageBuffer) => {
+      const form = new FormData();
+      form.append("chat_id", chatId);
+      form.append("photo", imageBuffer, {
         filename: `chart_${interval}min.png`,
         contentType: "image/png"
       });
-      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN_A}/sendPhoto`, formA, {
-        headers: formA.getHeaders()
+      await axios.post(`https://api.telegram.org/bot${token}/sendPhoto`, form, {
+        headers: form.getHeaders()
       });
+    };
+
+    // ✅ 최실장 봇 전송
+    await sendTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, buffer);
+    console.log("✅ 최실장 이미지 전송 완료");
+
+    // ✅ 밍밍 봇 전송
+    if (process.env.MINGMING_ENABLED === "true") {
+      await sendTelegram(TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A, buffer);
       console.log("✅ 밍밍 이미지 전송 완료");
+    } else {
+      console.log("⛔ 밍밍 봇 비활성화 상태 – 이미지 전송 스킵됨");
     }
 
   } catch (err) {
