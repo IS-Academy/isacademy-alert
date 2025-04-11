@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (최종: id 기반 셀렉터 적용)
+// ✅👇 captureAndSend.js (submitButton 셀렉터 반영 최종 안정화 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -62,7 +62,7 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
     await Promise.all([
-      page.click("button[type='submit']"),
+      page.click("button[class*='submitButton']"),
       page.waitForNavigation({ waitUntil: "networkidle0" })
     ]);
 
