@@ -3,30 +3,32 @@ const express = require("express");
 const router = express.Router();
 const { exec } = require("child_process");
 
-// POST /capture?interval=1
-router.post("/capture", (req, res) => {
+// GET /capture 지원 (브라우저 요청용)
+router.get("/capture", (req, res) => {
   const interval = req.query.interval || "1";
-  console.log(`📸 Received capture request for interval: ${interval}`);
-
-  // 실행 명령어
+  console.log(`📸 [GET] capture request for interval=${interval}`);
   const command = `node captureAndSend.js --interval=${interval}`;
-
   exec(command, (error, stdout, stderr) => {
     if (error) {
-      console.error(`❌ Error running capture: ${error.message}`);
+      console.error(`❌ Error: ${error.message}`);
       return res.status(500).send("Capture failed");
     }
-    if (stderr) console.error(`stderr: ${stderr}`);
-    if (stdout) console.log(`stdout: ${stdout}`);
-
-    res.send("✅ Capture initiated");
+    res.send("✅ Capture initiated via GET");
   });
 });
 
-// GET /capture?interval=1 지원 추가 (브라우저에서 직접 호출 가능)
-router.get("/capture", (req, res, next) => {
-  req.method = "POST";
-  next();
+// POST도 동일 처리 가능
+router.post("/capture", (req, res) => {
+  const interval = req.query.interval || "1";
+  console.log(`📸 [POST] capture request for interval=${interval}`);
+  const command = `node captureAndSend.js --interval=${interval}`;
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`❌ Error: ${error.message}`);
+      return res.status(500).send("Capture failed");
+    }
+    res.send("✅ Capture initiated via POST");
+  });
 });
 
 module.exports = router;
