@@ -1,4 +1,6 @@
 {
-  "123456789": { "lang": "en", "tz": "America/New_York" },
-  "987654321": { "lang": "zh", "tz": "Asia/Shanghai" }
+  "ko": "./ko.js",
+  "en": "./en.js",
+  "jp": "./jp.js",
+  "zh": "./zh.js"
 }
