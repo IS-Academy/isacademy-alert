@@ -45,24 +45,20 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // 🚀 최종 완벽한 광고 제거 코드
+    // 🚀 최종 확실한 광고 제거 코드 (수정된 최신버전)
     try {
       await page.evaluate(() => {
-        document.querySelectorAll("div[data-dialog-name='gopro'], div[role='dialog']").forEach(el => el.remove());
-      });
-      console.log("🧹 중앙 큰 팝업 광고 제거 완료");
+        // 중앙 큰 팝업 광고 제거
+        document.querySelectorAll('div[role="dialog"], div[data-dialog-name]').forEach(el => el.remove());
 
-      await page.evaluate(() => {
-        document.querySelectorAll("div[data-name='base-toast'], div[data-role='toast-container']").forEach(el => el.remove());
-      });
-      console.log("🧹 좌측 하단 광고 제거 완료");
+        // 좌측 하단 작은 광고 완벽 제거 (최신 확인)
+        document.querySelectorAll('div.toastListScroll-Hvz5Irky, div.toastGroup-JUpQSP8o, div[data-role="toast-container"], div[data-name="base-toast"]').forEach(el => el.remove());
 
-      await page.evaluate(() => {
-        const bottomBanner = document.querySelector("div[class*='layout__area--bottom']");
+        // 하단 배너 제거
+        const bottomBanner = document.querySelector('div[class*="layout__area--bottom"]');
         if (bottomBanner) bottomBanner.remove();
       });
-      console.log("🧼 하단 배너 광고 제거 완료");
-
+      console.log("🧹 모든 광고 완벽 제거 완료");
     } catch (err) {
       console.log("⚠️ 광고 제거 중 오류 발생:", err.message);
     }
@@ -95,4 +91,5 @@ if (!CAPTURE_TYPES.includes(type)) {
     await browser.close();
   }
 })();
+
 
