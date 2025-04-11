@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (최적화된 selector 대기 방식 반영)
+// ✅👇 captureAndSend.js (form 로딩까지 대기 포함한 안정화 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -6,7 +6,7 @@ const FormData = require("form-data");
 const fs = require("fs");
 
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
-const TV_EMAIL = process.env.TV_EMAIL;
+const TV_EMAIL = process.env.TVI_EMAIL;
 const TV_PASSWORD = process.env.TV_PASSWORD;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -47,23 +47,21 @@ if (!CAPTURE_TYPES.includes(type)) {
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    // ✅ 로그인 페이지 접근
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
     console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    // ✅ 텍스트 기반 버튼 클릭 + selector 기다리기 병렬 처리
-    await Promise.all([
-      page.evaluate(() => {
-        const emailBtn = [...document.querySelectorAll("button")]
-          .find(el => el.textContent?.trim() === "Email");
-        if (emailBtn) emailBtn.click();
-      }),
-      page.waitForSelector("input[name='username']", { timeout: 15000 })
-    ]);
+    await page.evaluate(() => {
+      const emailBtn = [...document.querySelectorAll("button")]
+        .find(el => el.textContent?.trim() === "Email");
+      if (emailBtn) emailBtn.click();
+    });
 
+    await page.waitForSelector("form[action='/accounts/login/']", { timeout: 15000 });
+    await page.waitForSelector("input[name='username']", { timeout: 15000 });
     await page.type("input[name='username']", TV_EMAIL, { delay: 50 });
+
     await page.waitForSelector("input[name='password']", { timeout: 15000 });
     await page.type("input[name='password']", TV_PASSWORD, { delay: 50 });
 
