@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (차트 로딩 기준으로 로그인 확인 방식 적용)
+// ✅👇 captureAndSend.js (canvas 감싸기 + 함수 기반 로딩 대기 방식 적용)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -51,11 +51,13 @@ if (!CAPTURE_TYPES.includes(type)) {
 
     await page.click("button[class*='submitButton']");
 
-    // ✅ 로그인 후 차트 페이지 로딩 여부로 확인
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
-    await page.waitForSelector("canvas", { timeout: 10000 });
-    console.log("✅ 차트 페이지 로딩 확인됨");
 
+    // ✅ 차트 렌더링 여부를 함수 기반으로 대기 (canvas 1개 이상)
+    await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 20000 });
+    console.log("✅ 차트 캔버스 렌더링 확인됨");
+
+    // ✅ 광고 닫기 시도
     try {
       const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
       if (popup) {
