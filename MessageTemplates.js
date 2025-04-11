@@ -37,13 +37,16 @@ function generatePnLLine(price, entryAvg, entryCount, lang = 'ko') {
 }
 
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
-  const valid = parseFloat(entryCount) && parseFloat(entryAvg);
+  const percent = parseFloat(entryCount).toFixed(1);
+  const avg = parseFloat(entryAvg).toFixed(1);
+
+  const valid = parseFloat(percent) && parseFloat(avg);
   if (!valid) {
     return '📊 진입 비율 정보 없음 / 평균가 계산 불가';
   }
 
   const labels = translations[lang]?.labels || translations['ko'].labels;
-  return `${labels.entryInfo.replace('{entryCount}', entryCount).replace('{entryAvg}', entryAvg)}`;
+  return `${labels.entryInfo.replace('{entryCount}', percent).replace('{entryAvg}', avg)}`;
 }
 
 function getTemplate({
@@ -66,7 +69,9 @@ function getTemplate({
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
     ? generatePnLLine(price, entryAvg, entryCount, lang)
     : '';
-  const capTime = `${labels.captured}:\n${date}\n${time}`;
+  const capTime = `${labels.captured}:
+${date}
+${time}`;
   const disclaimer = labels.disclaimer_full;
 
   const templates = {
