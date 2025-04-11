@@ -1,10 +1,8 @@
-// ✅👇 captureAndSend.js (광고 닫기 + 관리자봇 온오프 연동 + 상태캡처 제거)
+// ✅👇 captureAndSend.js (로딩 없이 차트 흐름만 따라가는 최종 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
-const fs = require("fs");
-const { loadBotState } = require("./utils"); // 관리자 상태 파일 불러오기
 
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
 const TV_EMAIL = process.env.TV_EMAIL;
@@ -22,8 +20,8 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-// ✅ 관리자봇 상태 불러오기
-const { choiEnabled, mingEnabled } = loadBotState();
+const choiEnabled = global.choiEnabled ?? true;
+const mingEnabled = global.mingEnabled ?? true;
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
   console.log("📵 이미지 캡처 대상이 아님 → 종료");
@@ -43,34 +41,45 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
     await page.waitForTimeout(3000);
 
-    await page.waitForSelector('button[class*="emailButton"]', { timeout: 10000 });
+    await page.waitForSelector('button[class*="emailButton"]');
     await page.click('button[class*="emailButton"]');
 
-    await page.waitForSelector("input#id_username", { timeout: 15000 });
+    await page.waitForSelector("input#id_username");
     await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
-    await page.waitForSelector("input#id_password", { timeout: 15000 });
+    await page.waitForSelector("input#id_password");
     await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
-    await Promise.all([
-      page.click("button[class*='submitButton']"),
-      page.waitForNavigation({ waitUntil: "networkidle0" })
-    ]);
+    await page.click("button[class*='submitButton']");
 
-    console.log("✅ 트레이딩뷰 로그인 성공");
+    // ✅ 로그인 후 자연스러운 흐름 확보
+    await page.waitForTimeout(1000);
+    console.log("✅ 로그인 입력 후 흐름 유지됨");
 
-    await page.goto(chartUrl, { waitUntil: "networkidle2" });
+    await page.goto(chartUrl, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(3000); // 차트 초기 렌더 대기
 
     // ✅ 광고 닫기 시도
     try {
-      await page.waitForSelector("div[role='dialog'] button[aria-label='Close']", { timeout: 3000 });
-      await page.click("div[role='dialog'] button[aria-label='Close']");
-      console.log("🧹 광고 팝업 닫기 완료");
-    } catch {
-      console.log("ℹ️ 광고 팝업 없음");
-    }
+      const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
+      if (popup) {
+        await popup.click();
+        console.log("🧹 중앙 광고 팝업 닫힘");
+      }
+    } catch {}
 
-    await page.waitForTimeout(5000);
+    try {
+      const banner = await page.$("div[class*='layout__area--bottom']");
+      if (banner) {
+        await page.evaluate(() => {
+          const el = document.querySelector("div[class*='layout__area--bottom']");
+          if (el) el.remove();
+        });
+        console.log("🧼 하단 배너 제거 완료");
+      }
+    } catch {}
+
+    await page.waitForTimeout(1000);
     const buffer = await page.screenshot({ type: "png" });
 
     if (choiEnabled) {
@@ -97,6 +106,8 @@ if (!CAPTURE_TYPES.includes(type)) {
         headers: formA.getHeaders()
       });
       console.log("✅ 밍밍 이미지 전송 완료");
+    } else {
+      console.log("⛔ 밍밍 봇 비활성화 상태 – 이미지 전송 스킵됨");
     }
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);
