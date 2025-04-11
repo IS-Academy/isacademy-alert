@@ -1,6 +1,6 @@
 // ✅👇 captureAndSend.js
 
-// ✅👇 최적화된 captureAndSend.js (명확한 선택자 & 세션 유지 추가)
+// ✅ 최종 개선된 captureAndSend.js (timeout 문제 개선 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -42,43 +42,43 @@ if (!CAPTURE_TYPES.includes(type)) {
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    // ✅ 한국어로 접속하여 지역적 충돌을 최소화
-    await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2" });
+    // ✅ 빠른 로딩 옵션으로 변경
+    await page.goto("https://kr.tradingview.com/accounts/signin/", {
+      waitUntil: "domcontentloaded",
+      timeout: 60000 // 60초로 여유 있게 설정
+    });
 
-    // 이메일 로그인 버튼 선택 및 클릭
     await page.waitForSelector('button[class*="emailButton"]', { visible: true });
     await page.click('button[class*="emailButton"]');
 
-    // 이메일 입력
     await page.waitForSelector("#id_username", { visible: true });
     await page.type("#id_username", TV_EMAIL, { delay: 50 });
 
-    // 비밀번호 입력
     await page.waitForSelector("#id_password", { visible: true });
     await page.type("#id_password", TV_PASSWORD, { delay: 50 });
 
-    // 로그인 버튼 클릭 및 내비게이션 기다림
+    // 로그인 버튼 클릭 및 로그인 확인
     await Promise.all([
       page.click("button[class*='submitButton']"),
-      page.waitForNavigation({ waitUntil: "networkidle2" })
+      page.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60000 })
     ]);
 
-    // ✅ 프로필 아이콘이 나타날 때까지 기다려 로그인 확인
-    await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 10000 });
-    console.log("✅ 로그인 성공 및 프로필 아이콘 확인됨");
+    // 프로필 아이콘으로 로그인 확정 체크
+    await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
+    console.log("✅ 로그인 성공 확인됨");
 
-    // 차트 페이지 이동
-    await page.goto(chartUrl, { waitUntil: "networkidle2" });
+    // 차트 페이지로 이동 및 빠른 로딩 체크
+    await page.goto(chartUrl, { waitUntil: "domcontentloaded", timeout: 60000 });
 
-    // ✅ 차트 주요 엘리먼트 확인
-    await page.waitForSelector(".chart-markup-table, canvas", { visible: true, timeout: 15000 });
+    // 차트 요소 명확하게 체크
+    await page.waitForSelector(".chart-markup-table, canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // 광고 팝업 있으면 제거 (최적화된 빠른 체크)
+    // 광고 제거
     const popupCloseBtn = await page.$("div[role='dialog'] button[aria-label='Close']");
     if (popupCloseBtn) {
       await popupCloseBtn.click();
-      console.log("🧹 광고 팝업 닫기 성공");
+      console.log("🧹 광고 팝업 닫힘");
     }
 
     const bottomBanner = await page.$("div[class*='layout__area--bottom']");
@@ -87,10 +87,10 @@ if (!CAPTURE_TYPES.includes(type)) {
       console.log("🧼 하단 배너 제거 완료");
     }
 
-    // 스크린샷 캡처
+    // 이미지 캡처
     const buffer = await page.screenshot({ type: "png" });
 
-    // 텔레그램 이미지 전송
+    // 텔레그램 전송
     if (choiEnabled) {
       const form = new FormData();
       form.append("chat_id", TELEGRAM_CHAT_ID);
@@ -116,7 +116,7 @@ if (!CAPTURE_TYPES.includes(type)) {
       });
       console.log("✅ 밍밍 이미지 전송 완료");
     } else {
-      console.log("⛔ 밍밍 봇 비활성화 상태 – 이미지 전송 스킵됨");
+      console.log("⛔ 밍밍 봇 비활성화 – 스킵됨");
     }
 
   } catch (err) {
@@ -125,5 +125,3 @@ if (!CAPTURE_TYPES.includes(type)) {
     await browser.close();
   }
 })();
-
-
