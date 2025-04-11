@@ -23,4 +23,10 @@ router.post("/capture", (req, res) => {
   });
 });
 
+// GET /capture?interval=1 지원 추가 (브라우저에서 직접 호출 가능)
+router.get("/capture", (req, res, next) => {
+  req.method = "POST";
+  next();
+});
+
 module.exports = router;
