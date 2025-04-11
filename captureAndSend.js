@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (botState.json 제거 + 관리자 상태 전역 변수 기반 + 로그인 완료 확인)
+// ✅👇 captureAndSend.js (차트 로딩 기준으로 로그인 확인 방식 적용)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -20,10 +20,8 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-// ✅ 전역 변수 기반 관리자 상태 불러오기 (Render 부팅 시 상태 유지됨)
 const choiEnabled = global.choiEnabled ?? true;
 const mingEnabled = global.mingEnabled ?? true;
-
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
   console.log("📵 이미지 캡처 대상이 아님 → 종료");
@@ -53,13 +51,11 @@ if (!CAPTURE_TYPES.includes(type)) {
 
     await page.click("button[class*='submitButton']");
 
-    // ✅ 로그인 완료는 사용자 메뉴 등장 기준으로 확정
-    await page.waitForSelector("button[aria-label='Open user menu']", { timeout: 15000 });
-    console.log("✅ 트레이딩뷰 로그인 성공 (세션 반영 완료)");
-
+    // ✅ 로그인 후 차트 페이지 로딩 여부로 확인
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
+    await page.waitForSelector("canvas", { timeout: 10000 });
+    console.log("✅ 차트 페이지 로딩 확인됨");
 
-    // ✅ 광고 팝업 제거
     try {
       const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
       if (popup) {
