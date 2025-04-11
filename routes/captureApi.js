@@ -32,3 +32,4 @@ router.post("/capture", (req, res) => {
 });
 
 module.exports = router;
+console.log("✅ captureApi.js 라우터 정상 로딩됨");
