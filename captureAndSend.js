@@ -15,13 +15,13 @@ const TELEGRAM_BOT_TOKEN_A = process.env.TELEGRAM_BOT_TOKEN_A;
 const TELEGRAM_CHAT_ID_A = process.env.TELEGRAM_CHAT_ID_A;
 
 const interval = process.argv.find(arg => arg.includes("--interval="))?.split("=")[1] || "1";
+const type = process.argv.find(arg => arg.includes("--type="))?.split("=")[1] || "unknown";
 const chartUrl = process.env[`TV_CHART_URL_${interval}`];
 if (!chartUrl) {
   console.error(`❌ TV_CHART_URL_${interval} not found in environment variables.`);
   process.exit(1);
 }
 
-// 상태 불러오기 (최실장/밍밍 전송 여부)
 let choiEnabled = true;
 let mingEnabled = true;
 try {
@@ -29,45 +29,17 @@ try {
   choiEnabled = botState.choiEnabled;
   mingEnabled = botState.mingEnabled;
 } catch (err) {
-  console.warn("⚠️ botState.json 불러오기 실패, 기본값 사용됨 (true)");
+  console.warn("⚠️ botState.json 불러오기 실패, 기본값(true) 사용됨");
 }
 
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
-const fsMessagePath = `./telegramMessage_${interval}.json`;
-if (!fs.existsSync(fsMessagePath)) {
-  console.warn("⚠️ 텔레그램 메시지 데이터 없음, 종료됨");
-  process.exit(1);
+if (!CAPTURE_TYPES.includes(type)) {
+  console.log("📵 이미지 캡처 대상이 아님 → 종료");
+  process.exit(0);
 }
 
-const messageData = JSON.parse(fs.readFileSync(fsMessagePath, "utf8"));
-const { type, textMessage } = messageData;
-
 (async () => {
-  console.log(`🚀 캡처 전송 실행 시작 → interval=${interval}, type=${type}`);
-
-  // ✅ 메시지 우선 전송
-  if (choiEnabled) {
-    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      chat_id: TELEGRAM_CHAT_ID,
-      text: textMessage,
-      parse_mode: "HTML"
-    });
-    console.log("✅ 최실장 메시지 전송 완료");
-  }
-  if (mingEnabled) {
-    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN_A}/sendMessage`, {
-      chat_id: TELEGRAM_CHAT_ID_A,
-      text: textMessage,
-      parse_mode: "HTML"
-    });
-    console.log("✅ 밍밍 메시지 전송 완료");
-  }
-
-  // ✅ 청산 신호 아닐 경우 스크린샷 생략
-  if (!CAPTURE_TYPES.includes(type)) {
-    console.log("📵 청산 신호 아님 → 스크린샷 생략 완료");
-    return;
-  }
+  console.log(`📸 이미지 캡처 시작: interval=${interval}, type=${type}`);
 
   const browser = await puppeteer.connect({
     browserWSEndpoint: `wss://chrome.browserless.io?token=${BROWSERLESS_TOKEN}`
@@ -76,7 +48,7 @@ const { type, textMessage } = messageData;
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    // ✅ 로그인 (신버전 흐름)
+    // ✅ 로그인 흐름 반영
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
     await page.waitForSelector("button[data-name='email']", { timeout: 10000 });
     await page.click("button[data-name='email']");
@@ -94,7 +66,6 @@ const { type, textMessage } = messageData;
 
     console.log("✅ 트레이딩뷰 로그인 성공");
 
-    // ✅ 차트 열기 및 캡처
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
     await page.waitForTimeout(5000);
     const buffer = await page.screenshot({ type: "png" });
