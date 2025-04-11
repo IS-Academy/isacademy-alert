@@ -3,8 +3,8 @@ const express = require("express");
 const router = express.Router();
 const { exec } = require("child_process");
 
-// GET /capture 지원 (브라우저 요청용)
-router.get("/capture", (req, res) => {
+// GET / 지원 (브라우저 요청용)
+router.get("/", (req, res) => {
   const interval = req.query.interval || "1";
   console.log(`📸 [GET] capture request for interval=${interval}`);
   const command = `node captureAndSend.js --interval=${interval}`;
@@ -17,8 +17,8 @@ router.get("/capture", (req, res) => {
   });
 });
 
-// POST도 동일 처리 가능
-router.post("/capture", (req, res) => {
+// POST / 지원 (웹훅용)
+router.post("/", (req, res) => {
   const interval = req.query.interval || "1";
   console.log(`📸 [POST] capture request for interval=${interval}`);
   const command = `node captureAndSend.js --interval=${interval}`;
