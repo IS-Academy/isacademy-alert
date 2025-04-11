@@ -1,13 +1,14 @@
-// ✅🚀 최종 진단 가능한 전체코드 (오류 시 스크린샷 전송)
+// ✅ 쿠키 환경변수에서 로드하는 완벽한 방식 (captureAndSend.js 최종버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
 
 const {
-  BROWSERLESS_TOKEN, TV_EMAIL, TV_PASSWORD,
+  BROWSERLESS_TOKEN,
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
-  TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A
+  TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A,
+  TV_COOKIES
 } = process.env;
 
 const interval = process.argv.find(a => a.startsWith("--interval="))?.split("=")[1] || "1";
@@ -35,34 +36,11 @@ if (!CAPTURE_TYPES.includes(type)) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720 });
 
-  await page.setUserAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.69 Safari/537.36"
-  );
-
-  await page.evaluateOnNewDocument(() => {
-    delete navigator.__proto__.webdriver;
-  });
+  // ✅ 환경변수에서 쿠키 불러오기
+  const cookies = JSON.parse(TV_COOKIES);
+  await page.setCookie(...cookies);
 
   try {
-    await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2" });
-
-    await page.waitForXPath("//span[contains(text(),'이메일')]", { visible: true });
-    const [emailButton] = await page.$x("//span[contains(text(),'이메일')]");
-    await emailButton.click();
-
-    await page.waitForSelector("#id_username", { visible: true });
-    await page.type("#id_username", TV_EMAIL, { delay: 30 });
-
-    await page.waitForSelector("#id_password", { visible: true });
-    await page.type("#id_password", TV_PASSWORD, { delay: 30 });
-
-    await page.waitForXPath("//button[contains(., '로그인')]", { visible: true });
-    const [loginButton] = await page.$x("//button[contains(., '로그인')]");
-    await loginButton.click();
-
-    await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
-    console.log("✅ AJAX 로그인 완료 확실히 확인됨");
-
     await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
@@ -103,19 +81,6 @@ if (!CAPTURE_TYPES.includes(type)) {
 
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);
-
-    // 🚨 오류 진단용: 현재 화면 상태를 스크린샷으로 전송
-    const buffer = await page.screenshot({ type: "png" });
-    const form = new FormData();
-    form.append("chat_id", TELEGRAM_CHAT_ID);
-    form.append("photo", buffer, {
-      filename: `error_${Date.now()}.png`,
-      contentType: "image/png"
-    });
-    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, form, {
-      headers: form.getHeaders()
-    });
-    console.log("⚠️ 오류 화면 스크린샷 전송됨");
   } finally {
     await browser.close();
   }
