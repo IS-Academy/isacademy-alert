@@ -33,3 +33,8 @@ router.post("/", (req, res) => {
 
 module.exports = router;
 console.log("✅ captureApi.js 라우터 정상 로딩됨");
+
+router.get("/", (req, res) => {
+  console.log("📸 /capture [GET] 라우터에 진입함");
+  res.send("✅ /capture 진입 성공");
+});
