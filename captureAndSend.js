@@ -1,4 +1,5 @@
-// captureAndSend.js
+// ✅👇 captureAndSend.js
+
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
