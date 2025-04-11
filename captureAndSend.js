@@ -1,4 +1,5 @@
-// ✅ 쿠키 환경변수에서 로드하는 완벽한 방식 (captureAndSend.js 최종버전)
+// ✅👇 captureAndSend.js
+
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -36,7 +37,6 @@ if (!CAPTURE_TYPES.includes(type)) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720 });
 
-  // ✅ 환경변수에서 쿠키 불러오기
   const cookies = JSON.parse(TV_COOKIES);
   await page.setCookie(...cookies);
 
@@ -45,16 +45,27 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
-    if (popup) {
-      await popup.click();
-      console.log("🧹 광고 팝업 닫힘");
-    }
+    // ✅ 최종 완벽한 광고 제거 코드 (수정 부분)
+    try {
+      const popupCloseButton = await page.$("div[data-role='toast-container'] button[aria-label='Close'], div[role='dialog'] button[aria-label='Close']");
+      if (popupCloseButton) {
+        await popupCloseButton.click();
+        console.log("🧹 중앙 광고 팝업 닫힘");
+      }
 
-    const bottomBanner = await page.$("div[class*='layout__area--bottom']");
-    if (bottomBanner) {
-      await page.evaluate(el => el.remove(), bottomBanner);
-      console.log("🧼 하단 배너 제거 완료");
+      await page.evaluate(() => {
+        document.querySelectorAll("div[data-role='toast-container'], div[data-name='base-toast']").forEach(el => el.remove());
+      });
+      console.log("🧹 좌측 하단 광고 제거 완료");
+
+      const bottomBanner = await page.$("div[class*='layout__area--bottom']");
+      if (bottomBanner) {
+        await page.evaluate(el => el.remove(), bottomBanner);
+        console.log("🧼 하단 배너 제거 완료");
+      }
+
+    } catch (err) {
+      console.log("⚠️ 광고 제거 중 오류 발생:", err.message);
     }
 
     const buffer = await page.screenshot({ type: "png" });
