@@ -1,4 +1,4 @@
-// ✅🚀 최종 완벽한 신규 작성 captureAndSend.js
+// ✅ 최종 정확한 2단계 로그인 처리 코드 (새로 작성)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -44,41 +44,47 @@ if (!CAPTURE_TYPES.includes(type)) {
   });
 
   try {
-    // ✅ TradingView 로그인 페이지 이동
-    await page.goto("https://kr.tradingview.com/accounts/signin/", { waitUntil: "networkidle2", timeout: 60000 });
+    // ✅ 로그인 페이지 접속
+    await page.goto("https://kr.tradingview.com/accounts/signin/", {
+      waitUntil: "networkidle2", timeout: 60000
+    });
 
-    // ✅ 이메일 로그인 버튼 클릭 (명확히 한글 텍스트 기반)
-    await page.waitForSelector('button', { visible: true });
-    const emailBtn = await page.$x("//button[contains(text(), '이메일로 계속하기')]");
-    if (emailBtn.length > 0) await emailBtn[0].click();
-    else throw new Error("이메일 로그인 버튼이 없습니다.");
+    // ✅ 1단계: 이메일 버튼 클릭 (정확한 텍스트 기준)
+    await page.waitForXPath("//span[contains(text(),'이메일')]", { visible: true, timeout: 30000 });
+    const [emailButton] = await page.$x("//span[contains(text(),'이메일')]");
+    if (emailButton) await emailButton.click();
+    else throw new Error("1단계 이메일 버튼 클릭 실패");
 
-    // ✅ 이메일 입력
-    await page.waitForSelector("#id_username", { visible: true });
-    await page.type("#id_username", TV_EMAIL, { delay: 50 });
+    // ✅ 2단계: 아이디 입력
+    await page.waitForSelector("input#id_username", { visible: true, timeout: 30000 });
+    await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
-    // ✅ 비밀번호 입력
-    await page.waitForSelector("#id_password", { visible: true });
-    await page.type("#id_password", TV_PASSWORD, { delay: 50 });
+    // ✅ 2단계: 비밀번호 입력
+    await page.waitForSelector("input#id_password", { visible: true, timeout: 30000 });
+    await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
-    // ✅ 로그인 버튼 클릭
-    await Promise.all([
-      page.click("button[type='submit']"),
-      page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 })
-    ]);
+    // ✅ 2단계: 최종 로그인 버튼 클릭 (텍스트로 정확히 클릭)
+    await page.waitForXPath("//button[contains(., '로그인')]", { visible: true, timeout: 30000 });
+    const [loginButton] = await page.$x("//button[contains(., '로그인')]");
+    if (loginButton) {
+      await Promise.all([
+        loginButton.click(),
+        page.waitForNavigation({ waitUntil: "networkidle2", timeout: 60000 })
+      ]);
+    } else throw new Error("2단계 로그인 버튼 클릭 실패");
 
-    // ✅ 프로필 아이콘으로 로그인 체크
+    // ✅ 로그인 완료 확인 (프로필 아이콘)
     await page.waitForSelector("button[aria-label='사용자 메뉴 열기']", { visible: true, timeout: 60000 });
     console.log("✅ 로그인 성공 확인됨");
 
     // ✅ 차트 페이지 이동
     await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
 
-    // ✅ 차트 로딩 체크
+    // ✅ 차트 로딩 확인
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // ✅ 광고 있으면 닫기
+    // ✅ 광고 있으면 제거
     const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
     if (popup) {
       await popup.click();
@@ -91,7 +97,7 @@ if (!CAPTURE_TYPES.includes(type)) {
       console.log("🧼 하단 배너 제거 완료");
     }
 
-    // ✅ 차트 스크린샷
+    // ✅ 차트 스크린샷 캡처
     const buffer = await page.screenshot({ type: "png" });
 
     // ✅ 텔레그램 전송 함수
