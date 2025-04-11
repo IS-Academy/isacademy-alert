@@ -1,5 +1,4 @@
-// ✅👇 captureAndSend.js
-
+// ✅👇 captureAndSend.js (최적화된 selector 대기 방식 반영)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -54,17 +53,17 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
     console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    // ✅ 버튼 텍스트 기반 접근으로 이메일 로그인 클릭 처리
-    await page.evaluate(() => {
-      const emailBtn = [...document.querySelectorAll("button")]
-        .find(el => el.textContent?.trim() === "Email");
-      if (emailBtn) emailBtn.click();
-    });
-    await page.waitForTimeout(1000);
+    // ✅ 텍스트 기반 버튼 클릭 + selector 기다리기 병렬 처리
+    await Promise.all([
+      page.evaluate(() => {
+        const emailBtn = [...document.querySelectorAll("button")]
+          .find(el => el.textContent?.trim() === "Email");
+        if (emailBtn) emailBtn.click();
+      }),
+      page.waitForSelector("input[name='username']", { timeout: 15000 })
+    ]);
 
-    await page.waitForSelector("input[name='username']", { timeout: 15000 });
     await page.type("input[name='username']", TV_EMAIL, { delay: 50 });
-
     await page.waitForSelector("input[name='password']", { timeout: 15000 });
     await page.type("input[name='password']", TV_PASSWORD, { delay: 50 });
 
