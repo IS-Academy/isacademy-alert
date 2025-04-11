@@ -1,5 +1,4 @@
-// ✅ captureAndSend.js
-
+// ✅ Browserless 무료환경 최종 최적화 버전 (로그인 버튼 로딩 수정)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -40,10 +39,10 @@ if (!CAPTURE_TYPES.includes(type)) {
   const page = await browser.newPage();
   await page.setViewport({ width: 1024, height: 600 });
 
-  // 🚨 봇 탐지 우회 옵션
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.69 Safari/537.36"
   );
+
   await page.evaluateOnNewDocument(() => {
     delete navigator.__proto__.webdriver;
   });
@@ -52,14 +51,10 @@ if (!CAPTURE_TYPES.includes(type)) {
     "Accept-Language": "ko-KR,ko;q=0.9"
   });
 
-  // 🚀 불필요한 요청 차단 (강력 추천!)
+  // 🚀 최소한의 리소스만 차단 (필수 리소스 로딩 유지)
   await page.setRequestInterception(true);
   page.on("request", req => {
-    if (
-      ["image", "stylesheet", "font", "media"].includes(req.resourceType()) ||
-      req.url().includes("google-analytics") ||
-      req.url().includes("ads")
-    ) {
+    if (["image", "font", "media"].includes(req.resourceType())) {
       req.abort();
     } else {
       req.continue();
@@ -127,4 +122,3 @@ if (!CAPTURE_TYPES.includes(type)) {
     await browser.close();
   }
 })();
-
