@@ -1,4 +1,5 @@
-// ✅👇 captureAndSend.js (디버깅용 스크린샷 캡처 포함)
+// ✅👇 captureAndSend.js
+
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -47,14 +48,19 @@ if (!CAPTURE_TYPES.includes(type)) {
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    // ✅ 로그인 흐름 디버깅용 (페이지 상태 캡처 추가)
+    // ✅ 로그인 페이지 접근
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
-    await page.waitForTimeout(5000); // 충분한 대기
+    await page.waitForTimeout(5000);
     await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
     console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    await page.waitForSelector("button[data-name='email']", { timeout: 10000 });
-    await page.click("button[data-name='email']");
+    // ✅ 버튼 텍스트 기반 접근으로 이메일 로그인 클릭 처리
+    await page.evaluate(() => {
+      const emailBtn = [...document.querySelectorAll("button")]
+        .find(el => el.textContent?.trim() === "Email");
+      if (emailBtn) emailBtn.click();
+    });
+    await page.waitForTimeout(1000);
 
     await page.waitForSelector("input[name='username']", { timeout: 15000 });
     await page.type("input[name='username']", TV_EMAIL, { delay: 50 });
