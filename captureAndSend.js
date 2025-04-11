@@ -1,5 +1,4 @@
-// ✅👇 captureAndSend.js (메시지 제거, 이미지 전송 전용 버전)
-
+// ✅👇 captureAndSend.js (디버깅용 스크린샷 캡처 포함)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -48,8 +47,12 @@ if (!CAPTURE_TYPES.includes(type)) {
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    // ✅ 로그인 흐름 반영
+    // ✅ 로그인 흐름 디버깅용 (페이지 상태 캡처 추가)
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
+    await page.waitForTimeout(5000); // 충분한 대기
+    await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
+    console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
+
     await page.waitForSelector("button[data-name='email']", { timeout: 10000 });
     await page.click("button[data-name='email']");
 
