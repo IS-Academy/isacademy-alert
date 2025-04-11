@@ -40,3 +40,5 @@ app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
   await initAdminPanel();
 });
+
+console.log("✅ index.js 실행 시작");
