@@ -1,9 +1,10 @@
-// ✅👇 captureAndSend.js (submitButton 셀렉터 반영 최종 안정화 버전)
+// ✅👇 captureAndSend.js (광고 닫기 + 관리자봇 온오프 연동 + 상태캡처 제거)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
 const fs = require("fs");
+const { loadBotState } = require("./utils"); // 관리자 상태 파일 불러오기
 
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
 const TV_EMAIL = process.env.TV_EMAIL;
@@ -21,16 +22,8 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-let choiEnabled = true;
-let mingEnabled = true;
-try {
-  const botState = JSON.parse(fs.readFileSync("./botState.json", "utf8"));
-  choiEnabled = botState.choiEnabled;
-  mingEnabled = botState.mingEnabled;
-} catch (err) {
-  console.warn("⚠️ botState.json 불러오기 실패, 기본값(true) 사용됨");
-}
-
+// ✅ 관리자봇 상태 불러오기
+const { choiEnabled, mingEnabled } = loadBotState();
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
   console.log("📵 이미지 캡처 대상이 아님 → 종료");
@@ -49,8 +42,6 @@ if (!CAPTURE_TYPES.includes(type)) {
   try {
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
     await page.waitForTimeout(3000);
-    await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
-    console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
     await page.waitForSelector('button[class*="emailButton"]', { timeout: 10000 });
     await page.click('button[class*="emailButton"]');
@@ -69,6 +60,16 @@ if (!CAPTURE_TYPES.includes(type)) {
     console.log("✅ 트레이딩뷰 로그인 성공");
 
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
+
+    // ✅ 광고 닫기 시도
+    try {
+      await page.waitForSelector("div[role='dialog'] button[aria-label='Close']", { timeout: 3000 });
+      await page.click("div[role='dialog'] button[aria-label='Close']");
+      console.log("🧹 광고 팝업 닫기 완료");
+    } catch {
+      console.log("ℹ️ 광고 팝업 없음");
+    }
+
     await page.waitForTimeout(5000);
     const buffer = await page.screenshot({ type: "png" });
 
