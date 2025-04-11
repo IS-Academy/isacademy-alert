@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (canvas 감싸기 + 함수 기반 로딩 대기 방식 적용)
+// ✅👇 captureAndSend.js (F5 새로고침 포함 차트 리트라이 로직 적용)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -51,10 +51,24 @@ if (!CAPTURE_TYPES.includes(type)) {
 
     await page.click("button[class*='submitButton']");
 
+    // ✅ 차트 열기 시도
     await page.goto(chartUrl, { waitUntil: "networkidle2" });
 
-    // ✅ 차트 렌더링 여부를 함수 기반으로 대기 (canvas 1개 이상)
-    await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 20000 });
+    // ✅ 캔버스가 없을 경우 → 새로고침 시도
+    let canvasReady = await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 10000 }).catch(() => false);
+
+    if (!canvasReady) {
+      console.warn("⚠️ 차트가 로딩되지 않음 → 새로고침(F5) 시도");
+      await page.reload({ waitUntil: "networkidle2" });
+
+      canvasReady = await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 10000 }).catch(() => false);
+
+      if (!canvasReady) {
+        console.error("❌ 새로고침 후에도 차트 로딩 실패 → 이미지 캡처 중단");
+        process.exit(1);
+      }
+    }
+
     console.log("✅ 차트 캔버스 렌더링 확인됨");
 
     // ✅ 광고 닫기 시도
