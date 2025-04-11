@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (emailButton 셀렉터로 클릭 안정화)
+// ✅👇 captureAndSend.js (최종: id 기반 셀렉터 적용)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -52,15 +52,14 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
     console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    // ✅ 안정적인 class 기반 셀렉터로 이메일 버튼 클릭
     await page.waitForSelector('button[class*="emailButton"]', { timeout: 10000 });
     await page.click('button[class*="emailButton"]');
 
     await page.waitForSelector("input#id_username", { timeout: 15000 });
     await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
-    await page.waitForSelector("input[name='password']", { timeout: 15000 });
-    await page.type("input[name='password']", TV_PASSWORD, { delay: 50 });
+    await page.waitForSelector("input#id_password", { timeout: 15000 });
+    await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
     await Promise.all([
       page.click("button[type='submit']"),
