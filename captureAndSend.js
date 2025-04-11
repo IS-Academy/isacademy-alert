@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (입력창 id 기반 셀렉터로 강화)
+// ✅👇 captureAndSend.js (emailButton 셀렉터로 클릭 안정화)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -6,7 +6,7 @@ const FormData = require("form-data");
 const fs = require("fs");
 
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
-const TV_EMAIL = process.env.TVI_EMAIL;
+const TV_EMAIL = process.env.TV_EMAIL;
 const TV_PASSWORD = process.env.TV_PASSWORD;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -52,11 +52,9 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
     console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    await page.evaluate(() => {
-      const emailBtn = [...document.querySelectorAll("button")]
-        .find(el => el.textContent?.trim() === "Email");
-      if (emailBtn) emailBtn.click();
-    });
+    // ✅ 안정적인 class 기반 셀렉터로 이메일 버튼 클릭
+    await page.waitForSelector('button[class*="emailButton"]', { timeout: 10000 });
+    await page.click('button[class*="emailButton"]');
 
     await page.waitForSelector("input#id_username", { timeout: 15000 });
     await page.type("input#id_username", TV_EMAIL, { delay: 50 });
