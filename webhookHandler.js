@@ -15,12 +15,25 @@ const {
   addEntry,
   clearEntries,
   getEntryInfo
-} = require('./entryManager'); // ✅ 명확한 entryManager.js 연결
+} = require('./entryManager');
 
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 const { getTranslation, translations } = require("./lang");
+
+// ✅ entry 캐시 저장소
+const entryCache = {};
+
+function saveEntryData(symbol, type, avg, ratio) {
+  const key = `${symbol}-${type}`;
+  entryCache[key] = { avg, ratio, ts: Date.now() };
+}
+
+function getEntryData(symbol, type) {
+  const key = `${symbol}-${type}`;
+  return entryCache[key] || { avg: 'N/A', ratio: 0 };
+}
 
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -34,7 +47,6 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
-  // ✅ long_table / short_table 분리 처리
   if (["long_table", "short_table"].includes(update.type)) {
     await handleTableWebhook(update);
     return res.status(200).send("✅ 테이블 전송됨");
@@ -48,6 +60,22 @@ module.exports = async function webhookHandler(req, res) {
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
 
+      // ✅ entryAvg/entryRatio 받아와서 캐시에 저장
+      const entryAvg = update.entryAvg || 'N/A';
+      const entryRatio = update.entryRatio || 0;
+      const isEntrySignal = [
+        "showSup", "isBigSup",
+        "showRes", "isBigRes",
+        "exitLong", "exitShort"
+      ].includes(type);
+
+      if (isEntrySignal) {
+        saveEntryData(symbol, type, entryAvg, entryRatio);
+      }
+
+      // ✅ entry 정보 불러오기
+      const { avg, ratio } = getEntryData(symbol, type);
+
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
@@ -58,15 +86,13 @@ module.exports = async function webhookHandler(req, res) {
         clearEntries(symbol, type, timeframe);
       }
 
-      const { entryCount, entryAvg } = getEntryInfo(symbol, type, timeframe);
-
       const msgChoi = getTemplate({
         type, symbol, timeframe, price, ts,
-        lang: langChoi, entryCount, entryAvg
+        lang: langChoi, entryCount: ratio, entryAvg: avg
       });
       const msgMing = getTemplate({
         type, symbol, timeframe, price, ts,
-        lang: langMing, entryCount, entryAvg
+        lang: langMing, entryCount: ratio, entryAvg: avg
       });
 
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
