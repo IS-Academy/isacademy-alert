@@ -40,30 +40,29 @@ if (!CAPTURE_TYPES.includes(type)) {
   await page.setViewport({ width: 1280, height: 720 });
 
   try {
-    await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
+    await page.goto("https://www.tradingview.com/accounts/signin/");
 
     await page.waitForSelector('button[class*="emailButton"]', { visible: true });
     await page.click('button[class*="emailButton"]');
 
     await page.waitForSelector("input#id_username", { visible: true });
-    await page.type("input#id_username", TV_EMAIL, { delay: 50 });
+    await page.type("input#id_username", TV_EMAIL, { delay: 30 });
 
     await page.waitForSelector("input#id_password", { visible: true });
-    await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
+    await page.type("input#id_password", TV_PASSWORD, { delay: 30 });
 
-    await page.click("button[class*='submitButton']");
+    await Promise.all([
+      page.click("button[class*='submitButton']"),
+      page.waitForNavigation({ waitUntil: "networkidle2", timeout: 15000 })
+    ]);
 
-    // ✅ 로그인 후 URL 이동으로 확인
-    await page.waitForNavigation({ waitUntil: "networkidle0", timeout: 20000 });
     console.log("✅ 로그인 완료 및 페이지 이동 확인");
 
-    await page.goto(chartUrl, { waitUntil: "networkidle0" });
+    await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 15000 });
 
-    // ✅ 차트 로딩 확인 (차트 컨테이너 존재 확인)
     await page.waitForSelector(".chart-markup-table", { timeout: 15000 });
     console.log("✅ 차트 로딩 완료 확정");
 
-    // ✅ 광고 체크 및 제거
     await page.evaluate(() => {
       document.querySelector("div[role='dialog'] button[aria-label='Close']")?.click();
       document.querySelector("div[class*='layout__area--bottom']")?.remove();
@@ -97,3 +96,4 @@ if (!CAPTURE_TYPES.includes(type)) {
     await browser.close();
   }
 })();
+
