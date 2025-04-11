@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (F5 새로고침 포함 차트 리트라이 로직 적용)
+// ✅👇 captureAndSend.js (로딩 없이 차트 흐름만 따라가는 최종 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -39,37 +39,25 @@ if (!CAPTURE_TYPES.includes(type)) {
 
   try {
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
+    await page.waitForTimeout(3000);
 
     await page.waitForSelector('button[class*="emailButton"]');
     await page.click('button[class*="emailButton"]');
 
     await page.waitForSelector("input#id_username");
-    await page.type("input#id_username", TV_EMAIL, { delay: 30 });
+    await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
     await page.waitForSelector("input#id_password");
-    await page.type("input#id_password", TV_PASSWORD, { delay: 30 });
+    await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
     await page.click("button[class*='submitButton']");
 
-    // ✅ 차트 열기 시도
-    await page.goto(chartUrl, { waitUntil: "networkidle2" });
+    // ✅ 로그인 후 자연스러운 흐름 확보
+    await page.waitForTimeout(1000);
+    console.log("✅ 로그인 입력 후 흐름 유지됨");
 
-    // ✅ 캔버스가 없을 경우 → 새로고침 시도
-    let canvasReady = await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 10000 }).catch(() => false);
-
-    if (!canvasReady) {
-      console.warn("⚠️ 차트가 로딩되지 않음 → 새로고침(F5) 시도");
-      await page.reload({ waitUntil: "networkidle2" });
-
-      canvasReady = await page.waitForFunction(() => document.querySelectorAll("canvas").length > 0, { timeout: 10000 }).catch(() => false);
-
-      if (!canvasReady) {
-        console.error("❌ 새로고침 후에도 차트 로딩 실패 → 이미지 캡처 중단");
-        process.exit(1);
-      }
-    }
-
-    console.log("✅ 차트 캔버스 렌더링 확인됨");
+    await page.goto(chartUrl, { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(3000); // 차트 초기 렌더 대기
 
     // ✅ 광고 닫기 시도
     try {
