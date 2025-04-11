@@ -53,9 +53,9 @@ if (!CAPTURE_TYPES.includes(type)) {
 
     await page.click("button[class*='submitButton']");
 
-    // ✅ 명확한 로그인 확인 선택자 (프로필 아이콘 체크)
-    await page.waitForSelector("button[aria-label='Open user menu']", { timeout: 10000 });
-    console.log("✅ 로그인 완료 확정");
+    // ✅ 로그인 후 URL 이동으로 확인
+    await page.waitForNavigation({ waitUntil: "networkidle0", timeout: 20000 });
+    console.log("✅ 로그인 완료 및 페이지 이동 확인");
 
     await page.goto(chartUrl, { waitUntil: "networkidle0" });
 
