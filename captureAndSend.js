@@ -1,4 +1,4 @@
-// ✅👇 captureAndSend.js (세션 인증 확인 + 상태 체크 로그 포함 최종 버전)
+// ✅👇 captureAndSend.js (로그인 메뉴 유무로 로그인 성공 여부 판단)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -53,10 +53,15 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
     await page.click("button[class*='submitButton']");
+    await page.waitForTimeout(2000);
 
-    // ✅ 세션 인증 확인용 홈 이동 + 사용자 메뉴 확인
+    // ✅ 로그인 성공 여부 판단: 로그인 버튼 존재 여부로 확인
     await page.goto("https://www.tradingview.com", { waitUntil: "networkidle2" });
-    await page.waitForSelector("button[aria-label='Open user menu']", { timeout: 10000 });
+    const isStillLoggedOut = await page.$('a[href="/accounts/signin/"]');
+    if (isStillLoggedOut) {
+      console.error("❌ 로그인 실패: 로그인 메뉴 여전히 존재함");
+      process.exit(1);
+    }
     console.log("✅ 세션 인증 및 로그인 확인됨");
 
     await page.goto(chartUrl, { waitUntil: "domcontentloaded" });
