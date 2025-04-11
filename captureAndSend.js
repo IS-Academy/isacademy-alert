@@ -1,8 +1,9 @@
-// ✅👇 captureAndSend.js (로그인 메뉴 유무로 로그인 성공 여부 판단)
+// ✅👇 captureAndSend.js (submitButton 셀렉터 반영 최종 안정화 버전)
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
+const fs = require("fs");
 
 const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
 const TV_EMAIL = process.env.TV_EMAIL;
@@ -20,9 +21,15 @@ if (!chartUrl) {
   process.exit(1);
 }
 
-const choiEnabled = global.choiEnabled ?? true;
-const mingEnabled = global.mingEnabled ?? true;
-console.log("🧠 상태 체크:", { choiEnabled, mingEnabled });
+let choiEnabled = true;
+let mingEnabled = true;
+try {
+  const botState = JSON.parse(fs.readFileSync("./botState.json", "utf8"));
+  choiEnabled = botState.choiEnabled;
+  mingEnabled = botState.mingEnabled;
+} catch (err) {
+  console.warn("⚠️ botState.json 불러오기 실패, 기본값(true) 사용됨");
+}
 
 const CAPTURE_TYPES = ["exitLong", "exitShort"];
 if (!CAPTURE_TYPES.includes(type)) {
@@ -42,51 +49,27 @@ if (!CAPTURE_TYPES.includes(type)) {
   try {
     await page.goto("https://www.tradingview.com/accounts/signin/?lang=en");
     await page.waitForTimeout(3000);
+    await page.screenshot({ path: "login_fail_debug.png", fullPage: true });
+    console.log("📸 로그인 페이지 상태 캡처 완료 → login_fail_debug.png");
 
-    await page.waitForSelector('button[class*="emailButton"]');
+    await page.waitForSelector('button[class*="emailButton"]', { timeout: 10000 });
     await page.click('button[class*="emailButton"]');
 
-    await page.waitForSelector("input#id_username");
+    await page.waitForSelector("input#id_username", { timeout: 15000 });
     await page.type("input#id_username", TV_EMAIL, { delay: 50 });
 
-    await page.waitForSelector("input#id_password");
+    await page.waitForSelector("input#id_password", { timeout: 15000 });
     await page.type("input#id_password", TV_PASSWORD, { delay: 50 });
 
-    await page.click("button[class*='submitButton']");
-    await page.waitForTimeout(2000);
+    await Promise.all([
+      page.click("button[class*='submitButton']"),
+      page.waitForNavigation({ waitUntil: "networkidle0" })
+    ]);
 
-    // ✅ 로그인 성공 여부 판단: 로그인 버튼 존재 여부로 확인
-    await page.goto("https://www.tradingview.com", { waitUntil: "networkidle2" });
-    const isStillLoggedOut = await page.$('a[href="/accounts/signin/"]');
-    if (isStillLoggedOut) {
-      console.error("❌ 로그인 실패: 로그인 메뉴 여전히 존재함");
-      process.exit(1);
-    }
-    console.log("✅ 세션 인증 및 로그인 확인됨");
+    console.log("✅ 트레이딩뷰 로그인 성공");
 
-    await page.goto(chartUrl, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(3000);
-
-    try {
-      const popup = await page.$("div[role='dialog'] button[aria-label='Close']");
-      if (popup) {
-        await popup.click();
-        console.log("🧹 중앙 광고 팝업 닫힘");
-      }
-    } catch {}
-
-    try {
-      const banner = await page.$("div[class*='layout__area--bottom']");
-      if (banner) {
-        await page.evaluate(() => {
-          const el = document.querySelector("div[class*='layout__area--bottom']");
-          if (el) el.remove();
-        });
-        console.log("🧼 하단 배너 제거 완료");
-      }
-    } catch {}
-
-    await page.waitForTimeout(1000);
+    await page.goto(chartUrl, { waitUntil: "networkidle2" });
+    await page.waitForTimeout(5000);
     const buffer = await page.screenshot({ type: "png" });
 
     if (choiEnabled) {
@@ -113,8 +96,6 @@ if (!CAPTURE_TYPES.includes(type)) {
         headers: formA.getHeaders()
       });
       console.log("✅ 밍밍 이미지 전송 완료");
-    } else {
-      console.log("⛔ 밍밍 봇 비활성화 상태 – 이미지 전송 스킵됨");
     }
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);
