@@ -9,8 +9,8 @@ const { getTimeString, saveBotState } = require("./utils");
 const { addEntry, clearEntries } = require('./entryManager');
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
-const sendBotStatus = require("./commands/status");
-const { exec } = require('child_process'); // 추가됨 (캡처 실행용)
+const { sendBotStatus, handleAdminAction } = require("./commands/status");
+const { exec } = require('child_process');
 
 // ✅ entry 캐시 저장소
 const entryCache = {};
@@ -91,11 +91,18 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
+  // ✅ 버튼 눌렀을 때 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query?.message?.chat?.id;
     const messageId = update.callback_query?.message?.message_id;
 
+    const ctx = {
+      chat: { id: chatId },
+      callbackQuery: update.callback_query
+    };
+
+    await handleAdminAction(update.callback_query.data, ctx); // ✅ 여기 핵심 추가
     res.sendStatus(200);
 
     if (!chatId) {
