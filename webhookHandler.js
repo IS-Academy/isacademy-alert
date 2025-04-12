@@ -89,15 +89,18 @@ module.exports = async function webhookHandler(req, res) {
   }
 
   if (update.callback_query) {
-    const chatId = update.callback_query.message?.chat?.id;
+    const cmd = update.callback_query.data;
+    const chatId = update.callback_query?.message?.chat?.id;
+    const messageId = update.callback_query?.message?.message_id;
+
+    res.sendStatus(200);
+
     if (!chatId) {
       console.error('❗ chatId 없음: callback_query.message.chat.id 확인 필요');
       return;
     }
-    const cmd = update.callback_query.data;
-    const messageId = update.callback_query.message.message_id;
-    res.sendStatus(200);
 
+    const lang = getUserLang(chatId);
     const timeStr = getTimeString();
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
