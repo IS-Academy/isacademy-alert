@@ -1,9 +1,8 @@
-// ✅ botManager.js - 메시지 전송/수정 및 키보드 제공
+// ✅👇 botManager.js
 
 const axios = require('axios');
 const config = require('./config');
 
-// ✅ 인라인 키보드 버튼 정의
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
@@ -13,13 +12,13 @@ const inlineKeyboard = {
   ]
 };
 
-// ✅ 하단 reply 키보드
+// ✅ 하단 키보드 (reply_keyboard용)
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
   resize_keyboard: true
 };
 
-// ✅ 언어 선택용 키보드
+// 🌐 언어선택용 키보드
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -31,11 +30,13 @@ function getLangKeyboard(bot) {
   };
 }
 
-// ✅ 메시지 전송
+// 📨 메시지 전송 (reply_keyboard 또는 inline_keyboard)
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
                 config.ADMIN_BOT_TOKEN;
+
+  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}`);
 
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -45,40 +46,38 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
       reply_markup: replyMarkup || undefined
     });
 
+    if (!response.data.ok) {
+      throw new Error(`Telegram 응답 오류: ${response.data.error_code} - ${response.data.description}`);
+    }
+
     return response;
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
-    throw err;
+    throw err; // 반드시 에러를 상위로 전달
   }
 }
 
-// ✅ 메시지 수정 + 버튼 응답 + 로그 출력
+// ✏️ 메시지 수정 (inline_keyboard 전용)
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-  const renderedText = `${text}\u200B`; // zero-width space 추가로 중복 방지
-  const markup = replyMarkup || inlineKeyboard;
+
+  // 👇 HTML 주석으로 현재 시간 추가해서 텍스트 강제 수정되게 만듦
+  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const renderedText = `${text}\n<!-- updated: ${now} -->`;
+
+  console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
 
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
-      text: renderedText,
+      text,
       parse_mode: options.parse_mode || 'HTML',
-      reply_markup: markup
+      reply_markup: replyMarkup || inlineKeyboard
     });
 
-    // ✅ 버튼 응답 처리
-    if (options.callbackQueryId) {
-      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
-        callback_query_id: options.callbackQueryId,
-        text: options.callbackResponse || '✅ 패널이 갱신되었습니다.',
-        show_alert: false
-      });
-    }
-
-    // ✅ 로그 출력
-    if (options.logMessage) {
-      console.log(options.logMessage);
+    if (!response.data.ok) {
+      throw new Error(`Telegram 수정 응답 오류: ${response.data.error_code} - ${response.data.description}`);
     }
 
     return response;
@@ -86,29 +85,24 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     const errorMsg = err.response?.data?.description || err.message;
 
     if (errorMsg.includes('message is not modified')) {
-      if (options.callbackQueryId) {
-        await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
-          callback_query_id: options.callbackQueryId,
-          text: '⏱️ 이미 최신 상태입니다.',
-          show_alert: false
-        });
-      }
-
-      if (options.logMessage) {
-        console.log(`${options.logMessage} (중복 생략됨)`);
-      }
-
-      return { data: { result: true } };
+      console.log('🔹 editMessage: 변경 사항 없음');
+      return { data: { result: true } }; // 이 경우는 오류가 아님.
+    } else if (errorMsg.includes('message to edit not found')) {
+      console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
+      return await sendTextToBot(botType, chatId, text, replyMarkup, options);
+    } else {
+      console.error('❌ editMessage 실패:', errorMsg);
+      throw err; // 명확한 에러는 전달
     }
-
-    throw err;
   }
 }
 
+// 📤 각 대상별 메시지 전송
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
+// 🧩 export 모듈
 module.exports = {
   sendToAdmin,
   sendToChoi,
