@@ -3,7 +3,6 @@
 const axios = require('axios');
 const config = require('./config');
 
-// ✅ 고정 인라인 키보드 (백업용)
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
@@ -13,18 +12,15 @@ const inlineKeyboard = {
   ]
 };
 
-// ✅ reply 키보드 (하단 키보드용)
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
   resize_keyboard: true
 };
 
-// ✅ 버튼마다 invisible noise 삽입
 function addInvisibleNoise(text) {
   return text + '\u200B';
 }
 
-// ✅ 호출마다 조금씩 다른 inline 키보드
 function getDynamicInlineKeyboard() {
   return {
     inline_keyboard: [
@@ -48,7 +44,6 @@ function getDynamicInlineKeyboard() {
   };
 }
 
-// ✅ 언어 선택 키보드
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -60,7 +55,6 @@ function getLangKeyboard(bot) {
   };
 }
 
-// ✅ 메시지 전송 함수 (sendMessage)
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
@@ -77,10 +71,6 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
       reply_markup: replyMarkup || undefined
     });
 
-    if (!response.data.ok) {
-      throw new Error(`Telegram 응답 오류: ${response.data.error_code} - ${response.data.description}`);
-    }
-
     return response;
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
@@ -88,11 +78,8 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
-// ✅ 메시지 수정 함수 (editMessageText)
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-
-  // 👻 텍스트에 zero-width space 추가로 강제 변경
   const renderedText = `${text}\u200B`;
   const markup = replyMarkup || getDynamicInlineKeyboard();
 
@@ -108,14 +95,24 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       reply_markup: markup
     });
 
+    // 💬 edit 성공 시에도 answerCallbackQuery 보내기
+    if (options.callbackQueryId) {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        callback_query_id: options.callbackQueryId,
+        text: '✅ 상태 갱신 완료',
+        show_alert: false
+      });
+    }
+
     return response;
+
   } catch (err) {
     const errorMsg = err.response?.data?.description || err.message;
 
-    // ✅ 변경 사항 없음 → 버퍼링 방지: answerCallbackQuery 응답
     if (errorMsg.includes('message is not modified')) {
       console.log('🔹 editMessage: 변경 사항 없음');
 
+      // ✅ 이 경우에도 answerCallbackQuery 무조건 호출
       if (options.callbackQueryId) {
         await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
           callback_query_id: options.callbackQueryId,
@@ -137,13 +134,11 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
-// ✅ 전용 전송 함수들
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToAdminInline = (text, keyboard = inlineKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
-// ✅ 모듈 export
 module.exports = {
   sendToAdmin,
   sendToAdminInline,
