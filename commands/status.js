@@ -1,4 +1,4 @@
-// ✅ commands/status.js - 관리자 패널 메시지 처리 + 봇 실행까지 전체 통합
+// ✅ commands/status.js - 관리자 봇 상태 패널 생성 + 웹훅 기반 Telegraf 실행
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
@@ -12,11 +12,13 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const { Telegraf } = require('telegraf'); // ✅ Telegraf 봇도 이 안에서 실행
+const { Telegraf } = require('telegraf');
 
 const cache = new Map();
 
-// ✅ 버튼 로그 자동 매핑
+let bot; // ✅ 글로벌 봇 인스턴스
+
+// ✅ 버튼 로그 메시지 매핑
 const logMap = {
   'choi_on': '📌 [상태 갱신됨: 최실장 ON]',
   'choi_off': '📌 [상태 갱신됨: 최실장 OFF]',
@@ -26,7 +28,7 @@ const logMap = {
   'dummy_status': '📌 [더미 상태 확인 요청됨]'
 };
 
-// ✅ 상태 메시지 생성 및 전송
+// ✅ 상태 패널 메시지 전송
 async function sendBotStatus(
   timeStr = getTimeString(),
   suffix = '',
@@ -98,52 +100,53 @@ async function sendBotStatus(
   }
 }
 
-// ✅ 관리자 봇 초기화 + Telegraf 시작
-async function initAdminBot() {
-  // ✅ 상태 전역 변수 등록
-  const state = loadBotState();
-  global.choiEnabled = state.choiEnabled;
-  global.mingEnabled = state.mingEnabled;
+// ✅ Telegraf 봇 초기화 + 상태 처리
+function setupAdminBot() {
+  bot = new Telegraf(config.ADMIN_BOT_TOKEN);
 
-  // ✅ 봇 생성
-  const bot = new Telegraf(config.ADMIN_BOT_TOKEN);
+  // ✅ Telegram에 웹훅 주소 등록
+  bot.telegram.setWebhook(`${config.SERVER_URL}/bot${config.ADMIN_BOT_TOKEN}`);
 
-  // ✅ 버튼 콜백 핸들링
+  // ✅ 버튼 콜백 처리
   bot.on('callback_query', async (ctx) => {
     const data = ctx.callbackQuery.data;
     const chatId = ctx.chat.id;
     const messageId = ctx.callbackQuery.message.message_id;
 
-    // ✅ 상태 갱신 처리
+    // ✅ 상태 갱신
     switch (data) {
-      case 'choi_on':
-        global.choiEnabled = true;
-        break;
-      case 'choi_off':
-        global.choiEnabled = false;
-        break;
-      case 'ming_on':
-        global.mingEnabled = true;
-        break;
-      case 'ming_off':
-        global.mingEnabled = false;
-        break;
+      case 'choi_on': global.choiEnabled = true; break;
+      case 'choi_off': global.choiEnabled = false; break;
+      case 'ming_on': global.mingEnabled = true; break;
+      case 'ming_off': global.mingEnabled = false; break;
     }
 
-    // ✅ 상태 메시지 호출
     await sendBotStatus(undefined, data, chatId, messageId, {
       callbackQueryId: ctx.callbackQuery.id,
       callbackResponse: '✅ 상태 패널 갱신 완료',
       logMessage: logMap[data] || `📌 [버튼 클릭됨: ${data}]`
     });
   });
+}
 
+// ✅ Express 앱에 Telegraf 웹훅 등록
+function registerWebhook(app) {
+  app.use(bot.webhookCallback(`/bot${config.ADMIN_BOT_TOKEN}`));
+}
+
+// ✅ 전체 초기화 함수
+async function initAdminBot() {
+  const state = loadBotState();
+  global.choiEnabled = state.choiEnabled;
+  global.mingEnabled = state.mingEnabled;
+
+  setupAdminBot();       // ✅ 봇 설정 + 핸들러 등록
   await sendBotStatus(); // ✅ 초기 메시지 전송
-  await bot.launch();     // ✅ 봇 실행
-  console.log('✅ 관리자 봇 실행 완료');
+  console.log('✅ 관리자 봇 웹훅 모드 실행 완료');
 }
 
 module.exports = {
   sendBotStatus,
-  initAdminBot // ✅ index.js에서 사용
+  initAdminBot,
+  registerWebhook
 };
