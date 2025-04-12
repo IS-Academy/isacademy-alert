@@ -3,12 +3,12 @@
 const axios = require('axios');
 const config = require('./config');
 
-// invisible noise 문자 (zero-width space)
+// 👻 zero-width space 추가 함수
 function addInvisibleNoise(text) {
   return text + '\u200B';
 }
 
-// 매 호출마다 변경되는 키보드 생성
+// 🔁 매번 다른 inline keyboard 생성
 function getDynamicInlineKeyboard() {
   return {
     inline_keyboard: [
@@ -32,11 +32,13 @@ function getDynamicInlineKeyboard() {
   };
 }
 
+// ✅ 하단 키보드 (reply_keyboard용)
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
   resize_keyboard: true
 };
 
+// 🌐 언어선택용 키보드
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -48,6 +50,7 @@ function getLangKeyboard(bot) {
   };
 }
 
+// 📨 메시지 전송 (reply_keyboard 또는 inline_keyboard)
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
@@ -74,14 +77,15 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
+// ✏️ 메시지 수정 (inline_keyboard 전용)
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
 
-  // 텍스트 뒤에 HTML 주석 추가
+  // 📌 텍스트에 시간 정보 주석 추가
+  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
   const renderedText = `${text}\n<!-- updated: ${now} -->`;
 
-  // replyMarkup이 없으면 동적 키보드 사용
+  // 👇 replyMarkup이 없으면 자동으로 동적 키보드 사용
   const dynamicKeyboard = replyMarkup || getDynamicInlineKeyboard();
 
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
@@ -108,7 +112,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       return { data: { result: true } };
     } else if (errorMsg.includes('message to edit not found')) {
       console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
-      return await sendTextToBot(botType, chatId, text, replyMarkup, options);
+      return await sendTextToBot(botType, chatId, text, dynamicKeyboard, options);
     } else {
       console.error('❌ editMessage 실패:', errorMsg);
       throw err;
@@ -116,17 +120,21 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
+// 📤 각 대상별 메시지 전송
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
+const sendToAdminInline = (text, inline = getDynamicInlineKeyboard()) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, inline);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
+// 🧩 export 모듈
 module.exports = {
   sendToAdmin,
+  sendToAdminInline,
   sendToChoi,
   sendToMing,
   editMessage,
-  mainKeyboard,
   getLangKeyboard,
   getDynamicInlineKeyboard,
+  mainKeyboard,
   sendTextToBot
 };
