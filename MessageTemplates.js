@@ -3,10 +3,9 @@
 const moment = require('moment-timezone');
 const config = require('./config');
 const { translations } = require('./lang');
-const { getEntryInfo } = require('./utils');
 
 function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
-  const tz = translations[lang]?.timezone || fallbackTz; // ⬅️ locales 에서 가져옴
+  const tz = translations[lang]?.timezone || fallbackTz;
   const m = moment.unix(ts).tz(tz);
   const dayKey = m.format('ddd');
   const dayTranslated = translations[lang]?.days?.[dayKey] || dayKey;
@@ -23,7 +22,7 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
   const count = parseInt(entryCount);
   const lev = parseFloat(leverage);
 
-  if (!avg || !cur || !count || !lev) {
+  if (!avg || !cur || !count || !lev || !Number.isFinite(avg) || !Number.isFinite(cur)) {
     return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
   }
 
@@ -42,16 +41,18 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
 }
 
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
-  const percent = parseInt(entryCount);
+  const count = parseInt(entryCount);
   const avg = parseFloat(entryAvg).toFixed(1);
 
-  const valid = percent && avg;
+  const valid = Number.isFinite(count) && Number.isFinite(parseFloat(entryAvg));
   if (!valid) {
     return '📊 진입 비율 정보 없음 / 평균가 계산 불가';
   }
 
   const labels = translations[lang]?.labels || translations['ko'].labels;
-  return `${labels.entryInfo.replace('{entryCount}', `${percent}%`).replace('{entryAvg}', avg)}`;
+
+  // ❌ 중복 % 방지: count에는 % 안 붙이고 템플릿에서만 % 표시
+  return `${labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg)}`;
 }
 
 function getTemplate({
@@ -103,3 +104,4 @@ function getTemplate({
 module.exports = {
   getTemplate
 };
+
