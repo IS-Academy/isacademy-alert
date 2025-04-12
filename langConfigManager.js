@@ -35,7 +35,7 @@ function getUserConfig(chatId) {
 }
 
 function setUserLang(chatId, lang) {
-  if (!['ko', 'en', 'zh', 'ja'].includes(lang)) return false;
+  if (!['ko', 'en', 'zh', 'jp'].includes(lang)) return false;
   const current = langConfig[chatId]?.lang;
   if (current === lang) return true;
   langConfig[chatId] = langConfig[chatId] || {};
