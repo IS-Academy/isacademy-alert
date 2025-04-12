@@ -52,6 +52,21 @@ module.exports = async function webhookHandler(req, res) {
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
 
+      //////////
+      // ✅ 1. 원본 수신값 먼저 로그
+      const entryAvg = update.entryAvg || 'N/A';
+      const entryRatio = update.entryRatio || 0;
+      console.log('📨 웹훅 수신 원본:', { type, symbol, entryAvg, entryRatio });
+
+      // ✅ 2. entry 캐시 저장
+      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes", "exitLong", "exitShort"].includes(type);
+      if (isEntrySignal) saveEntryData(symbol, type, entryAvg, entryRatio);
+
+      // ✅ 3. 메시지 생성 직전의 값
+      const { avg, ratio } = getEntryData(symbol, type);
+      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
+      //////////
+
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장
       const entryAvg = update.entryAvg || 'N/A';
       const entryRatio = update.entryRatio || 0;
