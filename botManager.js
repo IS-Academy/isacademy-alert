@@ -25,7 +25,7 @@ function getLangKeyboard(bot) {
       { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
       { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
       { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
-      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_ja` }
+      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_jp` }
     ]]
   };
 }
