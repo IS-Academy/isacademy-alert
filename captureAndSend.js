@@ -5,11 +5,12 @@ const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
 
+// 기존 파일에서 글로벌 상태를 로드하기 위한 설정 추가
 const {
   BROWSERLESS_TOKEN,
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
   TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A,
-  TV_COOKIES, MINGMING_ENABLED
+  TV_COOKIES
 } = process.env;
 
 const args = process.argv.reduce((acc, curr) => {
@@ -50,46 +51,59 @@ const sendTelegram = async (token, chatId, buffer) => {
   await page.setViewport({ width: 1280, height: 720 });
   await page.setCookie(...JSON.parse(TV_COOKIES));
 
+  const maxRetries = 2;
+  let loaded = false;
+
   try {
-    await page.goto(chartUrl, { waitUntil: "networkidle2", timeout: 60000 });
-    await page.waitForSelector("canvas", { visible: true, timeout: 30000 });
-    console.log("✅ 차트 로딩 완료");
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      console.log(`🔄 로딩 시도 (${attempt + 1}/${maxRetries + 1})`);
+      await page.goto(chartUrl, { waitUntil: "domcontentloaded", timeout: 15000 });
 
-    // 🔥 빠르고 효과적인 광고 제거
+      try {
+        await page.waitForSelector("canvas", { visible: true, timeout: 5000 });
+        console.log("✅ 차트 로딩 성공");
+        loaded = true;
+        break;
+      } catch {
+        if (attempt < maxRetries) {
+          console.log("⚠️ 로딩 실패 → 새로고침 시도");
+          await page.reload({ waitUntil: "domcontentloaded", timeout: 10000 });
+        } else {
+          throw new Error("❌ 최대 로딩 재시도 초과");
+        }
+      }
+    }
+
+    if (!loaded) throw new Error("❌ 최종 로딩 실패");
+
     await page.evaluate(() => {
-      const removeAds = () => {
-        document.querySelectorAll(
-          'div[role="dialog"], div[data-dialog-name], ' +
-          'div.toastListScroll-Hvz5Irky, div.toastGroup-JUpQSP8o, ' +
-          'div[data-role="toast-container"], div[data-name="base-toast"], ' +
-          'div[class*="layout__area--bottom"]'
-        ).forEach(el => el.remove());
-      };
-      removeAds();
+      document.querySelectorAll(
+        'div[role="dialog"], div[data-dialog-name], div.toastListScroll-Hvz5Irky, ' +
+        'div.toastGroup-JUpQSP8o, div[data-role="toast-container"], ' +
+        'div[data-name="base-toast"], div[class*="layout__area--bottom"]'
+      ).forEach(el => el.remove());
 
-      // 닫기 버튼 클릭 시도
       const closeBtn = document.querySelector('button[aria-label="Close"], button[class*="close"]');
       if (closeBtn) closeBtn.click();
     });
-    console.log("🧹 광고 제거 시도 완료");
-
-    // 짧은 추가 대기 후 광고 재확인 및 재제거 (확실한 처리)
-    await page.waitForTimeout(500);
-    await page.evaluate(() => {
-      document.querySelectorAll(
-        'div[role="dialog"], div[data-dialog-name]'
-      ).forEach(el => el.remove());
-    });
+    console.log("🧹 광고 제거 완료");
 
     const buffer = await page.screenshot({ type: "png" });
     console.log("📷 스크린샷 캡처 완료");
 
-    await sendTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, buffer);
-    console.log("✅ 최실장 이미지 전송 완료");
+    // 🔥 글로벌 상태를 직접 확인하여 이미지 전송 여부 결정
+    if (global.choiEnabled !== false) { // undefined일 경우 기본값 true로 간주
+      await sendTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, buffer);
+      console.log("✅ 최실장 이미지 전송 완료");
+    } else {
+      console.log("⛔ 최실장 비활성화 상태 (전송 스킵)");
+    }
 
-    if (MINGMING_ENABLED === "true") {
+    if (global.mingEnabled !== false) {
       await sendTelegram(TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A, buffer);
       console.log("✅ 밍밍 이미지 전송 완료");
+    } else {
+      console.log("⛔ 밍밍 비활성화 상태 (전송 스킵)");
     }
 
   } catch (err) {
