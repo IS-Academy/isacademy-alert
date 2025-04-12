@@ -1,4 +1,4 @@
-// ✅ commands/status.js - 관리자 패널 초기화 전용
+// ✅👇 commands/status.js
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
@@ -15,8 +15,7 @@ const moment = require('moment-timezone');
 
 const cache = new Map();
 
-// ✅ 상태 패널 메시지 전송 함수 (기존과 동일)
-async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -39,6 +38,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const lastDummy = getLastDummyTime();
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
+
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
@@ -61,6 +61,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
 
   try {
     const existingMessageId = messageId || getAdminMessageId();
+
     let sent;
 
     if (existingMessageId) {
@@ -81,24 +82,9 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
       }
     }
 
-    return sent;
+    return sent; // ✅ 명확한 반환 (반드시 유지할 것)
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
-    return null;
+    return null; // ✅ 명확한 반환 (반드시 유지할 것)
   }
-}
-
-// ✅ index.js에서 불러서 실행할 초기화 함수
-async function initAdminPanel() {
-  const sent = await sendBotStatus();
-  if (sent && sent.data?.result) {
-    console.log('✅ 관리자 패널 초기화 성공');
-  } else {
-    console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
-  }
-}
-
-module.exports = {
-  sendBotStatus,
-  initAdminPanel
 };
