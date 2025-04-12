@@ -1,3 +1,5 @@
+// ✅👇 locales/ko.js
+
 module.exports = {
   symbols: {
     Ready_showSup: "#🩵롱 대기 📈",
@@ -34,6 +36,5 @@ module.exports = {
   days: {
     Mon: "월", Tue: "화", Wed: "수", Thu: "목", Fri: "금", Sat: "토", Sun: "일"
   },
-  am: "오전",
-  pm: "오후"
+  am: "오전", pm: "오후", timezone: "Asia/Seoul"
 };
