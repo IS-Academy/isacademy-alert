@@ -3,14 +3,34 @@
 const axios = require('axios');
 const config = require('./config');
 
-const inlineKeyboard = {
-  inline_keyboard: [
-    [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
-    [{ text: '▶️ 밍밍 켜기', callback_data: 'ming_on' }, { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }],
-    [{ text: '🌐 최실장 언어선택', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }],
-    [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }]
-  ]
-};
+// invisible noise 문자 (zero-width space)
+function addInvisibleNoise(text) {
+  return text + '\u200B';
+}
+
+// 매 호출마다 변경되는 키보드 생성
+function getDynamicInlineKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: addInvisibleNoise('▶️ 최실장 켜기'), callback_data: 'choi_on' },
+        { text: addInvisibleNoise('⏹️ 최실장 끄기'), callback_data: 'choi_off' }
+      ],
+      [
+        { text: addInvisibleNoise('▶️ 밍밍 켜기'), callback_data: 'ming_on' },
+        { text: addInvisibleNoise('⏹️ 밍밍 끄기'), callback_data: 'ming_off' }
+      ],
+      [
+        { text: addInvisibleNoise('🌐 최실장 언어선택'), callback_data: 'lang_choi' },
+        { text: addInvisibleNoise('🌐 밍밍 언어선택'), callback_data: 'lang_ming' }
+      ],
+      [
+        { text: addInvisibleNoise('📡 상태 확인'), callback_data: 'status' },
+        { text: addInvisibleNoise('🔁 더미 상태'), callback_data: 'dummy_status' }
+      ]
+    ]
+  };
+}
 
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
@@ -50,16 +70,19 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
     return response;
   } catch (err) {
     console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
-    throw err; // 반드시 에러를 상위로 전달
+    throw err;
   }
 }
 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-
-  // 👇 HTML 주석으로 현재 시간 추가해서 텍스트 강제 수정되게 만듦
   const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+
+  // 텍스트 뒤에 HTML 주석 추가
   const renderedText = `${text}\n<!-- updated: ${now} -->`;
+
+  // replyMarkup이 없으면 동적 키보드 사용
+  const dynamicKeyboard = replyMarkup || getDynamicInlineKeyboard();
 
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
 
@@ -67,9 +90,9 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
-      text,
+      text: renderedText,
       parse_mode: options.parse_mode || 'HTML',
-      reply_markup: replyMarkup || inlineKeyboard
+      reply_markup: dynamicKeyboard
     });
 
     if (!response.data.ok) {
@@ -82,13 +105,13 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
 
     if (errorMsg.includes('message is not modified')) {
       console.log('🔹 editMessage: 변경 사항 없음');
-      return { data: { result: true } }; // 이 경우는 오류가 아님.
+      return { data: { result: true } };
     } else if (errorMsg.includes('message to edit not found')) {
       console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
       return await sendTextToBot(botType, chatId, text, replyMarkup, options);
     } else {
       console.error('❌ editMessage 실패:', errorMsg);
-      throw err; // 명확한 에러는 전달
+      throw err;
     }
   }
 }
@@ -102,8 +125,8 @@ module.exports = {
   sendToChoi,
   sendToMing,
   editMessage,
-  inlineKeyboard,
   mainKeyboard,
   getLangKeyboard,
+  getDynamicInlineKeyboard,
   sendTextToBot
 };
