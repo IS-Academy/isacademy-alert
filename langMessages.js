@@ -20,10 +20,10 @@ module.exports = {
   },
 
   setLangFail: {
-    ko: () => `❌ 언어 설정 실패. (ko, en, zh, ja 중 하나여야 합니다)`,
-    en: () => `❌ Failed to set language. Use one of: ko, en, zh, ja.`,
-    zh: () => `❌ 语言设置失败，请使用 ko, en, zh, ja 之一。`,
-    jp: () => `❌ 言語の設定に失敗しました。ko, en, zh, ja のいずれかを使用してください。`
+    ko: () => `❌ 언어 설정 실패. (ko, en, zh, jp 중 하나여야 합니다)`,
+    en: () => `❌ Failed to set language. Use one of: ko, en, zh, jp.`,
+    zh: () => `❌ 语言设置失败，请使用 ko, en, zh, jp 之一。`,
+    jp: () => `❌ 言語の設定に失敗しました。ko, en, zh, jp のいずれかを使用してください。`
   },
 
   setTzSuccess: {
