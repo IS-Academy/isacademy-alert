@@ -1,3 +1,5 @@
+// ✅👇 locales/zh.js
+
 module.exports = {
   symbols: {
     Ready_showSup: "#🩵做多准备 📈",
@@ -34,6 +36,5 @@ module.exports = {
   days: {
     Mon: "周一", Tue: "周二", Wed: "周三", Thu: "周四", Fri: "周五", Sat: "周六", Sun: "周日"
   },
-  am: "上午",
-  pm: "下午"
+  am: "上午", pm: "下午", timezone: "Asia/Shanghai"
 };
