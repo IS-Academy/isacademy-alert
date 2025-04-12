@@ -7,7 +7,7 @@ const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const captureApi = require('./routes/captureApi');
 const { loadBotState } = require('./utils');
-const sendBotStatus = require('./commands/status');
+const { initAdminPanel } = require('./commands/status');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
