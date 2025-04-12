@@ -62,8 +62,8 @@ module.exports = async function webhookHandler(req, res) {
       if (isEntrySignal) saveEntryData(symbol, type, rawEntryAvg, rawEntryRatio);
 
       // ✅ 3. 메시지 생성 직전 값 확인
-      const { avg, ratio } = getEntryData(symbol, type);
-      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
+      const entryData = getEntryData(symbol, type);
+      console.log('📦 메시지 입력값:', { symbol, type, avg: entryData.avg, ratio: entryData.ratio });
       //////////
 
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장
