@@ -3,6 +3,21 @@
 const axios = require('axios');
 const config = require('./config');
 
+// ✅ inlineKeyboard 맨 위로 이동 (중요!!)
+const inlineKeyboard = {
+  inline_keyboard: [
+    [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
+    [{ text: '▶️ 밍밍 켜기', callback_data: 'ming_on' }, { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }],
+    [{ text: '🌐 최실장 언어선택', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }],
+    [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }]
+  ]
+};
+
+const mainKeyboard = {
+  keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
+  resize_keyboard: true
+};
+
 // 👻 zero-width space 추가 함수
 function addInvisibleNoise(text) {
   return text + '\u200B';
@@ -31,11 +46,6 @@ function getDynamicInlineKeyboard() {
     ]
   };
 }
-
-const mainKeyboard = {
-  keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
-  resize_keyboard: true
-};
 
 function getLangKeyboard(bot) {
   return {
@@ -78,9 +88,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
 
-  // 👇 zero-width space만 붙여서 Telegram HTML 파서 에러 방지
-  const renderedText = `${text}\u200B`; // ← 이거만 있어도 매번 다르게 인식됨
-
+  const renderedText = `${text}\u200B`; // zero-width space로 변경 감지 유도
   const markup = replyMarkup || getDynamicInlineKeyboard();
 
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
