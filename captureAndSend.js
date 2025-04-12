@@ -1,4 +1,5 @@
-// ✅🚀 최종 완벽 리팩토링 (빠른 실행, 광고 제거 포함) captureAndSend.js
+// ✅👇 captureAndSend.js
+
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
