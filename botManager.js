@@ -61,7 +61,9 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
 
-  console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
+  if (options.verbose) {
+    console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
+  }
 
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
