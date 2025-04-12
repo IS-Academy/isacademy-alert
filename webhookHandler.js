@@ -52,27 +52,16 @@ module.exports = async function webhookHandler(req, res) {
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
 
-      //////////
-      // ✅ 1. 원본 수신값 먼저 로그
-      const rawEntryAvg  = update.entryAvg || 'N/A';
-      const rawEntryRatio  = update.entryRatio || 0;
-      console.log('📨 웹훅 수신 원본:', { type, symbol, entryAvg: rawEntryAvg, entryRatio: rawEntryRatio });
-
-      // ✅ 3. 메시지 생성 직전 값 확인
-      const entryData = getEntryData(symbol, type);
-      console.log('📦 메시지 입력값:', { symbol, type, avg: entryData.avg, ratio: entryData.ratio });
-      //////////
-
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장
       const entryAvg = update.entryAvg || 'N/A';
       const entryRatio = update.entryRatio || 0;
       const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes", "exitLong", "exitShort"].includes(type);
-      if (isEntrySignal) saveEntryData(symbol, type, rawEntryAvg, rawEntryRatio);
 
       if (isEntrySignal) saveEntryData(symbol, type, entryAvg, entryRatio);
 
       // ✅ entry 정보 불러오기
       const { avg, ratio } = getEntryData(symbol, type);
+      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio }); ///////// 테스트 한 줄
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
