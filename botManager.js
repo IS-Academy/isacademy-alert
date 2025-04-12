@@ -60,9 +60,6 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
                 config.ADMIN_BOT_TOKEN;
 
-  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}`);
-  console.log(`🧪 [사용 예시 리마인드] sendTextToBot('${botType}', ${chatId}, "${text}", keyboardType=${replyMarkup?.inline_keyboard ? 'inline' : 'reply'})`);
-
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
@@ -80,11 +77,8 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-  const renderedText = `${text}\u200B`;
+  const renderedText = `${text}\u200B`; // zero-width space 추가
   const markup = replyMarkup || getDynamicInlineKeyboard();
-
-  console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
-  console.log(`🧪 [사용 예시 리마인드] editMessage('${botType}', ${chatId}, ${messageId}, "${text}", keyboardType=inline)`);
 
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
@@ -95,13 +89,18 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       reply_markup: markup
     });
 
-    // 💬 edit 성공 시에도 answerCallbackQuery 보내기
+    // ✅ 버튼 반응 응답 전송
     if (options.callbackQueryId) {
       await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
-        text: '✅ 상태 갱신 완료',
+        text: options.callbackResponse || '✅ 상태가 갱신되었습니다.',
         show_alert: false
       });
+    }
+
+    // ✅ 사용자가 정의한 로그만 출력
+    if (options.logMessage) {
+      console.log(`📌 ${options.logMessage}`);
     }
 
     return response;
@@ -110,27 +109,26 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     const errorMsg = err.response?.data?.description || err.message;
 
     if (errorMsg.includes('message is not modified')) {
-      console.log('🔹 editMessage: 변경 사항 없음');
-
-      // ✅ 이 경우에도 answerCallbackQuery 무조건 호출
       if (options.callbackQueryId) {
         await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
           callback_query_id: options.callbackQueryId,
-          text: '⏱️ 최신 상태입니다.',
+          text: '⏱️ 이미 최신 상태입니다.',
           show_alert: false
         });
+      }
+
+      if (options.logMessage) {
+        console.log(`📌 ${options.logMessage} (중복 생략됨)`);
       }
 
       return { data: { result: true } };
     }
 
     if (errorMsg.includes('message to edit not found')) {
-      console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
       return await sendTextToBot(botType, chatId, text, markup, options);
-    } else {
-      console.error('❌ editMessage 실패:', errorMsg);
-      throw err;
     }
+
+    throw err;
   }
 }
 
@@ -151,3 +149,4 @@ module.exports = {
   getDynamicInlineKeyboard,
   sendTextToBot
 };
+
