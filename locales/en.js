@@ -1,3 +1,5 @@
+// ✅👇 locales/en.js
+
 module.exports = {
   symbols: {
     Ready_showSup: "#🩵Long Setup 📈",
@@ -34,6 +36,5 @@ module.exports = {
   days: {
     Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat", Sun: "Sun"
   },
-  am: "AM",
-  pm: "PM"
+  am: "AM", pm: "PM", timezone: "America/New_York"
 };
