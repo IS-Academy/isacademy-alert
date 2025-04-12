@@ -1,5 +1,4 @@
-// ✅👇 captureAndSend.js
-
+// ✅🚀 최종 완벽 광고제거 (닫기 버튼 클릭 포함) captureAndSend.js
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
@@ -45,20 +44,23 @@ if (!CAPTURE_TYPES.includes(type)) {
     await page.waitForSelector("canvas", { visible: true, timeout: 60000 });
     console.log("✅ 차트 로딩 완료됨");
 
-    // 🚀 최종 확실한 광고 제거 코드 (수정된 최신버전)
+    // 🚀 최종 광고 제거 (닫기 버튼 클릭 방식)
     try {
+      const closeButton = await page.$('div[role="dialog"] button[aria-label="Close"], div[data-dialog-name] button[aria-label="Close"]');
+      if (closeButton) {
+        await closeButton.click();
+        console.log("🧹 중앙 큰 팝업 광고 '닫기' 버튼 클릭 완료");
+      } else {
+        console.log("⚠️ 중앙 큰 팝업 광고 닫기 버튼을 찾지 못했습니다.");
+      }
+
       await page.evaluate(() => {
-        // 중앙 큰 팝업 광고 제거
-        document.querySelectorAll('div[role="dialog"], div[data-dialog-name]').forEach(el => el.remove());
-
-        // 좌측 하단 작은 광고 완벽 제거 (최신 확인)
-        document.querySelectorAll('div.toastListScroll-Hvz5Irky, div.toastGroup-JUpQSP8o, div[data-role="toast-container"], div[data-name="base-toast"]').forEach(el => el.remove());
-
-        // 하단 배너 제거
-        const bottomBanner = document.querySelector('div[class*="layout__area--bottom"]');
-        if (bottomBanner) bottomBanner.remove();
+        document.querySelectorAll(
+          'div.toastListScroll-Hvz5Irky, div.toastGroup-JUpQSP8o, div[data-role="toast-container"], div[data-name="base-toast"], div[class*="layout__area--bottom"]'
+        ).forEach(el => el.remove());
       });
-      console.log("🧹 모든 광고 완벽 제거 완료");
+      console.log("🧹 추가 광고 제거 완료");
+
     } catch (err) {
       console.log("⚠️ 광고 제거 중 오류 발생:", err.message);
     }
@@ -91,5 +93,3 @@ if (!CAPTURE_TYPES.includes(type)) {
     await browser.close();
   }
 })();
-
-
