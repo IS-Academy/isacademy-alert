@@ -80,7 +80,7 @@ module.exports = async function webhookHandler(req, res) {
         exec(captureCommand, (error, stdout, stderr) => {
           if (error) console.error(`❌ 캡처 실패: ${error.message}`);
           else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
-          else console.log(`✅ 캡처 성공:\n${stdout}`);
+          else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
         });
       }
 
