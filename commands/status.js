@@ -1,4 +1,4 @@
-// ✅ commands/status.js - 상태 메시지 생성 + 수정 처리
+// ✅ commands/status.js - 관리자 패널 메시지 처리 + 봇 실행까지 전체 통합
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
@@ -12,15 +12,27 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
+const { Telegraf } = require('telegraf'); // ✅ Telegraf 봇도 이 안에서 실행
 
 const cache = new Map();
 
-module.exports = async function sendBotStatus(
+// ✅ 버튼 로그 자동 매핑
+const logMap = {
+  'choi_on': '📌 [상태 갱신됨: 최실장 ON]',
+  'choi_off': '📌 [상태 갱신됨: 최실장 OFF]',
+  'ming_on': '📌 [상태 갱신됨: 밍밍 ON]',
+  'ming_off': '📌 [상태 갱신됨: 밍밍 OFF]',
+  'status': '📌 [상태 확인 요청됨]',
+  'dummy_status': '📌 [더미 상태 확인 요청됨]'
+};
+
+// ✅ 상태 메시지 생성 및 전송
+async function sendBotStatus(
   timeStr = getTimeString(),
   suffix = '',
   chatId = config.ADMIN_CHAT_ID,
   messageId = null,
-  options = {} // ✅ 추가: callbackQueryId, logMessage 등 전달
+  options = {}
 ) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
@@ -32,7 +44,7 @@ module.exports = async function sendBotStatus(
   }
   cache.set(key, nowTime);
 
-  const { choiEnabled, mingEnabled } = loadBotState();
+  const { choiEnabled, mingEnabled } = global;
 
   const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
   const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
@@ -84,4 +96,54 @@ module.exports = async function sendBotStatus(
     console.error('⚠️ 관리자 패널 오류:', err.message);
     return null;
   }
+}
+
+// ✅ 관리자 봇 초기화 + Telegraf 시작
+async function initAdminBot() {
+  // ✅ 상태 전역 변수 등록
+  const state = loadBotState();
+  global.choiEnabled = state.choiEnabled;
+  global.mingEnabled = state.mingEnabled;
+
+  // ✅ 봇 생성
+  const bot = new Telegraf(config.ADMIN_BOT_TOKEN);
+
+  // ✅ 버튼 콜백 핸들링
+  bot.on('callback_query', async (ctx) => {
+    const data = ctx.callbackQuery.data;
+    const chatId = ctx.chat.id;
+    const messageId = ctx.callbackQuery.message.message_id;
+
+    // ✅ 상태 갱신 처리
+    switch (data) {
+      case 'choi_on':
+        global.choiEnabled = true;
+        break;
+      case 'choi_off':
+        global.choiEnabled = false;
+        break;
+      case 'ming_on':
+        global.mingEnabled = true;
+        break;
+      case 'ming_off':
+        global.mingEnabled = false;
+        break;
+    }
+
+    // ✅ 상태 메시지 호출
+    await sendBotStatus(undefined, data, chatId, messageId, {
+      callbackQueryId: ctx.callbackQuery.id,
+      callbackResponse: '✅ 상태 패널 갱신 완료',
+      logMessage: logMap[data] || `📌 [버튼 클릭됨: ${data}]`
+    });
+  });
+
+  await sendBotStatus(); // ✅ 초기 메시지 전송
+  await bot.launch();     // ✅ 봇 실행
+  console.log('✅ 관리자 봇 실행 완료');
+}
+
+module.exports = {
+  sendBotStatus,
+  initAdminBot // ✅ index.js에서 사용
 };
