@@ -58,13 +58,10 @@ module.exports = async function webhookHandler(req, res) {
       const rawEntryRatio  = update.entryRatio || 0;
       console.log('📨 웹훅 수신 원본:', { type, symbol, entryAvg: rawEntryAvg, entryRatio: rawEntryRatio });
 
-      // ✅ 2. entry 캐시 저장 조건 정의
-      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes", "exitLong", "exitShort"].includes(type);
-
-      // ✅ 3. 캐시 저장
+      // ✅ 2. 캐시 저장
       if (isEntrySignal) saveEntryData(symbol, type, rawEntryAvg, rawEntryRatio);
 
-      // ✅ 4. 메시지 생성 직전 값 확인
+      // ✅ 3. 메시지 생성 직전 값 확인
       const { avg, ratio } = getEntryData(symbol, type);
       console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
       //////////
