@@ -17,12 +17,12 @@ const cache = new Map();
 
 // ✅ 버튼별 로그 메시지 매핑
 const logMap = {
-  'choi_on': '▶️ [상태 갱신됨: 최실장 ON]',
-  'choi_off': '⏹️ [상태 갱신됨: 최실장 OFF]',
-  'ming_on': '▶️ [상태 갱신됨: 밍밍 ON]',
-  'ming_off': '⏹️ [상태 갱신됨: 밍밍 OFF]',
-  'status': '📡 [상태 확인 요청됨]',
-  'dummy_status': '🔁 [더미 상태 확인 요청됨]'
+  'choi_on': '▶️ [상태 갱신: 최실장 ON]',
+  'choi_off': '⏹️ [상태 갱신: 최실장 OFF]',
+  'ming_on': '▶️ [상태 갱신: 밍밍 ON]',
+  'ming_off': '⏹️ [상태 갱신: 밍밍 OFF]',
+  'status': '📡 [상태 확인 요청]',
+  'dummy_status': '🔁 [더미 상태 확인 요청]'
 };
 
 // ✅ 버튼 처리 핸들러
@@ -55,7 +55,7 @@ async function handleAdminAction(data, ctx) {
     await editMessage('admin', chatId, messageId, '⏱️ 현재와 동일한 상태입니다.', null, {
       callbackQueryId,
       callbackResponse: '동일한 상태입니다.',
-      logMessage: `${logMap[data] || '🧩 버튼'} (중복 생략됨)`
+      logMessage: `${logMap[data] || '🧩 버튼'}`
     });
     return;
   }
@@ -72,13 +72,10 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
-  // ✅ 캐시 키에 상태를 포함해서 정밀하게 체크 (중복 클릭 방지 & 상태 변화 감지)
   const key = `${chatId}_${suffix}_${global.choiEnabled}_${global.mingEnabled}`;
 
   if (cache.get(key) === nowTime) {
-    console.log('⚠️ 상태 메시지 중복 생략');
-
-    // ✅ UI 버퍼링 방지를 위해 항상 answerCallbackQuery 응답 보내줌
+    // ✅ 캐시로 중복 생략 시 응답은 반드시 보냄 (버퍼링 방지)
     if (options.callbackQueryId) {
       const axios = require('axios');
       await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
@@ -88,9 +85,12 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
       });
     }
 
-    // ✅ 로그도 남겨줌
+    // ✅ 커스텀 로그 메시지
     if (options.logMessage) {
-      console.log(`${options.logMessage} (중복 생략됨)`);
+      const cleaned = options.logMessage.replace(/^.*\[\s?|\s?\]$/g, '').trim();
+      console.log(`⚠️ ${cleaned} 중복 생략`);
+    } else {
+      console.log('⚠️ 상태 메시지 중복 생략');
     }
 
     return;
