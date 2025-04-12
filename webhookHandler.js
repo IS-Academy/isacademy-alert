@@ -129,5 +129,4 @@ module.exports = async function webhookHandler(req, res) {
     }
     return;
   }
-  res.sendStatus(200);
 };
