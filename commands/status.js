@@ -70,16 +70,17 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
-  // ✅ 상태/언어 관련 변수는 캐시 키 생성 전에 선언
   const { choiEnabled, mingEnabled } = global;
-  const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
-  const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+  const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
+  const configMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A) || {};
+  const userConfig = langManager.getUserConfig(chatId) || {};
 
-  const userLang = langManager.getUserConfig(chatId)?.lang || 'ko';
-  const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
+  const langChoi = configChoi.lang || 'ko';
+  const langMing = configMing.lang || 'ko';
+  const userLang = userConfig.lang || 'ko';
+  const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
 
   const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}`;
-
   if (cache.get(key) === nowTime) {
     if (options.callbackQueryId) {
       const axios = require('axios');
@@ -90,7 +91,6 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
       });
     }
 
-    // ✅ suffix에 따라 로그 메시지 다르게 출력
     if (suffix.startsWith('lang_choi')) {
       console.log('🌐 최실장 언어선택 패널 중복 생략');
     } else if (suffix.startsWith('lang_ming')) {
@@ -107,7 +107,16 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
 
   cache.set(key, nowTime);
 
-  // ✅ 실제 패널 메시지 생성
+  // ✅ 언어별 타임존 + 이모지 매핑
+  const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
+  const langTzChoi = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzMing = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
+
+  const langDisplay = (lang, tz) => {
+    const emoji = langEmojiMap[lang] || '';
+    return `<code>${lang}</code> ${emoji} | ${tz}`;
+  };
+
   const dayTranslated = translations[userLang]?.days[now.format('ddd')] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
@@ -124,8 +133,8 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     `──────────────────────`,
     `📍 <b>현재 상태:</b> 🕐 <code>${nowTime}</code>`,
     ``,
-    `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (<code>${langChoi}</code>)`,
-    `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (<code>${langMing}</code>)`,
+    `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langChoi, langTzChoi)})`,
+    `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)})`,
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
     `🛰 <b>더미 수신:</b> ${dummyMoment ? '✅' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
