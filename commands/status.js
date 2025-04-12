@@ -7,15 +7,13 @@ const {
   getLastDummyTime,
   setAdminMessageId,
   getAdminMessageId,
-  getTimeString,
-  loadBotState
+  getTimeString
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 
 const cache = new Map();
 
-// ✅ 버튼별 로그 메시지 매핑
 const logMap = {
   'choi_on': '▶️ [상태 갱신: 최실장 ON]',
   'choi_off': '⏹️ [상태 갱신: 최실장 OFF]',
@@ -25,7 +23,7 @@ const logMap = {
   'dummy_status': '🔁 [더미 상태 확인 요청]'
 };
 
-// ✅ 버튼 처리 핸들러
+// ✅ 버튼 처리
 async function handleAdminAction(data, ctx) {
   const chatId = ctx.chat.id;
   const messageId = ctx.callbackQuery.message.message_id;
@@ -67,15 +65,22 @@ async function handleAdminAction(data, ctx) {
   });
 }
 
-// ✅ 상태 메시지 전송
+// ✅ 패널 전송
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
-  const key = `${chatId}_${suffix}_${global.choiEnabled}_${global.mingEnabled}`;
+  // ✅ 상태/언어 관련 변수는 캐시 키 생성 전에 선언
+  const { choiEnabled, mingEnabled } = global;
+  const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
+  const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
+
+  const userLang = langManager.getUserConfig(chatId)?.lang || 'ko';
+  const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
+
+  const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}`;
 
   if (cache.get(key) === nowTime) {
-    // ✅ 캐시로 중복 생략 시 응답은 반드시 보냄 (버퍼링 방지)
     if (options.callbackQueryId) {
       const axios = require('axios');
       await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
@@ -85,7 +90,6 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
       });
     }
 
-    // ✅ 커스텀 로그 메시지
     if (options.logMessage) {
       const cleaned = options.logMessage.replace(/^.*\[\s?|\s?\]$/g, '').trim();
       console.log(`⚠️ ${cleaned} 중복 생략`);
@@ -98,13 +102,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
 
   cache.set(key, nowTime);
 
-  const { choiEnabled, mingEnabled } = global;
-
-  const langChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID)?.lang || 'ko';
-  const langMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A)?.lang || 'ko';
-  const userLang = langManager.getUserConfig(chatId)?.lang || 'ko';
-  const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
-
+  // ✅ 실제 패널 메시지 생성
   const dayTranslated = translations[userLang]?.days[now.format('ddd')] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
@@ -152,7 +150,6 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   }
 }
 
-// ✅ 초기화 함수
 async function initAdminPanel() {
   const sent = await sendBotStatus();
   if (sent && sent.data?.result) {
