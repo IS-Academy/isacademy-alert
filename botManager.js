@@ -57,6 +57,10 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
 
+  // 👇 HTML 주석으로 현재 시간 추가해서 텍스트 강제 수정되게 만듦
+  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  const renderedText = `${text}\n<!-- updated: ${now} -->`;
+
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
 
   try {
