@@ -12,11 +12,13 @@ const inlineKeyboard = {
   ]
 };
 
+// ✅ 하단 키보드
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
   resize_keyboard: true
 };
 
+// 🌐 언어선택용 키보드
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -28,6 +30,7 @@ function getLangKeyboard(bot) {
   };
 }
 
+// 📨 메시지 전송
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
@@ -54,6 +57,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
+// ✏️ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
 
@@ -70,6 +74,11 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
 
     if (!response.data.ok) {
       throw new Error(`Telegram 수정 응답 오류: ${response.data.error_code} - ${response.data.description}`);
+    }
+
+    // ✅ 로그 메시지 출력
+    if (options.logMessage) {
+      console.log(options.logMessage);
     }
 
     return response;
@@ -89,10 +98,12 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
+// 📤 각 대상별 메시지 전송
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
+// 🧩 export 모듈
 module.exports = {
   sendToAdmin,
   sendToChoi,
