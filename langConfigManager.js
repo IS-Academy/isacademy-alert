@@ -3,6 +3,8 @@
 const fs = require('fs');
 const path = './langConfig.json';
 
+const SUPPORTED_LANGS = ['ko', 'en', 'zh', 'jp'];
+
 function ensureLangConfigFile() {
   if (!fs.existsSync(path)) {
     saveLangConfig({});
@@ -30,15 +32,18 @@ function saveLangConfig(data) {
 
 let langConfig = loadLangConfig();
 
+function initUser(chatId) {
+  if (!langConfig[chatId]) langConfig[chatId] = {};
+}
+
 function getUserConfig(chatId) {
   return langConfig[chatId];
 }
 
 function setUserLang(chatId, lang) {
-  if (!['ko', 'en', 'zh', 'jp'].includes(lang)) return false;
-  const current = langConfig[chatId]?.lang;
-  if (current === lang) return true;
-  langConfig[chatId] = langConfig[chatId] || {};
+  if (!SUPPORTED_LANGS.includes(lang)) return false;
+  initUser(chatId);
+  if (langConfig[chatId].lang === lang) return true;
   langConfig[chatId].lang = lang;
   saveLangConfig(langConfig);
   return true;
@@ -46,7 +51,7 @@ function setUserLang(chatId, lang) {
 
 function setUserTimezone(chatId, timezone) {
   if (!timezone) return false;
-  langConfig[chatId] = langConfig[chatId] || {};
+  initUser(chatId);
   langConfig[chatId].tz = timezone;
   saveLangConfig(langConfig);
   return true;
