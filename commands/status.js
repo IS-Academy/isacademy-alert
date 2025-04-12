@@ -1,4 +1,4 @@
-// ✅ commands/status.js - 관리자 패널 초기화 전용
+// ✅👇 commands/status.js - 관리자 패널 초기화 전용
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
