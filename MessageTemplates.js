@@ -140,27 +140,27 @@ ${disclaimer}`,
     Ready_showSup: `${symbols.Ready_showSup} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
     Ready_showRes: `${symbols.Ready_showRes} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
     Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
     Ready_isBigRes: `${symbols.Ready_isBigRes} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
     Ready_exitLong: `${symbols.Ready_exitLong} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`,
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
     Ready_exitShort: `${symbols.Ready_exitShort} ${timeframe}⏱️
 
 ${labels.symbol}: ${symbol}
-${labels.weight.replace('{weight}', weight)} / ${labels.leverage.replace('{leverage}', leverage)}`
+${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`
   };
 
   if (templates[type]) {
