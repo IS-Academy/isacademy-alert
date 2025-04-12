@@ -12,6 +12,9 @@ const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const sendBotStatus = require("./commands/status");
 const { exec } = require('child_process'); // 추가됨 (캡처 실행용)
 
+// ✅ entry 캐시 저장소
+const entryCache = {};
+
 function saveEntryData(symbol, type, avg, ratio) {
   global.entryCache = global.entryCache || {};
   const key = `${symbol}-${type}`;
@@ -132,4 +135,6 @@ module.exports = async function webhookHandler(req, res) {
     }
     return;
   }
+
+  res.sendStatus(200);
 };
