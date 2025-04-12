@@ -83,7 +83,7 @@ async function handleAdminAction(data, ctx) {
 
 // ✅ 상태 패널 메시지 생성 + 전송
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
-  const key = `${chatId}_${suffix}`;
+  const key = `${chatId}_${suffix}_${global.choiEnabled}_${global.mingEnabled}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
