@@ -60,7 +60,6 @@ module.exports = async function webhookHandler(req, res) {
 
       // ✅ 2. entry 캐시 저장
       const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes", "exitLong", "exitShort"].includes(type);
-      if (isEntrySignal) saveEntryData(symbol, type, rawEntryAvg, rawEntryRatio);
 
       // ✅ 3. 메시지 생성 직전의 값
       const { avg, ratio } = getEntryData(symbol, type);
