@@ -41,18 +41,17 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
 }
 
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
-  const count = parseInt(entryCount);
-  const avg = parseFloat(entryAvg).toFixed(1);
+  const count = parseInt(entryCount, 10);
+  const avgNum = parseFloat(entryAvg);
+  const avg = Number.isFinite(avgNum) ? avgNum.toFixed(1) : null;
 
-  const valid = Number.isFinite(count) && Number.isFinite(parseFloat(entryAvg));
-  if (!valid) {
-    return '📊 진입 비율 정보 없음 / 평균가 계산 불가';
+  const valid = Number.isFinite(count) && avg !== null;
+  if (!valid || count <= 0) {
+    return translations[lang]?.labels?.noEntryInfo || '📊 진입 비율 정보 없음 / 평균가 계산 불가';
   }
 
   const labels = translations[lang]?.labels || translations['ko'].labels;
-
-  // ❌ 중복 % 방지: count에는 % 안 붙이고 템플릿에서만 % 표시
-  return `${labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg)}`;
+  return labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg);
 }
 
 function getTemplate({
@@ -104,4 +103,3 @@ function getTemplate({
 module.exports = {
   getTemplate
 };
-
