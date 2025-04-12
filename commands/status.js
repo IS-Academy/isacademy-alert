@@ -85,12 +85,17 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
       const axios = require('axios');
       await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
-        text: '⏱️ 이미 최신 상태입니다.',
+        text: '⏱️ 최신 정보입니다.',
         show_alert: false
       });
     }
 
-    if (options.logMessage) {
+    // ✅ suffix에 따라 로그 메시지 다르게 출력
+    if (suffix.startsWith('lang_choi')) {
+      console.log('🌐 최실장 언어선택 패널 중복 생략');
+    } else if (suffix.startsWith('lang_ming')) {
+      console.log('🌐 밍밍 언어선택 패널 중복 생략');
+    } else if (options.logMessage) {
       const cleaned = options.logMessage.replace(/^.*\[\s?|\s?\]$/g, '').trim();
       console.log(`⚠️ ${cleaned} 중복 생략`);
     } else {
