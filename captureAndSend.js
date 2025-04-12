@@ -4,6 +4,7 @@ require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
+const { loadBotState } = require('./utils');
 
 // 기존 파일에서 글로벌 상태를 로드하기 위한 설정 추가
 const {
@@ -91,15 +92,18 @@ const sendTelegram = async (token, chatId, buffer) => {
     const buffer = await page.screenshot({ type: "png" });
     console.log("📷 스크린샷 캡처 완료");
 
-    // 🔥 글로벌 상태를 직접 확인하여 이미지 전송 여부 결정
-    if (global.choiEnabled !== false) { // undefined일 경우 기본값 true로 간주
+    // ✅ 추가된 부분: 파일에서 최실장, 밍밍 상태 불러오기
+    const { choiEnabled, mingEnabled } = loadBotState();
+
+    // 🔥 상태를 확인하여 이미지 전송 여부 결정
+    if (choiEnabled !== false) { // undefined일 경우 기본값 true로 간주
       await sendTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, buffer);
       console.log("✅ 최실장 이미지 전송 완료");
     } else {
       console.log("⛔ 최실장 비활성화 상태 (전송 스킵)");
     }
 
-    if (global.mingEnabled !== false) {
+    if (mingEnabled !== false) {
       await sendTelegram(TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A, buffer);
       console.log("✅ 밍밍 이미지 전송 완료");
     } else {
