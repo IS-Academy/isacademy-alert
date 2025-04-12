@@ -7,8 +7,8 @@ const sendBotStatus = require('./status');
 const config = require('../config');
 
 module.exports = async function handleSetLang(chatId, langCode, currentLang, timeStr) {
-  if (!langCode || !['ko', 'en', 'zh', 'ja'].includes(langCode)) {
-    await sendToAdmin('❗ 올바른 언어 코드를 입력하세요. (ko, en, zh, ja)');
+  if (!langCode || !['ko', 'en', 'zh', 'jp'].includes(langCode)) {
+    await sendToAdmin('❗ 올바른 언어 코드를 입력하세요. (ko, en, zh, jp)');
     return;
   }
 
