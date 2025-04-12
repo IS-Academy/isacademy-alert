@@ -3,28 +3,12 @@
 const axios = require('axios');
 const config = require('./config');
 
-// ✅ 하단 reply 키보드
-const mainKeyboard = {
-  keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
-  resize_keyboard: true
-};
-
-// ✅ 고정 inline 키보드
-const inlineKeyboard = {
-  inline_keyboard: [
-    [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
-    [{ text: '▶️ 밍밍 켜기', callback_data: 'ming_on' }, { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }],
-    [{ text: '🌐 최실장 언어선택', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }],
-    [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }]
-  ]
-};
-
-// ✅ Zero-width space 삽입 함수
+// 👻 zero-width space 추가 함수
 function addInvisibleNoise(text) {
   return text + '\u200B';
 }
 
-// ✅ 반복 호출시 매번 다르게 보이게 하는 dynamic inline 키보드
+// 💬 inline keyboard 버튼을 매번 다르게 구성
 function getDynamicInlineKeyboard() {
   return {
     inline_keyboard: [
@@ -48,7 +32,11 @@ function getDynamicInlineKeyboard() {
   };
 }
 
-// ✅ 언어 선택용 inline 키보드
+const mainKeyboard = {
+  keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
+  resize_keyboard: true
+};
+
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -60,7 +48,6 @@ function getLangKeyboard(bot) {
   };
 }
 
-// ✅ 메시지 전송 (reply or inline 키보드 전송)
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
@@ -88,11 +75,11 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
-// ✅ 메시지 수정 (inline 키보드만 가능)
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
-  const renderedText = `${text}\n<!-- updated: ${now} -->`;
+
+  // 👇 zero-width space만 붙여서 Telegram HTML 파서 에러 방지
+  const renderedText = `${text}\u200B`; // ← 이거만 있어도 매번 다르게 인식됨
 
   const markup = replyMarkup || getDynamicInlineKeyboard();
 
@@ -129,13 +116,12 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
-// ✅ 외부에서 호출할 수 있는 전용 함수들
+// 전송 함수
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToAdminInline = (text, keyboard = inlineKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
-// ✅ 모듈 exports
 module.exports = {
   sendToAdmin,
   sendToAdminInline,
@@ -148,4 +134,3 @@ module.exports = {
   getDynamicInlineKeyboard,
   sendTextToBot
 };
-
