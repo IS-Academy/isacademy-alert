@@ -101,8 +101,8 @@ module.exports = async function webhookHandler(req, res) {
     const timeStr = getTimeString();
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on";
-      global.mingEnabled = cmd === "ming_on";
+      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
+      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
       saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
     } else if (cmd.startsWith("lang_")) {
       const [_, bot, langCode] = cmd.split("_");
