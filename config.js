@@ -1,4 +1,4 @@
-// ✅ config.js - 환경변수 로딩 및 전역 설정
+// ✅👇 config.js - 환경변수 로딩 및 전역 설정
 
 require('dotenv').config();
 
@@ -31,4 +31,3 @@ module.exports = {
   // 기본 타임존
   DEFAULT_TIMEZONE: 'Asia/Seoul'
 };
-
