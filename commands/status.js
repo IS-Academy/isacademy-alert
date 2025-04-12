@@ -1,4 +1,4 @@
-// ✅👇 commands/status.js
+// ✅ commands/status.js - 상태 메시지 생성 + 수정 처리
 
 const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
 const langManager = require('../langConfigManager');
@@ -15,7 +15,13 @@ const moment = require('moment-timezone');
 
 const cache = new Map();
 
-module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null) {
+module.exports = async function sendBotStatus(
+  timeStr = getTimeString(),
+  suffix = '',
+  chatId = config.ADMIN_CHAT_ID,
+  messageId = null,
+  options = {} // ✅ 추가: callbackQueryId, logMessage 등 전달
+) {
   const key = `${chatId}_${suffix}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -34,11 +40,9 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
   const tz = langManager.getUserConfig(chatId)?.tz || config.DEFAULT_TIMEZONE;
 
   const dayTranslated = translations[userLang]?.days[now.format('ddd')] || now.format('ddd');
-
   const lastDummy = getLastDummyTime();
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
-
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
@@ -61,30 +65,23 @@ module.exports = async function sendBotStatus(timeStr = getTimeString(), suffix 
 
   try {
     const existingMessageId = messageId || getAdminMessageId();
-
     let sent;
 
     if (existingMessageId) {
-      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, { parse_mode: 'HTML' });
-      if (sent?.data?.result?.message_id) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log('✅ 메시지 수정 성공');
-      } else {
-        throw new Error('메시지 수정 결과 없음');
-      }
+      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, {
+        ...options, parse_mode: 'HTML'
+      });
+      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     } else {
-      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, { parse_mode: 'HTML' });
-      if (sent?.data?.result?.message_id) {
-        setAdminMessageId(sent.data.result.message_id);
-        console.log('✅ 신규 메시지 전송 성공');
-      } else {
-        throw new Error('신규 메시지 전송 결과 없음');
-      }
+      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, {
+        ...options, parse_mode: 'HTML'
+      });
+      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     }
 
-    return sent; // ✅ 명확한 반환 (반드시 유지할 것)
+    return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
-    return null; // ✅ 명확한 반환 (반드시 유지할 것)
+    return null;
   }
 };
