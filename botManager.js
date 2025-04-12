@@ -89,7 +89,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       reply_markup: markup
     });
 
-    // ✅ 버튼 반응 응답 전송
+    // ✅ 버튼 응답
     if (options.callbackQueryId) {
       await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
@@ -98,7 +98,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       });
     }
 
-    // ✅ 사용자가 정의한 로그만 출력
+    // ✅ 사용자 지정 로그만 출력
     if (options.logMessage) {
       console.log(`📌 ${options.logMessage}`);
     }
