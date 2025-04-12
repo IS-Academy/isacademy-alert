@@ -5,7 +5,8 @@ const config = require('./config');
 const { translations } = require('./lang');
 const { getEntryInfo } = require('./utils');
 
-function formatDate(ts, tz = config.DEFAULT_TIMEZONE, lang = 'ko') {
+function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
+  const tz = translations[lang]?.timezone || fallbackTz; // ⬅️ locales 에서 가져옴
   const m = moment.unix(ts).tz(tz);
   const dayKey = m.format('ddd');
   const dayTranslated = translations[lang]?.days?.[dayKey] || dayKey;
