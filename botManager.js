@@ -12,13 +12,11 @@ const inlineKeyboard = {
   ]
 };
 
-// ✅ 하단 키보드 (reply_keyboard용)
 const mainKeyboard = {
   keyboard: [['🌐 최실장 언어선택', '🌐 밍밍 언어선택'], ['📡 상태 확인', '🔁 더미 상태']],
   resize_keyboard: true
 };
 
-// 🌐 언어선택용 키보드
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
@@ -30,7 +28,6 @@ function getLangKeyboard(bot) {
   };
 }
 
-// 📨 메시지 전송 (reply_keyboard 또는 inline_keyboard)
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
@@ -57,13 +54,8 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
-// ✏️ 메시지 수정 (inline_keyboard 전용)
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
-
-  // 👇 HTML 주석으로 현재 시간 추가해서 텍스트 강제 수정되게 만듦
-  const now = new Date().toLocaleTimeString('ko-KR', { hour12: false });
-  const renderedText = `${text}\n<!-- updated: ${now} -->`;
 
   console.log(`✏️ [editMessage 호출됨] botType=${botType}, chatId=${chatId}, messageId=${messageId}`);
 
@@ -97,12 +89,10 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
-// 📤 각 대상별 메시지 전송
 const sendToAdmin = (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard);
 const sendToChoi = (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text);
 const sendToMing = (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text);
 
-// 🧩 export 모듈
 module.exports = {
   sendToAdmin,
   sendToChoi,
