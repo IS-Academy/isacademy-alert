@@ -25,42 +25,29 @@ const logMap = {
   'dummy_status': '🔁 [더미 상태 확인 요청됨]'
 };
 
-// ✅ 버튼 처리 로직 (webhookHandler에서 호출)
+// ✅ 버튼 처리 핸들러
 async function handleAdminAction(data, ctx) {
   const chatId = ctx.chat.id;
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
-  // ✅ 중복 클릭 방지: 상태가 바뀌지 않으면 처리하지 않음
   let changed = false;
 
   switch (data) {
     case 'choi_on':
-      if (!global.choiEnabled) {
-        global.choiEnabled = true;
-        changed = true;
-      }
+      if (!global.choiEnabled) { global.choiEnabled = true; changed = true; }
       break;
     case 'choi_off':
-      if (global.choiEnabled) {
-        global.choiEnabled = false;
-        changed = true;
-      }
+      if (global.choiEnabled) { global.choiEnabled = false; changed = true; }
       break;
     case 'ming_on':
-      if (!global.mingEnabled) {
-        global.mingEnabled = true;
-        changed = true;
-      }
+      if (!global.mingEnabled) { global.mingEnabled = true; changed = true; }
       break;
     case 'ming_off':
-      if (global.mingEnabled) {
-        global.mingEnabled = false;
-        changed = true;
-      }
+      if (global.mingEnabled) { global.mingEnabled = false; changed = true; }
       break;
     default:
-      changed = true; // 상태 확인류는 항상 처리
+      changed = true;
       break;
   }
 
@@ -68,29 +55,47 @@ async function handleAdminAction(data, ctx) {
     await editMessage('admin', chatId, messageId, '⏱️ 현재와 동일한 상태입니다.', null, {
       callbackQueryId,
       callbackResponse: '동일한 상태입니다.',
-      logMessage: `${logMap[data] || '🧩 알 수 없는 동작'} (중복 생략됨)`
+      logMessage: `${logMap[data] || '🧩 버튼'} (중복 생략됨)`
     });
     return;
   }
 
-  // ✅ 상태가 바뀐 경우 패널 메시지 갱신
   await sendBotStatus(undefined, data, chatId, messageId, {
     callbackQueryId,
     callbackResponse: '✅ 상태 갱신 완료',
-    logMessage: logMap[data] || '🧩 버튼 클릭됨'
+    logMessage: logMap[data]
   });
 }
 
-// ✅ 상태 패널 메시지 생성 + 전송
+// ✅ 상태 메시지 전송
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
-  const key = `${chatId}_${suffix}_${global.choiEnabled}_${global.mingEnabled}`;
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
+  // ✅ 캐시 키에 상태를 포함해서 정밀하게 체크 (중복 클릭 방지 & 상태 변화 감지)
+  const key = `${chatId}_${suffix}_${global.choiEnabled}_${global.mingEnabled}`;
+
   if (cache.get(key) === nowTime) {
     console.log('⚠️ 상태 메시지 중복 생략');
+
+    // ✅ UI 버퍼링 방지를 위해 항상 answerCallbackQuery 응답 보내줌
+    if (options.callbackQueryId) {
+      const axios = require('axios');
+      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+        callback_query_id: options.callbackQueryId,
+        text: '⏱️ 이미 최신 상태입니다.',
+        show_alert: false
+      });
+    }
+
+    // ✅ 로그도 남겨줌
+    if (options.logMessage) {
+      console.log(`${options.logMessage} (중복 생략됨)`);
+    }
+
     return;
   }
+
   cache.set(key, nowTime);
 
   const { choiEnabled, mingEnabled } = global;
@@ -147,7 +152,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   }
 }
 
-// ✅ 초기화 함수 (index.js에서 호출)
+// ✅ 초기화 함수
 async function initAdminPanel() {
   const sent = await sendBotStatus();
   if (sent && sent.data?.result) {
