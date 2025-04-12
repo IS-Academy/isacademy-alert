@@ -113,6 +113,11 @@ function setupAdminBot() {
     const chatId = ctx.chat.id;
     const messageId = ctx.callbackQuery.message.message_id;
 
+    // ✅ 바로 여기! 디버깅용 로그 추가
+    console.log('📨 수신된 callback_query:', data);
+    console.log('📨 messageId:', messageId);
+    console.log('📨 getAdminMessageId:', getAdminMessageId());
+
     // ✅ 상태 갱신
     switch (data) {
       case 'choi_on': global.choiEnabled = true; break;
