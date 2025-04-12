@@ -1,3 +1,5 @@
+// ✅👇 locales/jp.js
+
 module.exports = {
   symbols: {
     Ready_showSup: "#🩵ロング準備 📈",
@@ -34,6 +36,5 @@ module.exports = {
   days: {
     Mon: "月", Tue: "火", Wed: "水", Thu: "木", Fri: "金", Sat: "土", Sun: "日"
   },
-  am: "午前",
-  pm: "午後"
+  am: "午前", pm: "午後", timezone: "Asia/Tokyo"
 };
