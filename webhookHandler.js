@@ -79,9 +79,6 @@ module.exports = async function webhookHandler(req, res) {
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-      if (["showSup", "showRes", "isBigSup", "isBigRes"].includes(type)) addEntry(symbol, type, price, timeframe);
-      if (["exitLong", "exitShort"].includes(type)) clearEntries(symbol, type, timeframe);
-
       // ✅ 메시지 템플릿 생성
       const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount: ratio, entryAvg: avg });
       const msgMing = getTemplate({ type, symbol, timeframe, price, ts, lang: langMing, entryCount: ratio, entryAvg: avg });
