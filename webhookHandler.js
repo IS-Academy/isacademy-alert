@@ -6,26 +6,29 @@ const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
 const { getTimeString, saveBotState } = require("./utils");
-const { addEntry, clearEntries } = require('./entryManager');
+
+// ✅ entryManager에서 getEntryInfo도 import
+const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
+
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
 
-// ✅ entry 캐시 저장소
-const entryCache = {};
+// ✅ entry 캐시 저장소 (선택)유지하되 주석 처리 가능
+//const entryCache = {};
 
-function saveEntryData(symbol, type, avg, ratio) {
-  global.entryCache = global.entryCache || {};
-  const key = `${symbol}-${type}`;
-  global.entryCache[key] = { avg, ratio, ts: Date.now() };
-}
+//function saveEntryData(symbol, type, avg, ratio) {
+//  global.entryCache = global.entryCache || {};
+//  const key = `${symbol}-${type}`;
+//  global.entryCache[key] = { avg, ratio, ts: Date.now() };
+//}
 
-function getEntryData(symbol, type) {
-  global.entryCache = global.entryCache || {};
-  const key = `${symbol}-${type}`;
-  return global.entryCache[key] || { avg: 'N/A', ratio: 0 };
-}
+//function getEntryData(symbol, type) {
+//  global.entryCache = global.entryCache || {};
+//  const key = `${symbol}-${type}`;
+//  return global.entryCache[key] || { avg: 'N/A', ratio: 0 };
+//}
 
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -52,25 +55,38 @@ module.exports = async function webhookHandler(req, res) {
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
 
-      // ✅ entryAvg/entryRatio 받아와서 캐시에 저장
-      const entryAvg = update.entryAvg || 'N/A';
-      const entryRatio = update.entryRatio || 0;
-      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes", "exitLong", "exitShort"].includes(type);
+      // ✅ entryAvg/entryRatio 받아와서 캐시에 저장 (`25.04.14 미사용)
+//      const entryAvg = update.entryAvg || 'N/A';
+//      const entryRatio = update.entryRatio || 0;
+      
+      // ✅ direction 결정 후 진입/청산 구분
+      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes"].includes(type);
+      const isExitSignal = ["exitLong", "exitShort"].includes(type);
 
-      if (isEntrySignal) saveEntryData(symbol, type, entryAvg, entryRatio);
+      // ✅ 진입 신호일 경우 → 진입가 저장
+      if (isEntrySignal) addEntry(symbol, type, price, timeframe);
 
-      // ✅ entry 정보 불러오기
-      const { avg, ratio } = getEntryData(symbol, type);
-      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio }); ///////// 테스트 한 줄
+      // ✅ 청산 신호일 경우 → 리스트 초기화
+      if (isExitSignal) clearEntries(symbol, type, timeframe);   
+
+      // ✅ 평균 및 비중 계산 (🔥 핵심)
+      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
+      
+      // ✅ 로그 찍기
+      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
+      
+      // ✅ 다국어 설정
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       if (["showSup", "showRes", "isBigSup", "isBigRes"].includes(type)) addEntry(symbol, type, price, timeframe);
       if (["exitLong", "exitShort"].includes(type)) clearEntries(symbol, type, timeframe);
 
+      // ✅ 메시지 템플릿 생성
       const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, lang: langChoi, entryCount: ratio, entryAvg: avg });
       const msgMing = getTemplate({ type, symbol, timeframe, price, ts, lang: langMing, entryCount: ratio, entryAvg: avg });
       
+      // ✅ 텔레그램 전송
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
