@@ -16,6 +16,7 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   return { date, time };
 }
 
+// ✅ 진입가 기반 수익률 계산 (exit 신호에서만 사용됨)
 function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
   const avg = parseFloat(entryAvg);
   const cur = parseFloat(price);
@@ -40,6 +41,7 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
   return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
 }
 
+// ✅ 진입 비중 / 평균단가 표시
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
   const count = parseInt(entryCount, 10);
   const avgNum = parseFloat(entryAvg);
@@ -70,13 +72,18 @@ function getTemplate({
   const labels = translations[lang]?.labels || translations['ko'].labels;
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
 
+  // ✅ 진입/평단 정보 블럭 생성
   const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
+
+  // ✅ 청산 신호인 경우만 수익률 계산 포함
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
     ? generatePnLLine(price, entryAvg, entryCount, leverage, lang)
     : '';
+  
   const capTime = `${labels.captured}:\n${date}\n${time}`;
   const disclaimer = labels.disclaimer_full;
 
+  // ✅ 각 신호 유형별 템플릿 정의
   const templates = {
     showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
     showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
