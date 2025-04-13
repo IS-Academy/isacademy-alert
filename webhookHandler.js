@@ -66,11 +66,11 @@ module.exports = async function webhookHandler(req, res) {
       // ✅ 진입 신호일 경우 → 진입가 저장
       if (isEntrySignal) addEntry(symbol, type, price, timeframe);
 
+      // ✅ 평균 및 비중 계산 (🔥 핵심)
+      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);      
+
       // ✅ 청산 신호일 경우 → 리스트 초기화
       if (isExitSignal) clearEntries(symbol, type, timeframe);   
-
-      // ✅ 평균 및 비중 계산 (🔥 핵심)
-      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
       
       // ✅ 로그 찍기
       console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
