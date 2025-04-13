@@ -1,8 +1,7 @@
-// ✅👇 index.js
+// ✅👇 index.js (최종 수정본)
 
 require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
 const dummyHandler = require('./dummyHandler');
 const webhookHandler = require('./webhookHandler');
 const captureApi = require('./routes/captureApi');
@@ -16,7 +15,7 @@ const { choiEnabled, mingEnabled } = loadBotState();
 global.choiEnabled = choiEnabled;
 global.mingEnabled = mingEnabled;
 
-app.use(bodyParser.json());
+app.use(express.json()); // 🚨 이 부분을 express.json()으로 변경 (필수)
 
 // ✅ 라우트 등록
 app.use('/dummy', dummyHandler);
