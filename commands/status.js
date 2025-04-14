@@ -162,7 +162,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)})`,
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
-    `♻🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
+    `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
     `──────────────────────`
   ].join('\n');
 
