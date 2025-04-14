@@ -33,6 +33,7 @@ module.exports = {
     pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%",
     pnlLineProfit: "📈利益率 {pnl}% / 元本比 {capital}%",
     pnlLineLoss: "📉損失率 {pnl}% / 元本比 {capital}%",
+    noPnL: "📉収益率を計算できません",
     entryLimitReachedLong: "⚠️ ロングポジションが飽和状態です。",
     entryLimitReachedShort: "⚠️ ショートポジションが飽和状態です。",
     captured: "🕒 検出時間",
