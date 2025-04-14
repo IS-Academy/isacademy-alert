@@ -35,7 +35,7 @@ module.exports = {
     disclaimer_full: "⚠️Participation is always voluntary.\n⚠️All decisions are your own responsibility."
   },
   days: {
-    Mon: "Mon", Tue: "Tue", Wed: "Wed", Thu: "Thu", Fri: "Fri", Sat: "Sat", Sun: "Sun"
+    0: "Sun", 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri", 6: "Sat"
   },
   am: "AM", pm: "PM", timezone: "America/New_York"
 };
