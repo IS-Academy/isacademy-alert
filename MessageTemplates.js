@@ -130,14 +130,14 @@ function getTemplate({
     Ready_exitLong:
       `${symbols.Ready_exitLong} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
       `${labels.symbol}: ${symbol}\n` +
-      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
+//      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` + //✅ 진입&평균가
       `${labels.expectedCloseLong.replace('{price}', formatNumber(price))}\n` +
       `${expectedPnlLine}`,
 
     Ready_exitShort:
       `${symbols.Ready_exitShort} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
       `${labels.symbol}: ${symbol}\n` +
-      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
+//      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` + //✅ 진입&평균가
       `${labels.expectedCloseShort.replace('{price}', formatNumber(price))}\n` +
       `${expectedPnlLine}`
   };
