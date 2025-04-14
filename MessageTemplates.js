@@ -26,8 +26,8 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   return { date, time };
 }
 
-// ✅ 공통 수익률 + ROE 계산기
-function calculatePnL(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
+// ✅ 공통 수익률 + ROE 계산기 (롱/숏 방향 반영 추가)
+function calculatePnL(price, entryAvg, entryCount, leverage = 50, direction = 'long', lang = 'ko') {
   const avg = parseFloat(entryAvg);
   const cur = parseFloat(price);
   const count = parseInt(entryCount);
@@ -36,7 +36,11 @@ function calculatePnL(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
   const valid = avg > 0 && cur > 0 && count > 0 && lev > 0;
   if (!valid || !Number.isFinite(avg) || !Number.isFinite(cur)) return null;
 
-  const pnlRaw = ((cur - avg) / avg) * 100;
+  let pnlRaw = ((cur - avg) / avg) * 100;
+  if (direction === 'short') {
+    pnlRaw *= -1; // 📉 숏 방향이면 반대로!
+  }
+
   const pnl = pnlRaw * lev;
   const gross = (count * pnl) / 100;
 
@@ -48,9 +52,9 @@ function calculatePnL(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
 }
 
 // ✅ 진입가 기반 수익률 계산 (exit 신호에서만 사용됨)
-function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
+function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko', direction = 'long') {
   const labels = translations[lang]?.labels || translations['ko'].labels;
-  const result = calculatePnL(price, entryAvg, entryCount, leverage);
+  const result = calculatePnL(price, entryAvg, entryCount, leverage, direction, lang);
   if (!result) return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
 
   const { pnl, gross, isProfit } = result;
@@ -96,12 +100,17 @@ function getTemplate({
   const labels = translations[lang]?.labels || translations['ko'].labels;
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
 
+  // ✅ 신호 방향 판단
+  const isExit = type.startsWith('exit') || type.startsWith('Ready_exit');
+  const isShort = type.endsWith('Short');
+  const direction = isShort ? 'short' : 'long';
+
   // ✅ 진입/평단 정보 블럭 생성
   const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
   const formattedPrice = formatNumber(price);
 
   // ✅ 수익률만 계산 (Ready_계열 포함)
-  const pnlResult = calculatePnL(price, entryAvg, entryCount, leverage);
+  const pnlResult = calculatePnL(price, entryAvg, entryCount, leverage, direction);
   const expectedPnlLine = (() => {
     if (!pnlResult) return labels.noPnL || '📉수익률 계산 불가';
     const { pnl, isProfit } = pnlResult;
@@ -112,7 +121,7 @@ function getTemplate({
 
   // ✅ 청산 신호인 경우만 수익률 계산 포함
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
-    ? generatePnLLine(price, entryAvg, entryCount, leverage, lang)
+    ? generatePnLLine(price, entryAvg, entryCount, leverage, lang, direction)
     : '';
   
   const capTime = `${labels.captured}:\n${date}\n${time}`;
