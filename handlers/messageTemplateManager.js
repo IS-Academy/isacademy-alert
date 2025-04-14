@@ -1,4 +1,5 @@
-// handlers/messageTemplateManager.js
+// ✅👇 handlers/messageTemplateManager.js
+
 const templates = require("../MessageTemplates");
 const lang = require("../lang");
 
@@ -20,9 +21,28 @@ function formatSignalMessage(type, data, language = "ko") {
     : "";
 
   // 🧩 [4] 수익률 정보 (PnL / ROE)
-  const resultInfo = data.result
-    ? `\n📈${t.profit} ${data.result.pnl} / ${t.roe} ${data.result.roe}`
-    : "";
+  let resultInfo = "";
+  if (data.result && typeof data.result.pnl === "number") {
+    const direction = data.direction || "long"; // 기본값은 롱
+    const rawPnl = data.result.pnl;
+    const rawRoe = data.result.roe;
+
+    // 👉 숏 포지션이면 손익 반대로 계산
+    const pnl = direction === "short" ? -rawPnl : rawPnl;
+    const roe = direction === "short" ? -rawRoe : rawRoe;
+
+    // 👉 부호 포함된 수치 포맷
+    const formatSigned = (n) => (n >= 0 ? `+${n.toFixed(2)}` : `${n.toFixed(2)}`);
+
+    // 👉 수익/손실 여부에 따라 템플릿 선택
+    const isProfit = pnl >= 0;
+    const template = isProfit ? t.pnlLineProfit : t.pnlLineLoss;
+
+    // 👉 메시지 구성
+    resultInfo = `\n${template
+      .replace("{pnl}", formatSigned(pnl))
+      .replace("{capital}", formatSigned(roe))}`;
+  }
 
   // 🧩 [5] 포착 시간
   const time = `\n\n🕒 ${t.capturedAt}:
