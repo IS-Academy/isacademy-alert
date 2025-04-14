@@ -17,7 +17,7 @@ module.exports = {
   },
   labels: {
     symbol: "📌 シンボル",
-    timeframe: "⏱️ 時間枠 {interval}分",
+    timeframe: "⏱️ 時間枠",
     price: "💲 価格",
     entryInfo: "📊 エントリー {entryCount}% / 平均価格 {entryAvg}",
     entrySummary: "⏱️ エントリー状況:",
