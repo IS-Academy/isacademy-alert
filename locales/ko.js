@@ -28,8 +28,8 @@ module.exports = {
     expectedCloseLong: "예상 청산: {price} ⬆️",
     expectedCloseShort: "예상 청산: {price} ⬇️",
     // ✅ 수익률 단독
-    pnlOnlyProfit: "📈수익률 +{pnl}%",
-    pnlOnlyLoss: "📉수익률 -{pnl}%",
+    pnlOnlyProfit: "📈수익률 +{pnl}% 예상",
+    pnlOnlyLoss: "📉수익률 -{pnl}% 예상",
     // ✅ 원금대비 단독 (ROE)
     roeOnlyProfit: "💹 원금대비 +{capital}%",
     roeOnlyLoss: "💹 원금대비 -{capital}%",
