@@ -152,7 +152,7 @@ module.exports = async function webhookHandler(req, res) {
     if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
       await sendBotStatus(timeStr, '', chatId);
     } else {
-      await sendToAdmin(📨 사용자 메시지 수신\n\n<code>${messageText}</code>, null);
+      await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
     }
     return;
   }
