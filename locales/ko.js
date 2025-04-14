@@ -25,8 +25,8 @@ module.exports = {
     entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균가 {avg}",
 
     // ✅ 청산 방향별 메시지
-    expectedCloseLong: "예상 청산: {price} ⬆️",
-    expectedCloseShort: "예상 청산: {price} ⬇️",
+    expectedCloseLong: "예상 청산가: {price} ⬆️",
+    expectedCloseShort: "예상 청산가: {price} ⬇️",
     // ✅ 수익률 단독
     pnlOnlyProfit: "📈수익률 +{pnl}% 예상",
     pnlOnlyLoss: "📉수익률 -{pnl}% 예상",
