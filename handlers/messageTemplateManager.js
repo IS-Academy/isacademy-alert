@@ -9,7 +9,7 @@ function formatSignalMessage(type, data, language = "ko") {
 
   const common = `
 📌 ${t.symbol}: ${data.symbol}
-⏱️ ${t.timeframe}: ${data.timeframe}
+⏱️ ${t.timeframe}: ${data.timeframe}${t.timeframeUnit}
 💲 ${t.price}: ${data.price}`;
 
   const entryInfo = data.entry
