@@ -36,6 +36,8 @@ async function handleAdminAction(data, ctx) {
   if (data.startsWith("test_template_")) {
     const type = data.replace("test_template_", "");
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
+    const isShort = type.endsWith('Short');
+    const direction = isShort ? 'short' : 'long';
     try {
       const msg = getTemplate({
         type,
