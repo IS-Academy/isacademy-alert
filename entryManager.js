@@ -53,7 +53,8 @@ function getEntryInfo(symbol, type, timeframe = 'default') {
 
   return {
     entryCount: list.length,
-    entryAvg: avg.toFixed(2)
+    entryAvg: avg.toFixed(2),
+    direction
   };
 }
 
