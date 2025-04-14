@@ -21,7 +21,6 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss')
     .replace('AM', translations[lang]?.am)
     .replace('PM', translations[lang]?.pm);
-
   return { date, time };
 }
 
@@ -31,22 +30,18 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
   const cur = parseFloat(price);
   const count = parseInt(entryCount);
   const lev = parseFloat(leverage);
-
   if (!avg || !cur || !count || !lev || !Number.isFinite(avg) || !Number.isFinite(cur)) {
     return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
   }
-
   const pnlRaw = ((cur - avg) / avg) * 100;
   const pnl = pnlRaw * lev;
   const gross = (count * pnl) / 100;
   const pnlStr = pnl.toFixed(2);
   const grossStr = gross.toFixed(2);
   const isProfit = pnl >= 0;
-
   const line = isProfit
     ? translations[lang]?.labels?.pnlLineProfit
     : translations[lang]?.labels?.pnlLineLoss;
-
   return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
 }
 
@@ -63,6 +58,14 @@ function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
 
   const labels = translations[lang]?.labels || translations['ko'].labels;
   return labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg);
+}
+
+// ✅ Ready_용 메시지 줄 구성 포맷
+function formatReadyLine(symbolText, symbol, timeframe, weight, leverage, labels) {
+  return `${symbolText} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
+         `${labels.symbol}: ${symbol}\n` +
+         `${labels.weight.replace('{weight}', `${weight}%`)} / ` +
+         `${labels.leverage.replace('{leverage}', `${leverage}×`)}`;
 }
 
 // ✅ 메시지 템플릿 생성기 (신호 타입에 따라 메시지 분기)
@@ -85,6 +88,16 @@ function getTemplate({
   // ✅ 진입/평단 정보 블럭 생성
   const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
 
+  // ✅ 수익률만 계산 (청산 대기용) (compact version)
+  const avg = parseFloat(entryAvg);
+  const cur = parseFloat(price);
+  const lev = parseFloat(leverage);
+  const pnlRaw = (avg && cur && lev && Number.isFinite(avg) && Number.isFinite(cur))
+    ? ((cur - avg) / avg) * lev
+    : 0;
+  const pnlStr = Math.abs(pnlRaw).toFixed(2);
+  const expectedPnlLine = labels.expectedPnlLine.replace('{pnl}', pnlStr);
+
   // ✅ 청산 신호인 경우만 수익률 계산 포함
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
     ? generatePnLLine(price, entryAvg, entryCount, leverage, lang)
@@ -101,12 +114,26 @@ function getTemplate({
     isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
     exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
     exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
-    Ready_showSup: `${symbols.Ready_showSup} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
-    Ready_showRes: `${symbols.Ready_showRes} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
-    Ready_isBigSup: `${symbols.Ready_isBigSup} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
-    Ready_isBigRes: `${symbols.Ready_isBigRes} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
-    Ready_exitLong: `${symbols.Ready_exitLong} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`,
-    Ready_exitShort: `${symbols.Ready_exitShort} ${timeframe}${labels.timeframeUnit}⏱️\n\n${labels.symbol}: ${symbol}\n${labels.weight.replace('{weight}', `${weight}%`)} / ${labels.leverage.replace('{leverage}', `${leverage}×`)}`
+    
+    Ready_showSup: formatReadyLine(symbols.Ready_showSup, symbol, timeframe, weight, leverage, labels),
+    Ready_showRes: formatReadyLine(symbols.Ready_showRes, symbol, timeframe, weight, leverage, labels),
+    Ready_isBigSup: formatReadyLine(symbols.Ready_isBigSup, symbol, timeframe, weight, leverage, labels),
+    Ready_isBigRes: formatReadyLine(symbols.Ready_isBigRes, symbol, timeframe, weight, leverage, labels),
+    
+    // ✅ 수정된 Ready_exit 템플릿들
+    Ready_exitLong:
+      `${symbols.Ready_exitLong} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
+      `${labels.symbol}: ${symbol}\n` +
+      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
+      `${labels.expectedCloseLong.replace('{price}', price)}\n` +
+      `${expectedPnlLine}`,
+
+    Ready_exitShort:
+      `${symbols.Ready_exitShort} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
+      `${labels.symbol}: ${symbol}\n` +
+      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
+      `${labels.expectedCloseShort.replace('{price}', price)}\n` +
+      `${expectedPnlLine}`
   };
 
   if (templates[type]) {
