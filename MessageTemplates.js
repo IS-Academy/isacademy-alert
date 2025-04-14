@@ -13,8 +13,6 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const tz = translations[lang]?.timezone || fallbackTz;
   const m = moment.unix(ts).tz(tz);
 
-  // ✅ 기존 문제: m.format('ddd') → "Mon", "Tue" → 언어팩과 매칭 실패
-  // ✅ 수정: m.day() → 0~6 (일~토 숫자 인덱스)로 변경
   const dayIndex = m.day();
   const dayTranslated = translations[lang]?.days?.[dayIndex] || m.format('ddd');
 
@@ -28,25 +26,36 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   return { date, time };
 }
 
-// ✅ 진입가 기반 수익률 계산 (exit 신호에서만 사용됨)
-function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
+// ✅ 공통 수익률 + ROE 계산기
+function calculatePnL(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
   const avg = parseFloat(entryAvg);
   const cur = parseFloat(price);
   const count = parseInt(entryCount);
   const lev = parseFloat(leverage);
-  if (!avg || !cur || !count || !lev || !Number.isFinite(avg) || !Number.isFinite(cur)) {
-    return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
-  }
+
+  const valid = avg > 0 && cur > 0 && count > 0 && lev > 0;
+  if (!valid || !Number.isFinite(avg) || !Number.isFinite(cur)) return null;
+
   const pnlRaw = ((cur - avg) / avg) * 100;
   const pnl = pnlRaw * lev;
   const gross = (count * pnl) / 100;
-  const pnlStr = pnl.toFixed(2);
-  const grossStr = gross.toFixed(2);
-  const isProfit = pnl >= 0;
-  const line = isProfit
-    ? translations[lang]?.labels?.pnlLineProfit
-    : translations[lang]?.labels?.pnlLineLoss;
-  return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
+
+  return {
+    pnl: pnl.toFixed(2),
+    gross: gross.toFixed(2),
+    isProfit: pnl >= 0
+  };
+}
+
+// ✅ 진입가 기반 수익률 계산 (exit 신호에서만 사용됨)
+function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko') {
+  const labels = translations[lang]?.labels || translations['ko'].labels;
+  const result = calculatePnL(price, entryAvg, entryCount, leverage);
+  if (!result) return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
+
+  const { pnl, gross, isProfit } = result;
+  const line = isProfit ? labels.pnlLineProfit : labels.pnlLineLoss;
+  return line.replace('{pnl}', pnl).replace('{capital}', gross);
 }
 
 // ✅ 진입 비중 / 평균단가 표시
@@ -91,18 +100,15 @@ function getTemplate({
   const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
   const formattedPrice = formatNumber(price);
 
-  // ✅ 수익률만 계산 (청산 대기용) (compact version)
-  const avg = parseFloat(entryAvg);
-  const cur = parseFloat(price);
-  const lev = parseFloat(leverage);
-  const pnlRaw = (avg && cur && lev && Number.isFinite(avg) && Number.isFinite(cur))
-    ? ((cur - avg) / avg) * lev
-    : 0;
-  const pnlStr = Math.abs(pnlRaw).toFixed(2);
-  const expectedPnlLine = pnlRaw >= 0
-    ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
-    : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
-
+  // ✅ 수익률만 계산 (Ready_계열 포함)
+  const pnlResult = calculatePnL(price, entryAvg, entryCount, leverage);
+  const expectedPnlLine = (() => {
+    if (!pnlResult) return labels.noPnL || '📉수익률 계산 불가';
+    const { pnl, isProfit } = pnlResult;
+    return isProfit
+      ? labels.pnlOnlyProfit.replace('{pnl}', pnl)
+      : labels.pnlOnlyLoss.replace('{pnl}', pnl);
+  })();
 
   // ✅ 청산 신호인 경우만 수익률 계산 포함
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
