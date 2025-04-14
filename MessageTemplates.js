@@ -4,6 +4,10 @@ const moment = require('moment-timezone');
 const config = require('./config');
 const { translations } = require('./lang');
 
+function formatNumber(num) {
+  return Number(num).toLocaleString(); // ✅ 쉼표 포맷 적용
+}
+
 // ✅ [1] 날짜 포맷 함수 (언어팩 기반 요일 표시 포함)
 function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const tz = translations[lang]?.timezone || fallbackTz;
@@ -49,7 +53,7 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
   const count = parseInt(entryCount, 10);
   const avgNum = parseFloat(entryAvg);
-  const avg = Number.isFinite(avgNum) ? avgNum.toFixed(1) : null;
+  const avg = Number.isFinite(avgNum) ? formatNumber(avgNum.toFixed(1)) : null;
 
   const valid = Number.isFinite(count) && avg !== null;
   if (!valid || count <= 0) {
@@ -128,14 +132,14 @@ function getTemplate({
       `${symbols.Ready_exitLong} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
       `${labels.symbol}: ${symbol}\n` +
       `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
-      `${labels.expectedCloseLong.replace('{price}', price)}\n` +
+      `${labels.expectedCloseLong.replace('{price}', formatNumber(price))}\n` +
       `${expectedPnlLine}`,
 
     Ready_exitShort:
       `${symbols.Ready_exitShort} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
       `${labels.symbol}: ${symbol}\n` +
       `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` +
-      `${labels.expectedCloseShort.replace('{price}', price)}\n` +
+      `${labels.expectedCloseShort.replace('{price}', formatNumber(price))}\n` +
       `${expectedPnlLine}`
   };
 
