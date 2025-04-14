@@ -54,6 +54,7 @@ module.exports = async function webhookHandler(req, res) {
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
+      const leverage = update.leverage || config.DEFAULT_LEVERAGE;
 
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장 (`25.04.14 미사용)
 //      const entryAvg = update.entryAvg || 'N/A';
