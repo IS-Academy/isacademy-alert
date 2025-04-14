@@ -23,8 +23,20 @@ module.exports = {
     entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
     entrySummary: "⏱️ 진입 현황:",
     entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균가 {avg}",
+
+    // ✅ 청산 방향별 메시지
+    expectedCloseLong: "예상 청산: {price} ⬆️",
+    expectedCloseShort: "예상 청산: {price} ⬇️",
+    // ✅ 수익률 단독
+    pnlOnlyProfit: "📈수익률 +{pnl}%",
+    pnlOnlyLoss: "📉수익률 -{pnl}%",
+    // ✅ 원금대비 단독 (ROE)
+    roeOnlyProfit: "💹 원금대비 +{capital}%",
+    roeOnlyLoss: "💹 원금대비 -{capital}%",
+    // ✅ 수익률 + ROE 전체 버전
     pnlLineProfit: "📈수익률 {pnl}% / 원금대비 {capital}%",
     pnlLineLoss: "📉수익률 {pnl}% / 원금대비 {capital}%",
+    
     entryLimitReachedLong: "⚠️ 롱 포지션 포화 상태입니다.",
     entryLimitReachedShort: "⚠️ 숏 포지션 포화 상태입니다.",
     captured: "🕒 포착시간",
