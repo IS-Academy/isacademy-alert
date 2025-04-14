@@ -95,15 +95,13 @@ function getTemplate({
   const avg = parseFloat(entryAvg);
   const cur = parseFloat(price);
   const lev = parseFloat(leverage);
-  const pnlRaw = (avg > 0 && cur > 0 && lev > 0 && Number.isFinite(avg) && Number.isFinite(cur))
+  const pnlRaw = (avg && cur && lev && Number.isFinite(avg) && Number.isFinite(cur))
     ? ((cur - avg) / avg) * lev
-    : null;
-  const pnlStr = pnlRaw !== null ? Math.abs(pnlRaw).toFixed(2) : '-';
-  const expectedPnlLine = pnlRaw === null
-    ? labels.noPnL || '📉수익률 계산 불가'
-    : (pnlRaw >= 0
-      ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
-      : labels.pnlOnlyLoss.replace('{pnl}', pnlStr));
+    : 0;
+  const pnlStr = Math.abs(pnlRaw).toFixed(2);
+  const expectedPnlLine = pnlRaw >= 0
+    ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
+    : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
 
 
   // ✅ 청산 신호인 경우만 수익률 계산 포함
