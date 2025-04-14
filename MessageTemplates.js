@@ -4,15 +4,24 @@ const moment = require('moment-timezone');
 const config = require('./config');
 const { translations } = require('./lang');
 
+// ✅ [1] 날짜 포맷 함수 (언어팩 기반 요일 표시 포함)
 function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const tz = translations[lang]?.timezone || fallbackTz;
   const m = moment.unix(ts).tz(tz);
-  const dayKey = m.format('ddd');
-  const dayTranslated = translations[lang]?.days?.[dayKey] || dayKey;
+
+  // ✅ 기존 문제: m.format('ddd') → "Mon", "Tue" → 언어팩과 매칭 실패
+  // ✅ 수정: m.day() → 0~6 (일~토 숫자 인덱스)로 변경
+  const dayIndex = m.day();
+  const dayTranslated = translations[lang]?.days?.[dayIndex] || m.format('ddd');
+
+  // 📅 날짜 문자열 조립
   const date = m.format(`YY. MM. DD. (${dayTranslated})`);
+
+  // 🕐 시간 문자열 조립 (언어별 AM/PM 적용)
   const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss')
     .replace('AM', translations[lang]?.am)
     .replace('PM', translations[lang]?.pm);
+
   return { date, time };
 }
 
@@ -56,6 +65,7 @@ function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
   return labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg);
 }
 
+// ✅ 메시지 템플릿 생성기 (신호 타입에 따라 메시지 분기)
 function getTemplate({
   type,
   symbol,
