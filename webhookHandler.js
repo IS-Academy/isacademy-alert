@@ -80,8 +80,8 @@ module.exports = async function webhookHandler(req, res) {
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       // ✅ 메시지 템플릿 생성
-      const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, entryCount: typeof ratio === 'number' ? ratio : 0, entryAvg: typeof avg === 'string' ? avg : 'N/A', leverage: leverage || config.DEFAULT_LEVERAGE, lang: langChoi });
-      const msgMing = getTemplate({ type, symbol, timeframe, price, ts, entryCount: typeof ratio === 'number' ? ratio : 0, entryAvg: typeof avg === 'string' ? avg : 'N/A', leverage: leverage || config.DEFAULT_LEVERAGE, lang: langMing });
+      const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, entryCount: typeof ratio === 'number' ? ratio : 0, entryAvg: typeof avg === 'string' ? avg : 'N/A', leverage: body.leverage || config.DEFAULT_LEVERAGE, lang: langChoi });
+      const msgMing = getTemplate({ type, symbol, timeframe, price, ts, entryCount: typeof ratio === 'number' ? ratio : 0, entryAvg: typeof avg === 'string' ? avg : 'N/A', leverage: body.leverage || config.DEFAULT_LEVERAGE, lang: langMing });
       
       // ✅ 텔레그램 전송
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
