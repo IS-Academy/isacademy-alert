@@ -96,7 +96,10 @@ function getTemplate({
     ? ((cur - avg) / avg) * lev
     : 0;
   const pnlStr = Math.abs(pnlRaw).toFixed(2);
-  const expectedPnlLine = labels.expectedPnlLine.replace('{pnl}', pnlStr);
+  const expectedPnlLine = pnlRaw >= 0
+    ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
+    : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
+
 
   // ✅ 청산 신호인 경우만 수익률 계산 포함
   const pnlLine = (type === 'exitLong' || type === 'exitShort')
