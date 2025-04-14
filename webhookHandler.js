@@ -149,6 +149,11 @@ module.exports = async function webhookHandler(req, res) {
 
     res.sendStatus(200);
 
+    if (lower === '/test_menu') {
+      await sendBotStatus(timeStr, 'test_menu', chatId); // ✅ 템플릿 테스트 키보드 호출
+      return;
+    }
+
     if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
       await sendBotStatus(timeStr, '', chatId);
     } else {
