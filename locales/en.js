@@ -33,6 +33,7 @@ module.exports = {
     pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%",
     pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
     pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%",
+    noPnL: "📉P/L calculation unavailable",
     entryLimitReachedLong: "⚠️ Long position is saturated.",
     entryLimitReachedShort: "⚠️ Short position is saturated.",
     captured: "🕒 Captured At",
