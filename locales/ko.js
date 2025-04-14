@@ -36,6 +36,7 @@ module.exports = {
     // ✅ 수익률 + ROE 전체 버전
     pnlLineProfit: "📈수익률 {pnl}% / 원금대비 {capital}%",
     pnlLineLoss: "📉수익률 {pnl}% / 원금대비 {capital}%",
+    noPnL: "📉수익률 계산 불가",
     
     entryLimitReachedLong: "⚠️ 롱 포지션 포화 상태입니다.",
     entryLimitReachedShort: "⚠️ 숏 포지션 포화 상태입니다.",
