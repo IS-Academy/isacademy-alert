@@ -46,7 +46,8 @@ async function handleAdminAction(data, ctx) {
         entryCount: 1,
         entryAvg: '60000',
         leverage: 50,
-        lang
+        lang,
+        direction
       });
       await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`, null);
     } catch (err) {
