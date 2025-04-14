@@ -117,7 +117,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     return `<code>${lang}</code> ${emoji} | ${tz}`;
   };
 
-  const dayTranslated = translations[userLang]?.days[now.format('ddd')] || now.format('ddd');
+  const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
