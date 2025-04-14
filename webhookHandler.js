@@ -73,7 +73,7 @@ module.exports = async function webhookHandler(req, res) {
       if (isExitSignal) clearEntries(symbol, type, timeframe);   
       
       // ✅ 로그 찍기
-      console.log('📦 메시지 입력값:', { symbol, type, avg, ratio });
+      console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
       
       // ✅ 다국어 설정
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
