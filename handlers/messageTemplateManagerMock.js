@@ -1,4 +1,4 @@
-// handlers/messageTemplateManagerMock.js
+//✅👇 handlers/messageTemplateManagerMock.js (테스트 / 개발용 (mock용))
 const templates = require("../MessageTemplates");
 const lang = require("../lang-test");
 
