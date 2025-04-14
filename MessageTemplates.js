@@ -54,12 +54,10 @@ function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
   const count = parseInt(entryCount, 10);
   const avgNum = parseFloat(entryAvg);
   const avg = Number.isFinite(avgNum) ? formatNumber(avgNum.toFixed(1)) : null;
-
   const valid = Number.isFinite(count) && avg !== null;
   if (!valid || count <= 0) {
     return translations[lang]?.labels?.noEntryInfo || '📊 진입 비율 정보 없음 / 평균가 계산 불가';
   }
-
   const labels = translations[lang]?.labels || translations['ko'].labels;
   return labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg);
 }
@@ -91,6 +89,7 @@ function getTemplate({
 
   // ✅ 진입/평단 정보 블럭 생성
   const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
+  const formattedPrice = formatNumber(price);
 
   // ✅ 수익률만 계산 (청산 대기용) (compact version)
   const avg = parseFloat(entryAvg);
@@ -115,12 +114,12 @@ function getTemplate({
 
   // ✅ 각 신호 유형별 템플릿 정의
   const templates = {
-    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
-    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
-    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${price}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
+    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
+    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
     
     Ready_showSup: formatReadyLine(symbols.Ready_showSup, symbol, timeframe, weight, leverage, labels),
     Ready_showRes: formatReadyLine(symbols.Ready_showRes, symbol, timeframe, weight, leverage, labels),
