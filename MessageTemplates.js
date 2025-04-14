@@ -58,8 +58,10 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
   if (!result) return '📈수익률 +-% / 원금대비 +-%📉 계산 불가';
 
   const { pnl, gross, isProfit } = result;
+  const pnlStr = (isProfit ? '+' : '') + pnl;
+  const grossStr = (isProfit ? '+' : '') + gross;
   const line = isProfit ? labels.pnlLineProfit : labels.pnlLineLoss;
-  return line.replace('{pnl}', pnl).replace('{capital}', gross);
+  return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
 }
 
 // ✅ 진입 비중 / 평균단가 표시
@@ -114,9 +116,10 @@ function getTemplate({
   const expectedPnlLine = (() => {
     if (!pnlResult) return labels.noPnL || '📉수익률 계산 불가';
     const { pnl, isProfit } = pnlResult;
+    const pnlStr = (isProfit ? '+' : '') + pnl;
     return isProfit
-      ? labels.pnlOnlyProfit.replace('{pnl}', pnl)
-      : labels.pnlOnlyLoss.replace('{pnl}', pnl);
+      ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
+      : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
   })();
 
   // ✅ 청산 신호인 경우만 수익률 계산 포함
