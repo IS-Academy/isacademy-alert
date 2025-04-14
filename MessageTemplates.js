@@ -116,7 +116,7 @@ function getTemplate({
   const expectedPnlLine = (() => {
     if (!pnlResult) return labels.noPnL || '📉수익률 계산 불가';
     const { pnl, isProfit } = pnlResult;
-    const pnlStr = pnl;
+    const pnlStr = Math.abs(pnl);
     return isProfit
       ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
       : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
