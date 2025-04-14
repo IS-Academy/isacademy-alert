@@ -46,9 +46,9 @@ async function handleAdminAction(data, ctx) {
         leverage: 50,
         lang
       });
-      await sendToAdmin(`📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+      await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`, null);
     } catch (err) {
-      await sendToAdmin(`❌ 템플릿 오류: ${err.message}`);
+      await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`, null);
     }
     return;
   }
