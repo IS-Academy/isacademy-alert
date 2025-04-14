@@ -58,6 +58,10 @@ module.exports = async function webhookHandler(req, res) {
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장 (`25.04.14 미사용)
 //      const entryAvg = update.entryAvg || 'N/A';
 //      const entryRatio = update.entryRatio || 0;
+
+      // ✅ 방향 판단 추가
+      const isShort = type.endsWith('Short');
+      const direction = isShort ? 'short' : 'long';
       
       // ✅ direction 결정 후 진입/청산 구분
       const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes"].includes(type);
@@ -85,7 +89,8 @@ module.exports = async function webhookHandler(req, res) {
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
-        lang: langChoi 
+        lang: langChoi,
+        direction
       });
 
       const msgMing = getTemplate({ 
@@ -93,7 +98,8 @@ module.exports = async function webhookHandler(req, res) {
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
-        lang: langMing 
+        lang: langMing,
+        direction
       });
       
       // ✅ 텔레그램 전송
