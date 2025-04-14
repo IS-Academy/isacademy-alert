@@ -15,7 +15,7 @@ function formatDate(ts, fallbackTz = config.DEFAULT_TIMEZONE, lang = 'ko') {
   const dayTranslated = translations[lang]?.days?.[dayIndex] || m.format('ddd');
 
   // 📅 날짜 문자열 조립
-  const date = m.format(`YY. MM. DD. (${dayTranslated})`);
+  const date = `${m.format('YY')}. ${m.format('MM')}. ${m.format('DD')}. (${dayTranslated})`;
 
   // 🕐 시간 문자열 조립 (언어별 AM/PM 적용)
   const time = m.format(translations[lang]?.am === 'AM' ? 'A hh:mm:ss' : 'A hh:mm:ss')
