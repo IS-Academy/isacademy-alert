@@ -17,7 +17,7 @@ module.exports = {
   },
   labels: {
     symbol: "📌 종목",
-    timeframe: "⏱️ 타임프레임 {interval}분",
+    timeframe: "⏱️ 타임프레임",
     price: "💲 가격",
     entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
     entrySummary: "⏱️ 진입 현황:",
