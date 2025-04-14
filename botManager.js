@@ -3,6 +3,7 @@
 const axios = require('axios');
 const config = require('./config');
 
+// ✅ 관리자 인라인 키보드 패널
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '▶️ 최실장 켜기', callback_data: 'choi_on' }, { text: '⏹️ 최실장 끄기', callback_data: 'choi_off' }],
@@ -27,6 +28,36 @@ function getLangKeyboard(bot) {
       { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
       { text: '🇯🇵 日本語', callback_data: `lang_${bot}_jp` }
     ]]
+  };
+}
+
+// ✅ 템플릿 테스트용 인라인 키보드
+function getTemplateTestKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🟢 showSup', callback_data: 'test_template_showSup' },
+        { text: '🔴 showRes', callback_data: 'test_template_showRes' },
+        { text: '🚀 isBigSup', callback_data: 'test_template_isBigSup' },
+        { text: '🛸 isBigRes', callback_data: 'test_template_isBigRes' }
+      ],
+      [
+        { text: '💰 exitLong', callback_data: 'test_template_exitLong' },
+        { text: '💰 exitShort', callback_data: 'test_template_exitShort' }
+      ],
+      [
+        { text: '🟢 Ready_showSup', callback_data: 'test_template_Ready_showSup' },
+        { text: '🔴 Ready_showRes', callback_data: 'test_template_Ready_showRes' }
+      ],
+      [
+        { text: '🚀 Ready_isBigSup', callback_data: 'test_template_Ready_isBigSup' },
+        { text: '🛸 Ready_isBigRes', callback_data: 'test_template_Ready_isBigRes' }
+      ],
+      [
+        { text: '💲 Ready_exitLong', callback_data: 'test_template_Ready_exitLong' },
+        { text: '💲 Ready_exitShort', callback_data: 'test_template_Ready_exitShort' }
+      ]
+    ]
   };
 }
 
@@ -114,5 +145,6 @@ module.exports = {
   inlineKeyboard,
   mainKeyboard,
   getLangKeyboard,
+  getTemplateTestKeyboard,
   sendTextToBot
 };
