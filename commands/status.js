@@ -143,6 +143,8 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
 
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
+  console.log('🔍 getLastDummyTime():', lastDummy);
+  
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
