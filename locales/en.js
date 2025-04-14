@@ -30,7 +30,7 @@ module.exports = {
     roeOnlyProfit: "💹 ROE +{capital}%",
     roeOnlyLoss: "💹 ROE -{capital}%",
     pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
-    pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%"
+    pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%",
     pnlLineProfit: "📈PnL {pnl}% / Capital {capital}%",
     pnlLineLoss: "📉PnL {pnl}% / Capital {capital}%",
     entryLimitReachedLong: "⚠️ Long position is saturated.",
