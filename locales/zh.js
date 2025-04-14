@@ -33,6 +33,7 @@ module.exports = {
     pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
     pnlLineProfit: "📈收益率 {pnl}% / 本金比 {capital}%",
     pnlLineLoss: "📉亏损率 {pnl}% / 本金比 {capital}%",
+    noPnL: "📉无法计算收益率",
     entryLimitReachedLong: "⚠️ 多头持仓已饱和。",
     entryLimitReachedShort: "⚠️ 空头持仓已饱和。",
     captured: "🕒 捕捉时间",
