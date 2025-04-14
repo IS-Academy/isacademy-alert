@@ -17,7 +17,7 @@ module.exports = {
   },
   labels: {
     symbol: "📌 币种",
-    timeframe: "⏱️ 周期",
+    timeframe: "⏱️ 周期" {interval}分钟,
     price: "💲 价格",
     entryInfo: "📊 已进场 {entryCount}% / 均价 {entryAvg}",
     entrySummary: "⏱️ 入场概况:",
