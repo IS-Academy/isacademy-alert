@@ -35,7 +35,7 @@ module.exports = {
     disclaimer_full: "⚠️視点共有は常に任意です。\n⚠️投資判断は自己責任でお願いします。"
   },
   days: {
-    Mon: "月", Tue: "火", Wed: "水", Thu: "木", Fri: "金", Sat: "土", Sun: "日"
+    0: "日", 1: "月", 2: "火", 3: "水", 4: "木", 5: "金", 6: "土"
   },
   am: "午前", pm: "午後", timezone: "Asia/Tokyo"
 };
