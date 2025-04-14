@@ -9,7 +9,6 @@ const { getTimeString, saveBotState } = require("./utils");
 
 // ✅ entryManager에서 getEntryInfo도 import
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
-
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const { sendBotStatus, handleAdminAction } = require("./commands/status");
@@ -152,6 +151,38 @@ module.exports = async function webhookHandler(req, res) {
 
     if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
       await sendBotStatus(timeStr, '', chatId);
+    } else if (lower === '/test_templates') {
+      const signalTypes = [
+        'showSup', 'showRes', 'isBigSup', 'isBigRes',
+        'exitLong', 'exitShort',
+        'Ready_showSup', 'Ready_showRes', 'Ready_isBigSup', 'Ready_isBigRes',
+        'Ready_exitLong', 'Ready_exitShort'
+      ];
+      const langs = ['ko', 'en', 'zh', 'jp'];
+      const ts = Math.floor(Date.now() / 1000);
+
+      for (const lang of langs) {
+        let output = `🌐 [${lang.toUpperCase()}] 템플릿 테스트 결과\n\n`;
+        for (const type of signalTypes) {
+          try {
+            const msg = getTemplate({
+              type,
+              symbol: 'BTCUSDT.P',
+              timeframe: '1',
+              price: 62500,
+              ts,
+              entryCount: 1,
+              entryAvg: '60000',
+              leverage: 50,
+              lang
+            });
+            output += `✅ ${type}\n${msg}\n\n`;
+          } catch (err) {
+            output += `❌ ${type} 오류: ${err.message}\n\n`;
+          }
+        }
+        await sendToAdmin(output, chatId);
+      }
     } else {
       await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
     }
