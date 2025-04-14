@@ -1,6 +1,6 @@
 // ✅👇 commands/status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard, sendTextToBot } = require('../botManager');
+const { editMessage, inlineKeyboard, getLangKeyboard, getTemplateTestKeyboard, sendTextToBot, sendToAdmin } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
@@ -11,6 +11,7 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
+const { getTemplate } = require('../MessageTemplates');
 
 const cache = new Map();
 
@@ -29,6 +30,29 @@ async function handleAdminAction(data, ctx) {
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
+  // ✅ 템플릿 테스트용 신호 선택 처리
+  if (data.startsWith("test_template_")) {
+    const type = data.replace("test_template_", "");
+    const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
+    try {
+      const msg = getTemplate({
+        type,
+        symbol: 'BTCUSDT.P',
+        timeframe: '1',
+        price: 62500,
+        ts: Math.floor(Date.now() / 1000),
+        entryCount: 1,
+        entryAvg: '60000',
+        leverage: 50,
+        lang
+      });
+      await editMessage('admin', chatId, messageId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+    } catch (err) {
+      await editMessage('admin', chatId, messageId, `❌ 템플릿 오류: ${err.message}`);
+    }
+    return;
+  }
+  
   let changed = false;
 
   switch (data) {
@@ -126,6 +150,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
 
   const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
                    suffix === 'lang_ming' ? getLangKeyboard('ming') :
+                   suffix === 'test_menu' ? getTemplateTestKeyboard() :
                    inlineKeyboard;
 
   const statusMsg = [
