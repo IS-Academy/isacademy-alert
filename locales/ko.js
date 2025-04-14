@@ -35,7 +35,7 @@ module.exports = {
     disclaimer_full: "⚠️관점공유는 언제나【자율적 참여】\n⚠️모든 투자와 판단은 본인의 몫입니다."
   },
   days: {
-    Mon: "월", Tue: "화", Wed: "수", Thu: "목", Fri: "금", Sat: "토", Sun: "일"
+    0: "일", 1: "월", 2: "화", 3: "수", 4: "목", 5: "금", 6: "토"
   },
   am: "오전", pm: "오후", timezone: "Asia/Seoul"
 };
