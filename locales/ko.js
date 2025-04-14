@@ -17,11 +17,11 @@ module.exports = {
   },
   labels: {
     symbol: "📌 종목",
-    timeframe: "⏱️ 타임프레임",
+    timeframe: "⏱️ 타임프레임 {interval}분",
     price: "💲 가격",
     entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
     entrySummary: "⏱️ 진입 현황:",
-    entryInfoByTF: "• {tf}min → ✅ {percent}% / 평균가 {avg}",
+    entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균가 {avg}",
     pnlLineProfit: "📈수익률 {pnl}% / 원금대비 {capital}%",
     pnlLineLoss: "📉수익률 {pnl}% / 원금대비 {capital}%",
     entryLimitReachedLong: "⚠️ 롱 포지션 포화 상태입니다.",
