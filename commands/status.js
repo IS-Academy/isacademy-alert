@@ -13,8 +13,10 @@ const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
 
+// ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
 const cache = new Map();
 
+// ✅ 버튼 로그 메시지용 키 매핑
 const logMap = {
   'choi_on': '▶️ [상태 갱신: 최실장 ON]',
   'choi_off': '⏹️ [상태 갱신: 최실장 OFF]',
@@ -24,13 +26,13 @@ const logMap = {
   'dummy_status': '🔁 [더미 상태 확인 요청]'
 };
 
-// ✅ 버튼 처리
+// ✅ 텔레그램 버튼 클릭 처리 함수
 async function handleAdminAction(data, ctx) {
   const chatId = ctx.chat.id;
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
-  // ✅ 템플릿 테스트용 신호 선택 처리
+  // ✅ 템플릿 테스트 버튼 클릭 처리
   if (data.startsWith("test_template_")) {
     const type = data.replace("test_template_", "");
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -53,6 +55,7 @@ async function handleAdminAction(data, ctx) {
     return;
   }
   
+  // ✅ 상태 토글 처리용
   let changed = false;
 
   switch (data) {
@@ -73,6 +76,7 @@ async function handleAdminAction(data, ctx) {
       break;
   }
 
+  // ✅ 변경 없음 → 메시지 생략
   if (!changed) {
     await editMessage('admin', chatId, messageId, '⏱️ 현재와 동일한 상태입니다.', null, {
       callbackQueryId,
@@ -82,6 +86,7 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
+  // ✅ 상태 패널 갱신 호출
   await sendBotStatus(undefined, data, chatId, messageId, {
     callbackQueryId,
     callbackResponse: '✅ 상태 갱신 완료',
@@ -89,7 +94,7 @@ async function handleAdminAction(data, ctx) {
   });
 }
 
-// ✅ 패널 전송
+// ✅ 상태 패널 메시지 전송 함수
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -104,7 +109,17 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const userLang = userConfig.lang || 'ko';
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
 
-  const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}`;
+  // ✅ 캐시 키에 더미 수신 시간도 포함하여 중복 출력 방지 개선
+  const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
+  const lastDummy = getLastDummyTime();
+  const dummyKey = lastDummy || 'no-dummy';
+  const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
+  
+  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
+  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;  
+  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
+  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
+
   if (cache.get(key) === nowTime) {
     if (options.callbackQueryId) {
       const axios = require('axios');
@@ -125,7 +140,6 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     } else {
       console.log('⚠️ 상태 메시지 중복 생략');
     }
-
     return;
   }
 
@@ -141,24 +155,12 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     return `<code>${lang}</code> ${emoji} | ${tz}`;
   };
 
-  const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
-  const lastDummy = getLastDummyTime();
-  console.log('🔍 getLastDummyTime():', lastDummy);
-  
-  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
-  console.log('🔍 dummyMoment:', dummyMoment?.format() || 'Invalid');
-  
-  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
-  console.log('🔍 elapsed (min):', elapsed);
-  
-  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
-  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
-
   const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
                    suffix === 'lang_ming' ? getLangKeyboard('ming') :
                    suffix === 'test_menu' ? getTemplateTestKeyboard() :
                    inlineKeyboard;
 
+  // ✅ 패널 메시지 조립
   const statusMsg = [
     `📡 <b>IS 관리자봇 패널</b>`,
     `──────────────────────`,
@@ -195,10 +197,16 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   }
 }
 
+// ✅ 봇 실행 시 관리자 패널 초기화 및 자동 갱신 시작
 async function initAdminPanel() {
   const sent = await sendBotStatus();
   if (sent && sent.data?.result) {
     console.log('✅ 관리자 패널 초기화 성공');
+
+    // ✅ 1분마다 자동 갱신
+    setInterval(() => {
+      sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
+    }, 60 * 1000);
   } else {
     console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
   }
