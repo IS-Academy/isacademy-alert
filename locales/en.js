@@ -17,7 +17,7 @@ module.exports = {
   },
   labels: {
     symbol: "📌 Symbol",
-    timeframe: "⏱️ Timeframe",
+    timeframe: "⏱️ Timeframe {interval}min",
     price: "💲 Price",
     entryInfo: "📊 Entry {entryCount}% / Avg {entryAvg}",
     entrySummary: "⏱️ Entry Summary:",
