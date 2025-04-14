@@ -35,7 +35,7 @@ module.exports = {
     disclaimer_full: "⚠️观点分享纯属自愿\n⚠️所有交易和决策需自行承担。"
   },
   days: {
-    Mon: "周一", Tue: "周二", Wed: "周三", Thu: "周四", Fri: "周五", Sat: "周六", Sun: "周日"
+    0: "周日", 1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五", 6: "周六"
   },
   am: "上午", pm: "下午", timezone: "Asia/Shanghai"
 };
