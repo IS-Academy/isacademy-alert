@@ -7,15 +7,19 @@ const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
 const { getTimeString, saveBotState } = require("./utils");
 
-// ✅ entryManager에서 getEntryInfo도 import
+// ✅ entryManager import
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
 const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
 
-// ✅ entry 캐시 저장소 (선택)유지하되 주석 처리 가능
+// ✅ 자동매매 핸들러 추가
+const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler');
+
+// ✅ 전역 캐시 & 스위치 선언
 const entryCache = {};
+global.autoTradeEnabled = true; // 🪄 기본값: 자동매매 ON
 
 function saveEntryData(symbol, type, avg, ratio) {
   global.entryCache = global.entryCache || {};
@@ -70,11 +74,24 @@ module.exports = async function webhookHandler(req, res) {
       // ✅ 진입 신호일 경우 → 진입가 저장
       if (isEntrySignal) addEntry(symbol, type, price, timeframe);
 
+        // ✅ 자동매매 실행 (스위치 기반)
+        if (global.autoTradeEnabled) {
+          await handleTradeSignal({
+            side: direction,
+            symbol,
+            entryAvg: price,
+            amount: 0.001
+          });
+        } else {
+          console.log('⚠️ 자동매매 꺼짐 상태: 거래소 주문 실행 안됨');
+        }
+      }
+
       // ✅ 평균 및 비중 계산 (🔥 핵심)
-      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);      
+      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
       // ✅ 청산 신호일 경우 → 리스트 초기화
-      if (isExitSignal) clearEntries(symbol, type, timeframe);   
+      if (isExitSignal) clearEntries(symbol, type, timeframe);
       
       // ✅ 로그 찍기
       console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
@@ -84,20 +101,20 @@ module.exports = async function webhookHandler(req, res) {
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       // ✅ 메시지 템플릿 생성
-      const msgChoi = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
-        entryCount: typeof ratio === 'number' ? ratio : 0, 
+      const msgChoi = getTemplate({
+        type, symbol, timeframe, price, ts,
+        entryCount: typeof ratio === 'number' ? ratio : 0,
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE, 
+        leverage: leverage || config.DEFAULT_LEVERAGE,
         lang: langChoi,
         direction
       });
 
-      const msgMing = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
-        entryCount: typeof ratio === 'number' ? ratio : 0, 
+      const msgMing = getTemplate({
+        type, symbol, timeframe, price, ts,
+        entryCount: typeof ratio === 'number' ? ratio : 0,
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE, 
+        leverage: leverage || config.DEFAULT_LEVERAGE,
         lang: langMing,
         direction
       });
@@ -117,9 +134,9 @@ module.exports = async function webhookHandler(req, res) {
         });
       }
 
-      return res.status(200).send("✅ 텔레그램 및 캡처 전송 성공");
+      return res.status(200).send("✅ 텔레그램 및 자동매매 전송 성공");
     } catch (err) {
-      console.error("❌ 텔레그램 및 캡처 처리 오류:", err.stack || err.message);
+      console.error("❌ 텔레그램/자동매매 처리 오류:", err.stack || err.message);
       return res.status(500).send("서버 오류");
     }
   }
@@ -135,16 +152,18 @@ module.exports = async function webhookHandler(req, res) {
       callbackQuery: update.callback_query
     };
 
-    await handleAdminAction(update.callback_query.data, ctx); // ✅ 여기 핵심 추가
+    if (cmd === 'autotrade_on') global.autoTradeEnabled = true;
+    if (cmd === 'autotrade_off') global.autoTradeEnabled = false;
+
+    console.log(`[⚙️ 자동매매] 상태 변경됨 → ${global.autoTradeEnabled}`);
+
+    await handleAdminAction(cmd, ctx);
     res.sendStatus(200);
 
-    if (!chatId) {
-      console.error('❗ chatId 없음: callback_query.message.chat.id 확인 필요');
-      return;
-    }
-
+    if (!chatId) return;
     const lang = getUserLang(chatId);
     const timeStr = getTimeString();
+
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
