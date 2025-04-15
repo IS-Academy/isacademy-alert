@@ -124,20 +124,20 @@ module.exports = async function webhookHandler(req, res) {
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       // ✅ 메시지 템플릿 생성
-      const msgChoi = getTemplate({
-        type, symbol, timeframe, price, ts,
-        entryCount: typeof ratio === 'number' ? ratio : 0,
+      const msgChoi = getTemplate({ 
+        type, symbol, timeframe, price, ts, 
+        entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE,
+        leverage: leverage || config.DEFAULT_LEVERAGE, 
         lang: langChoi,
         direction
       });
 
-      const msgMing = getTemplate({
-        type, symbol, timeframe, price, ts,
-        entryCount: typeof ratio === 'number' ? ratio : 0,
+      const msgMing = getTemplate({ 
+        type, symbol, timeframe, price, ts, 
+        entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE,
+        leverage: leverage || config.DEFAULT_LEVERAGE, 
         lang: langMing,
         direction
       });
