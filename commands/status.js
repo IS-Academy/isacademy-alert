@@ -41,12 +41,12 @@ async function answerCallback(callbackQueryId, text) {
 
 // ✅ 관리자 액션 처리 (버튼 클릭 시 실행)
 async function handleAdminAction(data, ctx) {
-  const chatId = ctx.chat.id;
+  const chatId = config.ADMIN_CHAT_ID;
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
-  let newText, newKeyboard, responseText;
- isMenuOpened = true;
+  let newText, newKeyboard, responseText, shouldSendStatus = false;
+  isMenuOpened = true;
 
   switch (data) {
     case 'lang_menu':
@@ -125,9 +125,9 @@ async function handleAdminAction(data, ctx) {
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
         try {
           const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
-          await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
         } catch (err) {
-          await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
+          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `❌ 템플릿 오류: ${err.message}`);
         }
         return;
       }
