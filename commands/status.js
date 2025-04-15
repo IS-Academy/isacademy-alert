@@ -1,6 +1,9 @@
+// ✅👇 commands/status.js (최종 안정화 버전 - 모든 내용 복원 + UI 유지 패치)
+
 const {
   editMessage,
   inlineKeyboard,
+  getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
@@ -19,12 +22,15 @@ const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
 const { getEntryInfo } = require('../entryManager');
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
+const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 
 const cache = new Map();
 let isMenuOpened = false;
 
-// ✅ 콜백 응답 단순화 함수
+// ✅ 콜백 응답 전용 함수 (중복 제거용)
 async function answerCallback(callbackQueryId, text) {
   await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
     callback_query_id: callbackQueryId,
@@ -33,6 +39,7 @@ async function answerCallback(callbackQueryId, text) {
   });
 }
 
+// ✅ 관리자 액션 처리 (버튼 클릭 시 실행)
 async function handleAdminAction(data, ctx) {
   const chatId = ctx.chat.id;
   const messageId = ctx.callbackQuery.message.message_id;
@@ -41,47 +48,48 @@ async function handleAdminAction(data, ctx) {
   let newText, newKeyboard, responseText;
   let shouldSendStatus = false;
 
+  // ✅ 메뉴 전용 처리 (상태 토글 외)
   switch (data) {
     case 'lang_menu':
-      isMenuOpened = true;
       newText = '🌐 언어 설정 대상 선택';
       newKeyboard = getLangMenuKeyboard();
       responseText = '✅ 언어 메뉴 열림';
+      isMenuOpened = true;
       break;
 
     case 'choi_toggle':
-      isMenuOpened = true;
       newText = '👨‍💼 최실장 켜기/끄기 선택';
       newKeyboard = getUserToggleKeyboard('choi');
       responseText = '✅ 최실장 설정 메뉴';
+      isMenuOpened = true;
       break;
 
     case 'ming_toggle':
-      isMenuOpened = true;
       newText = '👩‍💼 밍밍 켜기/끄기 선택';
       newKeyboard = getUserToggleKeyboard('ming');
       responseText = '✅ 밍밍 설정 메뉴';
+      isMenuOpened = true;
       break;
 
     case 'symbol_toggle_menu':
-      isMenuOpened = true;
       newText = '📊 자동매매 종목 설정 (ON/OFF)';
       newKeyboard = getSymbolToggleKeyboard();
       responseText = '✅ 종목 설정 메뉴 열림';
+      isMenuOpened = true;
       break;
 
     case 'test_menu':
-      isMenuOpened = true;
       newText = '🧪 템플릿 테스트 메뉴입니다';
       newKeyboard = getTemplateTestKeyboard();
       responseText = '✅ 테스트 메뉴 열림';
+      isMenuOpened = true;
       break;
 
     case 'back_main':
-      isMenuOpened = false;
       newText = '📋 관리자 메뉴로 돌아갑니다';
       newKeyboard = inlineKeyboard;
       responseText = '↩️ 메인 메뉴로 이동';
+      isMenuOpened = false;
       shouldSendStatus = true;
       break;
 
@@ -127,12 +135,7 @@ async function handleAdminAction(data, ctx) {
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
         try {
-          const msg = getTemplate({
-            type, symbol, timeframe, price, ts,
-            entryCount: typeof ratio === 'number' ? ratio : 0,
-            entryAvg: typeof avg === 'number' ? avg : 'N/A',
-            leverage, lang, direction
-          });
+          const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
           await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
         } catch (err) {
           await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
@@ -150,7 +153,16 @@ async function handleAdminAction(data, ctx) {
       }
   }
 
-  async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
+  if (newText && newKeyboard) {
+    await editMessage('admin', chatId, messageId, newText, newKeyboard);
+    await answerCallback(callbackQueryId, responseText);
+  }
+
+  if (shouldSendStatus) await sendBotStatus();
+}
+
+// ✅ 상태 메시지 전송
+async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
@@ -167,16 +179,16 @@ async function handleAdminAction(data, ctx) {
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
-  const key = ${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey};
+  const key = `${chatId}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
 
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
-  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(YY.MM.DD (${dayTranslated}) HH:mm:ss) : '기록 없음';
-  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : +${elapsed}분 전) : '';
+  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
+  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
   if (cache.get(key) === nowTime) {
     if (options.callbackQueryId) {
-      await axios.post(https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery, {
+      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
         text: '⏱️ 최신 정보입니다.',
         show_alert: false
@@ -193,67 +205,46 @@ async function handleAdminAction(data, ctx) {
 
   const langDisplay = (lang, tz) => {
     const emoji = langEmojiMap[lang] || '';
-    return <code>${lang}</code> ${emoji} | ${tz};
+    return `<code>${lang}</code> ${emoji} | ${tz}`;
   };
 
-  const keyboard = inlineKeyboard;
-
   const statusMsg = [
-    📡 <b>IS 관리자봇 패널</b>,
-    ──────────────────────,
-    📍 <b>현재 상태:</b> 🕐 <code>${nowTime}</code>,
-    `,
-    👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langChoi, langTzChoi)}),
-    👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)}),
-    `,
-    📅 <b>${now.format(YY.MM.DD (${dayTranslated}))}</b>,
-    🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText},
-    ──────────────────────
+    `📡 <b>IS 관리자봇 패널</b>`,
+    `──────────────────────`,
+    `📍 <b>현재 상태:</b> 🕐 <code>${nowTime}</code>`,
+    ``,
+    `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langChoi, langTzChoi)})`,
+    `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)})`,
+    ``,
+    `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
+    `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
+    `──────────────────────`
   ].join('\n');
 
   try {
-    const existingMessageId = messageId || getAdminMessageId();
-    let sent;
-
-    sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, {
-      ...options, parse_mode: 'HTML'
+    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, inlineKeyboard, {
+      parse_mode: 'HTML', ...options
     });
-
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
     return null;
   }
-
-  if (newText && newKeyboard) {
-    await editMessage('admin', chatId, messageId, newText, newKeyboard);
-    await answerCallback(callbackQueryId, responseText);
-    if (!shouldSendStatus) return;
-  }
-
-  if (shouldSendStatus) {
-    await sendBotStatus(getTimeString(), data, chatId, messageId, {
-      callbackQueryId,
-      callbackResponse: responseText
-    });
-  }
-}
-
-async function initAdminPanel() {
-  const sent = await sendBotStatus();
-  if (sent && sent.data?.result) {
-    console.log('✅ 관리자 패널 초기화 성공');
-    setInterval(() => {
-      if (!isMenuOpened) sendBotStatus();
-    }, 60 * 1000);
-  } else {
-    console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
-  }
 }
 
 module.exports = {
   sendBotStatus,
-  initAdminPanel,
+  initAdminPanel: async () => {
+    const sent = await sendBotStatus();
+    if (sent && sent.data?.result) {
+      console.log('✅ 관리자 패널 초기화 성공');
+      setInterval(() => {
+        sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
+      }, 60 * 1000);
+    } else {
+      console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
+    }
+  },
   handleAdminAction
 };
