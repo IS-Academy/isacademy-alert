@@ -12,6 +12,9 @@ const {
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
+const fs = require('fs');
+const path = require('path');
+const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js'); // ✅ 심볼 토글 처리용 경로
 
 // ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
 const cache = new Map();
@@ -23,7 +26,8 @@ const logMap = {
   'ming_on': '▶️ [상태 갱신: 밍밍 ON]',
   'ming_off': '⏹️ [상태 갱신: 밍밍 OFF]',
   'status': '📡 [상태 확인 요청]',
-  'dummy_status': '🔁 [더미 상태 확인 요청]'
+  'dummy_status': '🔁 [더미 상태 확인 요청]',
+  'symbol_toggle_menu': '📊 [종목 토글 패널 열기]'
 };
 
 // ✅ 텔레그램 버튼 클릭 처리 함수
@@ -57,10 +61,40 @@ async function handleAdminAction(data, ctx) {
     }
     return;
   }
+
+  // ✅ 종목 ON/OFF 토글 처리
+  if (data.startsWith("toggle_symbol_")) {
+    const symbol = data.replace("toggle_symbol_", "");
+    const raw = fs.readFileSync(symbolsPath, 'utf8');
+    const lines = raw.split("\n");
+    const updated = lines.map(line => {
+      if (line.includes(`${symbol}: {`)) {
+        return line.includes('enabled: true')
+          ? line.replace('enabled: true', 'enabled: false')
+          : line.replace('enabled: false', 'enabled: true');
+      }
+      return line;
+    });
+    fs.writeFileSync(symbolsPath, updated.join("\n"));
+    console.log(`🔁 심볼 상태 토글됨: ${symbol}`);
+    await editMessage('admin', chatId, messageId, '📊 종목 자동매매 설정 토글됨', getSymbolToggleKeyboard(), {
+      callbackQueryId,
+      callbackResponse: `✅ ${symbol.toUpperCase()} 상태 토글됨`
+    });
+    return;
+  }
+
+  // ✅ 토글 메뉴 호출
+  if (data === 'symbol_toggle_menu') {
+    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 종목 설정 메뉴 열림'
+    });
+    return;
+  }
   
   // ✅ 상태 토글 처리용
   let changed = false;
-
   switch (data) {
     case 'choi_on':
       if (!global.choiEnabled) { global.choiEnabled = true; changed = true; }
