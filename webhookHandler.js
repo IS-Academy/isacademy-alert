@@ -13,9 +13,8 @@ const { getTemplate } = require("./MessageTemplates");
 const { sendToChoi, sendToMing, sendToAdmin } = require("./botManager");
 const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
-
-// ✅ 자동매매 핸들러 추가
-const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler');
+const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 핸들러
+const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로드
 
 // ✅ 전역 캐시 & 스위치 선언
 const entryCache = {};
@@ -53,11 +52,17 @@ module.exports = async function webhookHandler(req, res) {
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
-      const symbol = update.symbol || "Unknown";
+      const symbol = update.symbol?.toLowerCase() || "unknown";
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
       const leverage = update.leverage || config.DEFAULT_LEVERAGE;
+
+      // ✅ 종목 사용 가능 여부 확인
+      if (!tradeSymbols[symbol]?.enabled) {
+        console.warn(`⛔ [자동매매 비활성화된 종목] ${symbol} → 무시됨`);
+        return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
+      }
 
       // ✅ entryAvg/entryRatio 받아와서 캐시에 저장 (`25.04.14 미사용)
 //      const entryAvg = update.entryAvg || 'N/A';
@@ -80,8 +85,11 @@ module.exports = async function webhookHandler(req, res) {
           await handleTradeSignal({
             side: direction,
             symbol,
+            timeframe,
             entryAvg: price,
-            amount: 0.001
+            amount: 0.001,
+            isExit: false,
+            orderType: 'market' // ✅ 모든 주문 시장가 처리
           });
         } else {
           console.log('⚠️ 자동매매 꺼짐 상태: 거래소 주문 실행 안됨');
@@ -92,7 +100,21 @@ module.exports = async function webhookHandler(req, res) {
       const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
       // ✅ 청산 신호일 경우 → 리스트 초기화
-      if (isExitSignal) clearEntries(symbol, type, timeframe);
+      if (isExitSignal) {
+        clearEntries(symbol, type, timeframe);
+
+        if (global.autoTradeEnabled) {
+          await handleTradeSignal({
+            side: direction,
+            symbol,
+            timeframe,
+            entryAvg: price,
+            amount: 0.001,
+            isExit: true,
+            orderType: 'market' // ✅ 모든 주문 시장가 처리
+          });
+        }
+      }
       
       // ✅ 로그 찍기
       console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
@@ -164,7 +186,6 @@ module.exports = async function webhookHandler(req, res) {
     if (!chatId) return;
     const lang = getUserLang(chatId);
     const timeStr = getTimeString();
-
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;

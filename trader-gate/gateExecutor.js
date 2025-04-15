@@ -1,4 +1,4 @@
-// ✅ /trader-gate/gateExecutor.js
+// ✅👇 /trader-gate/gateExecutor.js
 
 const { authenticatedRequest } = require('./gateApi');
 const config = require('./gateConfig');
@@ -7,15 +7,16 @@ const config = require('./gateConfig');
 async function placeLongOrder({
   pair = config.DEFAULT_PAIR,
   price = '60000',
-  amount = config.DEFAULT_AMOUNT
+  amount = config.DEFAULT_AMOUNT,
+  orderType = 'limit'
 } = {}) {
   const order = {
     currency_pair: pair,
     side: 'buy',
-    type: 'limit',
-    price: price.toString(),
+    type: orderType,
     amount: amount.toString()
   };
+  if (orderType === 'limit') order.price = price.toString();
 
   try {
     const res = await authenticatedRequest('POST', '/spot/orders', '', order);
@@ -31,15 +32,16 @@ async function placeLongOrder({
 async function placeShortOrder({
   pair = config.DEFAULT_PAIR,
   price = '60000',
-  amount = config.DEFAULT_AMOUNT
+  amount = config.DEFAULT_AMOUNT,
+  orderType = 'limit'
 } = {}) {
   const order = {
     currency_pair: pair,
     side: 'sell',
-    type: 'limit',
-    price: price.toString(),
+    type: orderType,
     amount: amount.toString()
   };
+  if (orderType === 'limit') order.price = price.toString();
 
   try {
     const res = await authenticatedRequest('POST', '/spot/orders', '', order);
@@ -51,9 +53,9 @@ async function placeShortOrder({
   }
 }
 
-// ✅ 테스트 실행 (나중에 설명해줄게)
+// ✅ CLI 테스트용 (선택 실행)
 if (require.main === module) {
-  placeShortOrder();
+  placeLongOrder({ orderType: 'market' });
 }
 
 module.exports = {

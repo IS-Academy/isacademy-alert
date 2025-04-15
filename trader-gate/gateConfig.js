@@ -1,4 +1,4 @@
-// ✅ /trader-gate/gateConfig.js
+// ✅👇 /trader-gate/gateConfig.js
 
 module.exports = {
   GATE_API_KEY: 'YOUR_GATE_IO_API_KEY_HERE',
