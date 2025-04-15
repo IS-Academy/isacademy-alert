@@ -25,8 +25,8 @@ const fs = require('fs');
 const path = require('path');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js'); // ✅ 심볼 토글 처리용 경로
 
-// ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
-const cache = new Map();
+const cache = new Map(); // ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
+const skipCacheFor = ['symbol_toggle_menu']; // ✅ 캐시 생략 예외 대상 추가
 
 // ✅ 버튼 로그 메시지용 키 매핑
 const logMap = {
@@ -95,7 +95,7 @@ async function handleAdminAction(data, ctx) {
     });
     fs.writeFileSync(symbolsPath, updated.join("\n"));
     console.log(`🔁 심볼 상태 토글됨: ${symbol}`);
-    await editMessage('admin', chatId, messageId, '📊 종목 자동매매 설정 토글됨', getSymbolToggleKeyboard(), {
+    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 토글됨', getSymbolToggleKeyboard(), {
       callbackQueryId,
       callbackResponse: `✅ ${symbol.toUpperCase()} 상태 토글됨`
     });
@@ -176,7 +176,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
-  if (cache.get(key) === nowTime) {
+  if (!skipCacheFor.includes(suffix) && cache.get(key) === nowTime) {
     if (options.callbackQueryId) {
       const axios = require('axios');
       await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
