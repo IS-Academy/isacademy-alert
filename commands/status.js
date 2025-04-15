@@ -226,7 +226,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     console.error('⚠️ 관리자 패널 오류:', err.message);
     return null;
   }
-
+}
+  
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
