@@ -10,7 +10,8 @@ const inlineKeyboard = {
     [{ text: '▶️ 밍밍 켜기', callback_data: 'ming_on' }, { text: '⏹️ 밍밍 끄기', callback_data: 'ming_off' }],
     [{ text: '🌐 최실장 언어선택', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어선택', callback_data: 'lang_ming' }],
     [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
-    [{ text: '🧪 템플릿 테스트 메뉴', callback_data: 'test_menu' }]
+    [{ text: '🧪 템플릿 테스트 메뉴', callback_data: 'test_menu' }],
+    [{ text: '📊 종목 ON/OFF 관리', callback_data: 'symbol_toggle_menu' }] // ✅ 종목 토글 메뉴 추가
   ]
 };
 
@@ -36,30 +37,45 @@ function getLangKeyboard(bot) {
 function getTemplateTestKeyboard() {
   return {
     inline_keyboard: [
-      [
-        { text: '🟢 showSup', callback_data: 'test_template_showSup' },
-        { text: '🔴 showRes', callback_data: 'test_template_showRes' },
-        { text: '🚀 isBigSup', callback_data: 'test_template_isBigSup' },
-        { text: '🛸 isBigRes', callback_data: 'test_template_isBigRes' }
-      ],
-      [
+      [        
         { text: '💰 exitLong', callback_data: 'test_template_exitLong' },
         { text: '💰 exitShort', callback_data: 'test_template_exitShort' }
       ],
       [
-        { text: '🟢 Ready_showSup', callback_data: 'test_template_Ready_showSup' },
-        { text: '🔴 Ready_showRes', callback_data: 'test_template_Ready_showRes' }
+        { text: '💲 Ready_exitLong', callback_data: 'test_template_Ready_exitLong' },
+        { text: '💲 Ready_exitShort', callback_data: 'test_template_Ready_exitShort' }
       ],
+      [  
+        { text: '🚀 isBigSup', callback_data: 'test_template_isBigSup' },
+        { text: '🛸 isBigRes', callback_data: 'test_template_isBigRes' }
+      ],
+      [
+        { text: '🩵 showSup', callback_data: 'test_template_showSup' },
+        { text: '❤️ showRes', callback_data: 'test_template_showRes' }
+      ],            
       [
         { text: '🚀 Ready_isBigSup', callback_data: 'test_template_Ready_isBigSup' },
         { text: '🛸 Ready_isBigRes', callback_data: 'test_template_Ready_isBigRes' }
       ],
       [
-        { text: '💲 Ready_exitLong', callback_data: 'test_template_Ready_exitLong' },
-        { text: '💲 Ready_exitShort', callback_data: 'test_template_Ready_exitShort' }
+        { text: '🩵 Ready_showSup', callback_data: 'test_template_Ready_showSup' },
+        { text: '❤️ Ready_showRes', callback_data: 'test_template_Ready_showRes' }
       ]
     ]
   };
+}
+
+// ✅ 종목 ON/OFF 전환용 인라인 키보드 생성
+function getSymbolToggleKeyboard() {
+  const symbols = require('./trader-gate/symbols');
+  const buttons = Object.entries(symbols).map(([symbol, info]) => {
+    return [{
+      text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
+      callback_data: `toggle_symbol_${symbol}`
+    }];
+  });
+  buttons.push([{ text: '🔙 돌아가기', callback_data: 'test_menu' }]);
+  return { inline_keyboard: buttons };
 }
 
 // 📨 메시지 전송
@@ -147,5 +163,6 @@ module.exports = {
   mainKeyboard,
   getLangKeyboard,
   getTemplateTestKeyboard,
+  getSymbolToggleKeyboard, // ✅ 종목 토글 키보드
   sendTextToBot
 };
