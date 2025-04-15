@@ -155,7 +155,6 @@ async function handleAdminAction(data, ctx) {
     });
     return;
   }
-}
 
   // 상태 on/off 처리 부분 유지
   if (data === 'choi_on') global.choiEnabled = true;
