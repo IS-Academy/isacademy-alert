@@ -20,6 +20,7 @@ const {
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
+const axios = require('axios'); // ✅ 이거 추가!
 const fs = require('fs');
 const path = require('path');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js'); // ✅ 심볼 토글 처리용 경로
