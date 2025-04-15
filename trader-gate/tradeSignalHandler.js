@@ -1,10 +1,9 @@
-// ✅ /trader/tradeSignalHandler.js
+// ✅ /trader-gate/tradeSignalHandler.js
 
-const { placeLongOrder } = require('./gateExecutor');
-// 🔜 placeShortOrder도 나중에 추가 예정
+const { placeLongOrder, placeShortOrder } = require('./gateExecutor');
 
 /**
- * 자동매매 신호를 받아 실행하는 핸들러
+ * Gate.io 자동매매 신호를 받아 실행하는 핸들러
  * @param {Object} signal - 신호 객체
  * @param {string} signal.side - 'long' 또는 'short'
  * @param {string} signal.symbol - 거래 페어 (예: BTC_USDT)
@@ -18,8 +17,7 @@ async function handleTradeSignal({ side, symbol, entryAvg, amount }) {
       await placeLongOrder({ pair: symbol, price: entryAvg, amount });
     } else if (side === 'short') {
       console.log(`🔻 숏 진입 실행: ${symbol} @ ${entryAvg}`);
-      // placeShortOrder() 나중에 추가
-      console.warn('⚠️ 숏 주문 기능은 아직 준비 중입니다.');
+      await placeShortOrder({ pair: symbol, price: entryAvg, amount });
     } else {
       console.warn('❗알 수 없는 신호 방향:', side);
     }
