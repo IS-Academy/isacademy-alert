@@ -67,7 +67,7 @@ function getSymbolToggleKeyboard() {
 // ✅ 템플릿 테스트용 인라인 키보드
 function getTemplateTestKeyboard() {
   return {
-    inline_keyboard: [[
+    inline_keyboard: [
       [
         { text: '💰롱 청산📈', callback_data: 'test_template_exitLong' },
         { text: '💰숏 청산📉', callback_data: 'test_template_exitShort' }
@@ -91,9 +91,9 @@ function getTemplateTestKeyboard() {
       [
         { text: '🩵롱 대기📈', callback_data: 'test_template_Ready_showSup' },
         { text: '❤️숏 대기📉', callback_data: 'test_template_Ready_showRes' }
-      ]      
-    ] 
-    [{ text: '🔙 돌아가기', callback_data: 'back_main' }]]
+      ],
+      [{ text: '🔙 돌아가기', callback_data: 'back_main' }]
+    ]
   }; 
 }
 
