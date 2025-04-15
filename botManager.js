@@ -94,6 +94,15 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
       reply_markup: replyMarkup || undefined
     });
 
+    // ✅ 추가된 부분
+    if (options.callbackQueryId) {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        callback_query_id: options.callbackQueryId,
+        text: options.callbackResponse || '',
+        show_alert: false
+      });
+    }
+
     if (!response.data.ok) {
       throw new Error(`Telegram 응답 오류: ${response.data.error_code} - ${response.data.description}`);
     }
