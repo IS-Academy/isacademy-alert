@@ -1,6 +1,14 @@
 // ✅👇 commands/status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard, getTemplateTestKeyboard, sendTextToBot, sendToAdmin } = require('../botManager');
+const {
+  editMessage,
+  inlineKeyboard,
+  getLangKeyboard,
+  getTemplateTestKeyboard,
+  getSymbolToggleKeyboard, // ✅ 이거 추가!
+  sendTextToBot,
+  sendToAdmin
+} = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
