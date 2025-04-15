@@ -39,7 +39,7 @@ async function answerCallback(callbackQueryId, text) {
 }
 
 async function handleAdminAction(data, ctx) {
-  const chatId = config.ADMIN_CHAT_ID; // ✅ 수정완료
+  const chatId = config.ADMIN_CHAT_ID;
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
@@ -47,6 +47,21 @@ async function handleAdminAction(data, ctx) {
   isMenuOpened = true;
 
   switch (data) {
+    // ✅ 즉각적 ON/OFF 토글 방식 변경 (중요 수정)
+    case 'choi_toggle':
+      global.choiEnabled = !global.choiEnabled;
+      responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
+      shouldSendStatus = true;
+      isMenuOpened = false;
+      break;
+
+    case 'ming_toggle':
+      global.mingEnabled = !global.mingEnabled;
+      responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
+      shouldSendStatus = true;
+      isMenuOpened = false;
+      break;
+
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
       newKeyboard = getLangMenuKeyboard();
@@ -58,19 +73,13 @@ async function handleAdminAction(data, ctx) {
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
       newKeyboard = getLangKeyboard(data.split('_')[1]);
       responseText = '✅ 언어 선택 메뉴';
-      break;
+      break;   
 
-    case 'choi_toggle':
-      newText = '👨‍💼 최실장 켜기/끄기 선택';
-      newKeyboard = getUserToggleKeyboard('choi');
-      responseText = '✅ 최실장 설정 메뉴';
-      break;
-
-    case 'ming_toggle':
-      newText = '👩‍💼 밍밍 켜기/끄기 선택';
-      newKeyboard = getUserToggleKeyboard('ming');
-      responseText = '✅ 밍밍 설정 메뉴';
-      break;
+    case 'test_menu':
+      newText = '🧪 템플릿 테스트 메뉴입니다';
+      newKeyboard = getTemplateTestKeyboard();
+      responseText = '✅ 테스트 메뉴 열림';
+      break;      
 
     case 'symbol_toggle_menu':
       newText = '📊 자동매매 종목 설정 (ON/OFF)';
@@ -78,17 +87,12 @@ async function handleAdminAction(data, ctx) {
       responseText = '✅ 종목 설정 메뉴 열림';
       break;
 
-    case 'test_menu':
-      newText = '🧪 템플릿 테스트 메뉴입니다';
-      newKeyboard = getTemplateTestKeyboard();
-      responseText = '✅ 테스트 메뉴 열림';
-      break;
-
     case 'back_main':
       newText = '📋 관리자 메뉴로 돌아갑니다';
       newKeyboard = inlineKeyboard;
-      isMenuOpened = false;
       responseText = '↩️ 메인 메뉴로 이동';
+      isMenuOpened = false;
+      shouldSendStatus = true;
       break;
 
     default:
@@ -96,11 +100,11 @@ async function handleAdminAction(data, ctx) {
         const [_, bot, langCode] = data.split('_');
         const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경됨`);
-        await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard);
-        await answerCallback(callbackQueryId, '✅ 언어 변경 완료');
+        await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경되었습니다.`);
+        newText = '📋 관리자 메뉴로 돌아갑니다';
+        newKeyboard = inlineKeyboard;
+        responseText = '✅ 언어 변경 완료';
         isMenuOpened = false;
-        return;
       }
 
       if (data.startsWith('test_template_')) {
@@ -116,9 +120,13 @@ async function handleAdminAction(data, ctx) {
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
         try {
           const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
-          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+          await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+          newText = '📋 관리자 메뉴로 돌아갑니다';
+          newKeyboard = inlineKeyboard;
+          responseText = '✅ 테스트 완료';
+          isMenuOpened = false;
         } catch (err) {
-          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `❌ 템플릿 오류: ${err.message}`);
+          await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
         }
         return;
       }
@@ -143,7 +151,10 @@ async function handleAdminAction(data, ctx) {
     await answerCallback(callbackQueryId, responseText);
   }
 
-  if (shouldSendStatus) await sendBotStatus();
+  if (shouldSendStatus) await sendBotStatus(undefined, data, chatId, messageId, {
+    callbackQueryId,
+    callbackResponse: responseText
+  });
 }
 
 // ✅ 상태 메시지 전송
@@ -208,16 +219,13 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   ].join('\n');
 
   try {
-    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, inlineKeyboard, {
-      parse_mode: 'HTML', ...options
-    });
+    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, inlineKeyboard, { parse_mode: 'HTML', ...options });
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
     return null;
   }
-}
 
 module.exports = {
   sendBotStatus,
