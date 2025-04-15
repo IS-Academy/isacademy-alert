@@ -1,13 +1,14 @@
-// ✅👇 commands/status.js
+// ✅👇 commands/status.js (리팩토링 통합 버전)
 
 const {
   editMessage,
   inlineKeyboard,
   getLangKeyboard,
+  getLangMenuKeyboard,
+  getUserToggleKeyboard,
+  getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
-  getSymbolToggleKeyboard, // ✅ 이거 추가!
-  sendTextToBot,
-  sendToAdmin
+  sendTextToBot
 } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
@@ -23,21 +24,9 @@ const { getTemplate } = require('../MessageTemplates');
 const { getEntryInfo } = require('../entryManager');
 const fs = require('fs');
 const path = require('path');
-const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js'); // ✅ 심볼 토글 처리용 경로
+const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 
-// ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
 const cache = new Map();
-
-// ✅ 버튼 로그 메시지용 키 매핑
-const logMap = {
-  'choi_on': '▶️ [상태 갱신: 최실장 ON]',
-  'choi_off': '⏹️ [상태 갱신: 최실장 OFF]',
-  'ming_on': '▶️ [상태 갱신: 밍밍 ON]',
-  'ming_off': '⏹️ [상태 갱신: 밍밍 OFF]',
-  'status': '📡 [상태 확인 요청]',
-  'dummy_status': '🔁 [더미 상태 확인 요청]',
-  'symbol_toggle_menu': '📊 [종목 토글 패널 열기]'
-};
 
 // ✅ 텔레그램 버튼 클릭 처리 함수
 async function handleAdminAction(data, ctx) {
@@ -45,19 +34,61 @@ async function handleAdminAction(data, ctx) {
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
-  // ✅ 템플릿 테스트 버튼 클릭 처리
-  if (data.startsWith("test_template_")) {
-    const type = data.replace("test_template_", "");
+  // ✅ 메뉴 네비게이션 처리
+  if (data === 'lang_menu') {
+    await editMessage('admin', chatId, messageId, '🌐 언어 설정 대상 선택', getLangMenuKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 언어 메뉴 열림'
+    });
+    return;
+  }
+  if (data === 'choi_toggle') {
+    await editMessage('admin', chatId, messageId, '👨‍💼 최실장 켜기/끄기 선택', getUserToggleKeyboard('choi'), {
+      callbackQueryId,
+      callbackResponse: '✅ 최실장 설정 메뉴'
+    });
+    return;
+  }
+  if (data === 'ming_toggle') {
+    await editMessage('admin', chatId, messageId, '👩‍💼 밍밍 켜기/끄기 선택', getUserToggleKeyboard('ming'), {
+      callbackQueryId,
+      callbackResponse: '✅ 밍밍 설정 메뉴'
+    });
+    return;
+  }
+  if (data === 'symbol_toggle_menu') {
+    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 종목 설정 메뉴 열림'
+    });
+    return;
+  }
+  if (data === 'test_menu') {
+    await editMessage('admin', chatId, messageId, '🧪 템플릿 테스트 메뉴입니다', getTemplateTestKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 테스트 메뉴 열림'
+    });
+    return;
+  }
+  if (data === 'back_main') {
+    await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard, {
+      callbackQueryId,
+      callbackResponse: '↩️ 메인 메뉴'
+    });
+    return;
+  }
+
+  // ✅ 템플릿 테스트 처리
+  if (data.startsWith('test_template_')) {
+    const type = data.replace('test_template_', '');
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
     const isShort = type.endsWith('Short');
     const direction = isShort ? 'short' : 'long';
-
     const symbol = 'btcusdt.p';
     const timeframe = '1';
     const ts = Math.floor(Date.now() / 1000);
     const price = 62500;
     const leverage = 50;
-
     const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
     try {
@@ -80,77 +111,28 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
-  // ✅ 종목 ON/OFF 토글 처리
-  if (data.startsWith("toggle_symbol_")) {
-    const symbol = data.replace("toggle_symbol_", "");
-    const raw = fs.readFileSync(symbolsPath, 'utf8');
-    const lines = raw.split("\n");
-    const updated = lines.map(line => {
-      if (line.includes(`${symbol}: {`)) {
-        return line.includes('enabled: true')
-          ? line.replace('enabled: true', 'enabled: false')
-          : line.replace('enabled: false', 'enabled: true');
-      }
-      return line;
-    });
-    fs.writeFileSync(symbolsPath, updated.join("\n"));
-    console.log(`🔁 심볼 상태 토글됨: ${symbol}`);
-    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 토글됨', getSymbolToggleKeyboard(), {
-      callbackQueryId,
-      callbackResponse: `✅ ${symbol.toUpperCase()} 상태 토글됨`
-    });
+  // ✅ 언어 설정 (lang_choi_ko 등)
+  if (data.startsWith('lang_')) {
+    const [_, bot, langCode] = data.split('_');
+    const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
+    langManager.setUserLang(targetId, langCode);
+    await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경되었습니다`, null);
     return;
   }
 
-  // ✅ 토글 메뉴 호출
-if (data === 'symbol_toggle_menu') {
-  await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard(), {
+  // ✅ 사용자 ON/OFF (choi_on / ming_off)
+  if (data === 'choi_on') global.choiEnabled = true;
+  if (data === 'choi_off') global.choiEnabled = false;
+  if (data === 'ming_on') global.mingEnabled = true;
+  if (data === 'ming_off') global.mingEnabled = false;
+
+  await sendBotStatus(getTimeString(), data, chatId, messageId, {
     callbackQueryId,
-    callbackResponse: '✅ 종목 설정 메뉴 열림'
-  });
-  return;
-}
-  
-  // ✅ 상태 토글 처리용
-  let changed = false;
-
-  switch (data) {
-    case 'choi_on':
-      if (!global.choiEnabled) { global.choiEnabled = true; changed = true; }
-      break;
-    case 'choi_off':
-      if (global.choiEnabled) { global.choiEnabled = false; changed = true; }
-      break;
-    case 'ming_on':
-      if (!global.mingEnabled) { global.mingEnabled = true; changed = true; }
-      break;
-    case 'ming_off':
-      if (global.mingEnabled) { global.mingEnabled = false; changed = true; }
-      break;
-    default:
-      changed = true;
-      break;
-  }
-
-  // ✅ 변경 없음 → 메시지 생략
-  if (!changed) {
-    await editMessage('admin', chatId, messageId, '⏱️ 현재와 동일한 상태입니다.', null, {
-      callbackQueryId,
-      callbackResponse: '동일한 상태입니다.',
-      logMessage: `${logMap[data] || '🧩 버튼'}`
-    });
-    return;
-  }
-
-  // ✅ 상태 패널 갱신 호출
-  await sendBotStatus(undefined, data, chatId, messageId, {
-    callbackQueryId,
-    callbackResponse: '✅ 상태 갱신 완료',
-    logMessage: logMap[data]
+    callbackResponse: '✅ 상태 갱신 완료'
   });
 }
 
-// ✅ 상태 패널 메시지 전송 함수
+// ✅ 관리자 상태 메시지 전송 함수
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -165,14 +147,13 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   const userLang = userConfig.lang || 'ko';
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
 
-  // ✅ 캐시 키에 더미 수신 시간도 포함하여 중복 출력 방지 개선
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
   const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
-  
+
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
-  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;  
+  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
@@ -185,23 +166,11 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
         show_alert: false
       });
     }
-
-    if (suffix.startsWith('lang_choi')) {
-      console.log('🌐 최실장 언어선택 패널 중복 생략');
-    } else if (suffix.startsWith('lang_ming')) {
-      console.log('🌐 밍밍 언어선택 패널 중복 생략');
-    } else if (options.logMessage) {
-      const cleaned = options.logMessage.replace(/^.*\[\s?|\s?\]$/g, '').trim();
-      console.log(`⚠️ ${cleaned} 중복 생략`);
-    } else {
-      console.log('⚠️ 상태 메시지 중복 생략');
-    }
     return;
   }
 
   cache.set(key, nowTime);
 
-  // ✅ 언어별 타임존 + 이모지 매핑
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
   const langTzChoi = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
   const langTzMing = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
@@ -211,12 +180,8 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     return `<code>${lang}</code> ${emoji} | ${tz}`;
   };
 
-  const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
-                   suffix === 'lang_ming' ? getLangKeyboard('ming') :
-                   suffix === 'test_menu' ? getTemplateTestKeyboard() :
-                   inlineKeyboard;
+  const keyboard = inlineKeyboard;
 
-  // ✅ 패널 메시지 조립
   const statusMsg = [
     `📡 <b>IS 관리자봇 패널</b>`,
     `──────────────────────`,
@@ -253,23 +218,18 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   }
 }
 
-// ✅ 봇 실행 시 관리자 패널 초기화 및 자동 갱신 시작
-async function initAdminPanel() {
-  const sent = await sendBotStatus();
-  if (sent && sent.data?.result) {
-    console.log('✅ 관리자 패널 초기화 성공');
-
-    // ✅ 1분마다 자동 갱신
-    setInterval(() => {
-      sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
-    }, 60 * 1000);
-  } else {
-    console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
-  }
-}
-
 module.exports = {
   sendBotStatus,
-  initAdminPanel,
+  initAdminPanel: async () => {
+    const sent = await sendBotStatus();
+    if (sent && sent.data?.result) {
+      console.log('✅ 관리자 패널 초기화 성공');
+      setInterval(() => {
+        sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
+      }, 60 * 1000);
+    } else {
+      console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
+    }
+  },
   handleAdminAction
 };
