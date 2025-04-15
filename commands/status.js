@@ -1,4 +1,4 @@
-// ✅👇 commands/status.js (최종 안정화 버전 - 모든 내용 복원 + UI 유지 패치)
+// ✅👇 commands/status.js
 
 const {
   editMessage,
@@ -30,7 +30,6 @@ const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 const cache = new Map();
 let isMenuOpened = false;
 
-// ✅ 콜백 응답 전용 함수 (중복 제거용)
 async function answerCallback(callbackQueryId, text) {
   await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
     callback_query_id: callbackQueryId,
@@ -39,9 +38,8 @@ async function answerCallback(callbackQueryId, text) {
   });
 }
 
-// ✅ 관리자 액션 처리 (버튼 클릭 시 실행)
 async function handleAdminAction(data, ctx) {
-  const chatId = config.ADMIN_CHAT_ID;
+  const chatId = config.ADMIN_CHAT_ID; // ✅ 수정완료
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
@@ -51,12 +49,7 @@ async function handleAdminAction(data, ctx) {
   switch (data) {
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
-      newKeyboard = {
-        inline_keyboard: [
-          [{ text: '🌐 최실장 언어', callback_data: 'lang_choi' }, { text: '🌐 밍밍 언어', callback_data: 'lang_ming' }],
-          [{ text: '🔙 돌아가기', callback_data: 'back_main' }]
-        ]
-      };
+      newKeyboard = getLangMenuKeyboard();
       responseText = '✅ 언어 메뉴 열림';
       break;
 
@@ -65,6 +58,18 @@ async function handleAdminAction(data, ctx) {
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
       newKeyboard = getLangKeyboard(data.split('_')[1]);
       responseText = '✅ 언어 선택 메뉴';
+      break;
+
+    case 'choi_toggle':
+      newText = '👨‍💼 최실장 켜기/끄기 선택';
+      newKeyboard = getUserToggleKeyboard('choi');
+      responseText = '✅ 최실장 설정 메뉴';
+      break;
+
+    case 'ming_toggle':
+      newText = '👩‍💼 밍밍 켜기/끄기 선택';
+      newKeyboard = getUserToggleKeyboard('ming');
+      responseText = '✅ 밍밍 설정 메뉴';
       break;
 
     case 'symbol_toggle_menu':
@@ -86,29 +91,15 @@ async function handleAdminAction(data, ctx) {
       responseText = '↩️ 메인 메뉴로 이동';
       break;
 
-    case 'choi_on':
-    case 'choi_off':
-      global.choiEnabled = data === 'choi_on';
-      isMenuOpened = false;
-      responseText = `최실장 ${global.choiEnabled ? 'ON' : 'OFF'}`;
-      await sendBotStatus();
-      break;
-
-    case 'ming_on':
-    case 'ming_off':
-      global.mingEnabled = data === 'ming_on';
-      isMenuOpened = false;
-      responseText = `밍밍 ${global.mingEnabled ? 'ON' : 'OFF'}`;
-      await sendBotStatus();
-      break;
-
     default:
-      if (data.startsWith('lang_')) {
+      if (data.startsWith('lang_') && data.split('_').length === 3) {
         const [_, bot, langCode] = data.split('_');
         const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
         await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경됨`);
+        await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard);
         await answerCallback(callbackQueryId, '✅ 언어 변경 완료');
+        isMenuOpened = false;
         return;
       }
 
@@ -140,7 +131,7 @@ async function handleAdminAction(data, ctx) {
           fs.writeFileSync(symbolsPath, `module.exports = ${JSON.stringify(symbols, null, 2)}`);
           newText = '📊 자동매매 종목 설정 (ON/OFF)';
           newKeyboard = getSymbolToggleKeyboard();
-          await editMessage('admin', chatId, messageId, newText, newKeyboard);
+          await editMessage('admin', config.ADMIN_CHAT_ID, messageId, newText, newKeyboard);
           await answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`);
         }
         return;
