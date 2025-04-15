@@ -38,6 +38,44 @@ async function handleAdminAction(data, ctx) {
 
   switch (data) {
     case 'lang_menu':
+    case 'choi_toggle':
+    case 'ming_toggle':
+    case 'symbol_toggle_menu':
+    case 'test_menu':
+      isMenuOpened = true;  // 메뉴가 열렸음
+      break;
+
+    case 'back_main':
+      isMenuOpened = false; // 메뉴가 닫혔음 (메인으로 돌아옴)
+      break;
+
+    case 'choi_on':
+      global.choiEnabled = true;
+      responseText = '✅ 최실장 ON';
+      isMenuOpened = false;
+      break;
+
+    case 'choi_off':
+      global.choiEnabled = false;
+      responseText = '❌ 최실장 OFF';
+      isMenuOpened = false;
+      break;
+
+    case 'ming_on':
+      global.mingEnabled = true;
+      responseText = '✅ 밍밍 ON';
+      isMenuOpened = false;
+      break;
+
+    case 'ming_off':
+      global.mingEnabled = false;
+      responseText = '❌ 밍밍 OFF';
+      isMenuOpened = false;
+      break;
+  }
+
+  switch (data) {
+    case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
       newKeyboard = getLangMenuKeyboard();
       responseText = '✅ 언어 메뉴 열림';
@@ -73,26 +111,6 @@ async function handleAdminAction(data, ctx) {
       responseText = '↩️ 메인 메뉴로 이동';
       break;
 
-    case 'choi_on':
-      global.choiEnabled = true;
-      responseText = '✅ 최실장 ON';
-      break;
-
-    case 'choi_off':
-      global.choiEnabled = false;
-      responseText = '❌ 최실장 OFF';
-      break;
-
-    case 'ming_on':
-      global.mingEnabled = true;
-      responseText = '✅ 밍밍 ON';
-      break;
-
-    case 'ming_off':
-      global.mingEnabled = false;
-      responseText = '❌ 밍밍 OFF';
-      break;
-
     default:
       newText = null;
   }
@@ -107,8 +125,15 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
-  // 🔑 상태 토글일 때만 sendBotStatus 호출
   if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(data)) {
+    await sendBotStatus(getTimeString(), data, chatId, messageId, {
+      callbackQueryId,
+      callbackResponse: responseText
+    });
+    return;
+  }
+
+  if (data === 'back_main') {
     await sendBotStatus(getTimeString(), data, chatId, messageId, {
       callbackQueryId,
       callbackResponse: responseText
@@ -252,7 +277,9 @@ module.exports = {
     if (sent && sent.data?.result) {
       console.log('✅ 관리자 패널 초기화 성공');
       setInterval(() => {
-        sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
+        if (!isMenuOpened) { // 🔑 메뉴가 열리지 않은 상태일 때만 상태 갱신
+          sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
+        }
       }, 60 * 1000);
     } else {
       console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
