@@ -1,13 +1,14 @@
-// ✅👇 commands/status.js (editMessage → sendTextToBot 전환 완료)
+// ✅👇 commands/status.js (최종 안정화 버전 - 모든 내용 복원 + UI 유지 패치)
 
 const {
-  sendTextToBot,
+  editMessage,
   inlineKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
-  getTemplateTestKeyboard
+  getTemplateTestKeyboard,
+  sendTextToBot
 } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
@@ -35,42 +36,42 @@ async function handleAdminAction(data, ctx) {
 
   // ✅ 메뉴 전용 처리 (상태 토글 외)
   if (data === 'lang_menu') {
-    await sendTextToBot('admin', chatId, '🌐 언어 설정 대상 선택', getLangMenuKeyboard(), {
+    await editMessage('admin', chatId, messageId, '🌐 언어 설정 대상 선택​', getLangMenuKeyboard(), {
       callbackQueryId,
       callbackResponse: '✅ 언어 메뉴 열림'
     });
     return;
   }
   if (data === 'choi_toggle') {
-    await sendTextToBot('admin', chatId, '👨‍💼 최실장 켜기/끄기 선택', getUserToggleKeyboard('choi'), {
+    await editMessage('admin', chatId, messageId, '👨‍💼 최실장 켜기/끄기 선택​', getUserToggleKeyboard('choi'), {
       callbackQueryId,
       callbackResponse: '✅ 최실장 설정 메뉴'
     });
     return;
   }
   if (data === 'ming_toggle') {
-    await sendTextToBot('admin', chatId, '👩‍💼 밍밍 켜기/끄기 선택', getUserToggleKeyboard('ming'), {
+    await editMessage('admin', chatId, messageId, '👩‍💼 밍밍 켜기/끄기 선택​', getUserToggleKeyboard('ming'), {
       callbackQueryId,
       callbackResponse: '✅ 밍밍 설정 메뉴'
     });
     return;
   }
   if (data === 'symbol_toggle_menu') {
-    await sendTextToBot('admin', chatId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard(), {
+    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)​', getSymbolToggleKeyboard(), {
       callbackQueryId,
       callbackResponse: '✅ 종목 설정 메뉴 열림'
     });
     return;
   }
   if (data === 'test_menu') {
-    await sendTextToBot('admin', chatId, '🧪 템플릿 테스트 메뉴입니다', getTemplateTestKeyboard(), {
+    await editMessage('admin', chatId, messageId, '🧪 템플릿 테스트 메뉴입니다​', getTemplateTestKeyboard(), {
       callbackQueryId,
       callbackResponse: '✅ 테스트 메뉴 열림'
     });
     return;
   }
   if (data === 'back_main') {
-    await sendTextToBot('admin', chatId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard, {
+    await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다​', inlineKeyboard, {
       callbackQueryId,
       callbackResponse: '↩️ 메인 메뉴로 이동'
     });
@@ -110,7 +111,6 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
-  // ✅ 언어 변경
   if (data.startsWith('lang_')) {
     const [_, bot, langCode] = data.split('_');
     const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
@@ -119,7 +119,6 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
-  // ✅ 상태 토글
   if (data === 'choi_on') global.choiEnabled = true;
   if (data === 'choi_off') global.choiEnabled = false;
   if (data === 'ming_on') global.mingEnabled = true;
@@ -131,7 +130,6 @@ async function handleAdminAction(data, ctx) {
   });
 }
 
-// ✅ 상태 메시지 유지 함수
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -197,7 +195,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     const existingMessageId = messageId || getAdminMessageId();
     let sent;
 
-    sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, {
+    sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, {
       ...options, parse_mode: 'HTML'
     });
 
