@@ -3,7 +3,7 @@
 const { authenticatedRequest } = require('./gateApi');
 const config = require('./gateConfig');
 
-// ✅ Gate.io 매수 주문 함수 (롱 진입용)
+// ✅ 롱 포지션 진입 (BUY)
 async function placeLongOrder({
   pair = config.DEFAULT_PAIR,
   price = '60000',
@@ -12,26 +12,51 @@ async function placeLongOrder({
   const order = {
     currency_pair: pair,
     side: 'buy',
-    type: 'limit', // 또는 'market'
+    type: 'limit',
     price: price.toString(),
     amount: amount.toString()
   };
 
   try {
     const res = await authenticatedRequest('POST', '/spot/orders', '', order);
-    console.log('✅ 주문 성공:', res);
+    console.log('✅ 롱 주문 성공:', res);
     return res;
   } catch (err) {
-    console.error('❌ 주문 실패:', err.response?.data || err.message);
+    console.error('❌ 롱 주문 실패:', err.response?.data || err.message);
     return null;
   }
 }
 
-// ✅ CLI에서 단독 실행 가능하도록
+// ✅ 숏 포지션 진입 (SELL)
+async function placeShortOrder({
+  pair = config.DEFAULT_PAIR,
+  price = '60000',
+  amount = config.DEFAULT_AMOUNT
+} = {}) {
+  const order = {
+    currency_pair: pair,
+    side: 'sell',
+    type: 'limit',
+    price: price.toString(),
+    amount: amount.toString()
+  };
+
+  try {
+    const res = await authenticatedRequest('POST', '/spot/orders', '', order);
+    console.log('✅ 숏 주문 성공:', res);
+    return res;
+  } catch (err) {
+    console.error('❌ 숏 주문 실패:', err.response?.data || err.message);
+    return null;
+  }
+}
+
+// ✅ 테스트 실행 (나중에 설명해줄게)
 if (require.main === module) {
-  placeLongOrder();
+  placeShortOrder();
 }
 
 module.exports = {
-  placeLongOrder
+  placeLongOrder,
+  placeShortOrder
 };
