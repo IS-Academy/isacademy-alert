@@ -1,14 +1,13 @@
-// ✅👇 commands/status.js (메뉴 처리 후 즉시 return 추가 완료)
+// ✅👇 commands/status.js (editMessage → sendTextToBot 전환 완료)
 
 const {
-  editMessage,
+  sendTextToBot,
   inlineKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
-  getTemplateTestKeyboard,
-  sendTextToBot
+  getTemplateTestKeyboard
 } = require('../botManager');
 const langManager = require('../langConfigManager');
 const config = require('../config');
@@ -36,50 +35,44 @@ async function handleAdminAction(data, ctx) {
 
   // ✅ 메뉴 전용 처리 (상태 토글 외)
   if (data === 'lang_menu') {
-    await editMessage('admin', chatId, messageId, '🌐 언어 설정 대상 선택', getLangMenuKeyboard());
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '✅ 언어 메뉴 열림', show_alert: false
+    await sendTextToBot('admin', chatId, '🌐 언어 설정 대상 선택', getLangMenuKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 언어 메뉴 열림'
     });
     return;
   }
   if (data === 'choi_toggle') {
-    await editMessage('admin', chatId, messageId, '👨‍💼 최실장 켜기/끄기 선택', getUserToggleKeyboard('choi'));
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '✅ 최실장 설정 메뉴', show_alert: false
+    await sendTextToBot('admin', chatId, '👨‍💼 최실장 켜기/끄기 선택', getUserToggleKeyboard('choi'), {
+      callbackQueryId,
+      callbackResponse: '✅ 최실장 설정 메뉴'
     });
     return;
   }
   if (data === 'ming_toggle') {
-    await editMessage('admin', chatId, messageId, '👩‍💼 밍밍 켜기/끄기 선택', getUserToggleKeyboard('ming'));
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '✅ 밍밍 설정 메뉴', show_alert: false
+    await sendTextToBot('admin', chatId, '👩‍💼 밍밍 켜기/끄기 선택', getUserToggleKeyboard('ming'), {
+      callbackQueryId,
+      callbackResponse: '✅ 밍밍 설정 메뉴'
     });
     return;
   }
   if (data === 'symbol_toggle_menu') {
-    await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard());
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '✅ 종목 설정 메뉴 열림', show_alert: false
+    await sendTextToBot('admin', chatId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 종목 설정 메뉴 열림'
     });
     return;
   }
   if (data === 'test_menu') {
-    await editMessage('admin', chatId, messageId, '🧪 템플릿 테스트 메뉴입니다', getTemplateTestKeyboard());
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '✅ 테스트 메뉴 열림', show_alert: false
+    await sendTextToBot('admin', chatId, '🧪 템플릿 테스트 메뉴입니다', getTemplateTestKeyboard(), {
+      callbackQueryId,
+      callbackResponse: '✅ 테스트 메뉴 열림'
     });
     return;
   }
   if (data === 'back_main') {
-    await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard);
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text: '↩️ 메인 메뉴로 이동', show_alert: false
+    await sendTextToBot('admin', chatId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard, {
+      callbackQueryId,
+      callbackResponse: '↩️ 메인 메뉴로 이동'
     });
     return;
   }
@@ -138,7 +131,7 @@ async function handleAdminAction(data, ctx) {
   });
 }
 
-// ✅ 상태 패널 메시지 전송 함수
+// ✅ 상태 메시지 유지 함수
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
@@ -204,18 +197,11 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     const existingMessageId = messageId || getAdminMessageId();
     let sent;
 
-    if (existingMessageId) {
-      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, {
-        ...options, parse_mode: 'HTML'
-      });
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
-    } else {
-      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, {
-        ...options, parse_mode: 'HTML'
-      });
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
-    }
+    sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, {
+      ...options, parse_mode: 'HTML'
+    });
 
+    if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
