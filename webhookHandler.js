@@ -72,7 +72,8 @@ module.exports = async function webhookHandler(req, res) {
       const isExitSignal = ["exitLong", "exitShort"].includes(type);
 
       // ✅ 진입 신호일 경우 → 진입가 저장
-      if (isEntrySignal) addEntry(symbol, type, price, timeframe);
+      if (isEntrySignal) {
+        addEntry(symbol, type, price, timeframe);
 
         // ✅ 자동매매 실행 (스위치 기반)
         if (global.autoTradeEnabled) {
