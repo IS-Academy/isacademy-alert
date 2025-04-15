@@ -94,6 +94,8 @@ function getTemplateTestKeyboard() {
       ]
     ]
   };
+  buttons.push([{ text: '🔙 돌아가기', callback_data: 'back_main' }]);
+  return { inline_keyboard: buttons };
 }
 
 // ✅ 메시지 전송
