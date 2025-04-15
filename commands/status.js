@@ -20,6 +20,7 @@ const {
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
+const { getEntryInfo } = require('../entryManager');
 const fs = require('fs');
 const path = require('path');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js'); // ✅ 심볼 토글 처리용 경로
@@ -50,16 +51,25 @@ async function handleAdminAction(data, ctx) {
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
     const isShort = type.endsWith('Short');
     const direction = isShort ? 'short' : 'long';
+
+    const symbol = 'btcusdt.p';
+    const timeframe = '1';
+    const ts = Math.floor(Date.now() / 1000);
+    const price = 62500;
+    const leverage = 50;
+
+    const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
+
     try {
       const msg = getTemplate({
         type,
-        symbol: 'BTCUSDT.P',
-        timeframe: '1',
-        price: 62500,
-        ts: Math.floor(Date.now() / 1000),
-        entryCount: 1,
-        entryAvg: '60000',
-        leverage: 50,
+        symbol,
+        timeframe,
+        price,
+        ts,
+        entryCount: typeof ratio === 'number' ? ratio : 0,
+        entryAvg: typeof avg === 'number' ? avg : 'N/A',
+        leverage,
         lang,
         direction
       });
