@@ -98,6 +98,14 @@ async function handleAdminAction(data, ctx) {
       callbackQueryId,
       callbackResponse: '✅ 종목 설정 메뉴 열림'
     });
+
+    // ✅ 버튼 눌렀을 때 응답 명시적으로 전달
+    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+      callback_query_id: callbackQueryId,
+      text: '✅ 종목 설정 패널 표시됨',
+      show_alert: false
+    });
+
     return;
   }
   
