@@ -91,8 +91,7 @@ function getTemplateTestKeyboard() {
       [
         { text: '🩵롱 대기📈', callback_data: 'test_template_Ready_showSup' },
         { text: '❤️숏 대기📉', callback_data: 'test_template_Ready_showRes' }
-      ],
-      [{ text: '🔙 돌아가기', callback_data: 'back_main' }]
+      ]      
     ]
   }; 
 }
