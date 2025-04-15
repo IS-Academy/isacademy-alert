@@ -38,28 +38,28 @@ function getTemplateTestKeyboard() {
   return {
     inline_keyboard: [
       [        
-        { text: '💰 exitLong', callback_data: 'test_template_exitLong' },
-        { text: '💰 exitShort', callback_data: 'test_template_exitShort' }
+        { text: '💰롱 청산📈', callback_data: 'test_template_exitLong' },
+        { text: '💰숏 청산📉', callback_data: 'test_template_exitShort' }
       ],
       [
-        { text: '💲 Ready_exitLong', callback_data: 'test_template_Ready_exitLong' },
-        { text: '💲 Ready_exitShort', callback_data: 'test_template_Ready_exitShort' }
+        { text: '💲롱 청산 준비📈', callback_data: 'test_template_Ready_exitLong' },
+        { text: '💲숏 청산 준비📉', callback_data: 'test_template_Ready_exitShort' }
       ],
       [  
-        { text: '🚀 isBigSup', callback_data: 'test_template_isBigSup' },
-        { text: '🛸 isBigRes', callback_data: 'test_template_isBigRes' }
+        { text: '🚀강한 롱 진입📈', callback_data: 'test_template_isBigSup' },
+        { text: '🛸강한 숏 진입📉', callback_data: 'test_template_isBigRes' }
       ],
       [
-        { text: '🩵 showSup', callback_data: 'test_template_showSup' },
-        { text: '❤️ showRes', callback_data: 'test_template_showRes' }
+        { text: '🩵롱 진입📈', callback_data: 'test_template_showSup' },
+        { text: '❤️숏 진입📉', callback_data: 'test_template_showRes' }
       ],            
       [
-        { text: '🚀 Ready_isBigSup', callback_data: 'test_template_Ready_isBigSup' },
-        { text: '🛸 Ready_isBigRes', callback_data: 'test_template_Ready_isBigRes' }
+        { text: '🚀강한 롱 대기📈', callback_data: 'test_template_Ready_isBigSup' },
+        { text: '🛸강한 숏 대기📉', callback_data: 'test_template_Ready_isBigRes' }
       ],
       [
-        { text: '🩵 Ready_showSup', callback_data: 'test_template_Ready_showSup' },
-        { text: '❤️ Ready_showRes', callback_data: 'test_template_Ready_showRes' }
+        { text: '🩵롱 대기📈', callback_data: 'test_template_Ready_showSup' },
+        { text: '❤️숏 대기📉', callback_data: 'test_template_Ready_showRes' }
       ]
     ]
   };
