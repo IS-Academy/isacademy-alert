@@ -1,4 +1,4 @@
-// ✅ /trader-gate/gateExecutor.js
+// ✅👇 /trader-gate/gateExecutor.js
 
 const { authenticatedRequest } = require('./gateApi');
 const config = require('./gateConfig');
