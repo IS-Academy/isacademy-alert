@@ -1,4 +1,4 @@
-// ✅👇 commands/status.js (callbackQuery 응답 명시 포함 리팩토링)
+// ✅👇 commands/status.js (메뉴 처리 후 즉시 return 추가 완료)
 
 const {
   editMessage,
@@ -34,66 +34,57 @@ async function handleAdminAction(data, ctx) {
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
+  // ✅ 메뉴 전용 처리 (상태 토글 외)
   if (data === 'lang_menu') {
     await editMessage('admin', chatId, messageId, '🌐 언어 설정 대상 선택', getLangMenuKeyboard());
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '✅ 언어 메뉴 열림',
-      show_alert: false
+      text: '✅ 언어 메뉴 열림', show_alert: false
     });
     return;
   }
-
   if (data === 'choi_toggle') {
     await editMessage('admin', chatId, messageId, '👨‍💼 최실장 켜기/끄기 선택', getUserToggleKeyboard('choi'));
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '✅ 최실장 설정 메뉴',
-      show_alert: false
+      text: '✅ 최실장 설정 메뉴', show_alert: false
     });
     return;
   }
-
   if (data === 'ming_toggle') {
     await editMessage('admin', chatId, messageId, '👩‍💼 밍밍 켜기/끄기 선택', getUserToggleKeyboard('ming'));
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '✅ 밍밍 설정 메뉴',
-      show_alert: false
+      text: '✅ 밍밍 설정 메뉴', show_alert: false
     });
     return;
   }
-
   if (data === 'symbol_toggle_menu') {
     await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard());
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '✅ 종목 설정 메뉴 열림',
-      show_alert: false
+      text: '✅ 종목 설정 메뉴 열림', show_alert: false
     });
     return;
   }
-
   if (data === 'test_menu') {
     await editMessage('admin', chatId, messageId, '🧪 템플릿 테스트 메뉴입니다', getTemplateTestKeyboard());
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '✅ 테스트 메뉴 열림',
-      show_alert: false
+      text: '✅ 테스트 메뉴 열림', show_alert: false
     });
     return;
   }
-
   if (data === 'back_main') {
     await editMessage('admin', chatId, messageId, '📋 관리자 메뉴로 돌아갑니다', inlineKeyboard);
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
-      text: '↩️ 메인 메뉴로 이동',
-      show_alert: false
+      text: '↩️ 메인 메뉴로 이동', show_alert: false
     });
     return;
   }
 
+  // ✅ 템플릿 테스트 처리
   if (data.startsWith('test_template_')) {
     const type = data.replace('test_template_', '');
     const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -126,6 +117,7 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
+  // ✅ 언어 변경
   if (data.startsWith('lang_')) {
     const [_, bot, langCode] = data.split('_');
     const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
@@ -134,6 +126,7 @@ async function handleAdminAction(data, ctx) {
     return;
   }
 
+  // ✅ 상태 토글
   if (data === 'choi_on') global.choiEnabled = true;
   if (data === 'choi_off') global.choiEnabled = false;
   if (data === 'ming_on') global.mingEnabled = true;
@@ -145,6 +138,7 @@ async function handleAdminAction(data, ctx) {
   });
 }
 
+// ✅ 상태 패널 메시지 전송 함수
 async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
