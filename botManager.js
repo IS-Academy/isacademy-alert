@@ -91,9 +91,9 @@ function getTemplateTestKeyboard() {
       [
         { text: '🩵롱 대기📈', callback_data: 'test_template_Ready_showSup' },
         { text: '❤️숏 대기📉', callback_data: 'test_template_Ready_showRes' }
-      ]      
+      ]
     ]
-  }; 
+  };
 }
 
 // ✅ 메시지 전송
