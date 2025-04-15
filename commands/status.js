@@ -73,17 +73,45 @@ async function handleAdminAction(data, ctx) {
       responseText = '↩️ 메인 메뉴로 이동';
       break;
 
+    case 'choi_on':
+      global.choiEnabled = true;
+      responseText = '✅ 최실장 ON';
+      break;
+
+    case 'choi_off':
+      global.choiEnabled = false;
+      responseText = '❌ 최실장 OFF';
+      break;
+
+    case 'ming_on':
+      global.mingEnabled = true;
+      responseText = '✅ 밍밍 ON';
+      break;
+
+    case 'ming_off':
+      global.mingEnabled = false;
+      responseText = '❌ 밍밍 OFF';
+      break;
+
     default:
       newText = null;
   }
 
   if (newText && newKeyboard) {
-    // 메시지 수정 후 바로 answerCallbackQuery 호출
     await editMessage('admin', chatId, messageId, newText, newKeyboard);
     await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
       text: responseText,
       show_alert: false
+    });
+    return;
+  }
+
+  // 🔑 상태 토글일 때만 sendBotStatus 호출
+  if (['choi_on', 'choi_off', 'ming_on', 'ming_off'].includes(data)) {
+    await sendBotStatus(getTimeString(), data, chatId, messageId, {
+      callbackQueryId,
+      callbackResponse: responseText
     });
     return;
   }
@@ -127,6 +155,7 @@ async function handleAdminAction(data, ctx) {
     });
     return;
   }
+}
 
   // 상태 on/off 처리 부분 유지
   if (data === 'choi_on') global.choiEnabled = true;
