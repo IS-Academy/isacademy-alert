@@ -72,15 +72,19 @@ module.exports = async function webhookHandler(req, res) {
       const isExitSignal = ["exitLong", "exitShort"].includes(type);
 
       // ✅ 진입 신호일 경우 → 진입가 저장
-      if (isEntrySignal) addEntry(symbol, type, price, timeframe);
+      if (isEntrySignal) {
+        addEntry(symbol, type, price, timeframe);
 
         // ✅ 자동매매 실행 (스위치 기반)
         if (global.autoTradeEnabled) {
           await handleTradeSignal({
             side: direction,
             symbol,
+            timeframe,
             entryAvg: price,
-            amount: 0.001
+            amount: 0.001,
+            isExit: false,
+            orderType: 'market' // ✅ 모든 주문 시장가 처리
           });
         } else {
           console.log('⚠️ 자동매매 꺼짐 상태: 거래소 주문 실행 안됨');
@@ -91,7 +95,21 @@ module.exports = async function webhookHandler(req, res) {
       const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
       // ✅ 청산 신호일 경우 → 리스트 초기화
-      if (isExitSignal) clearEntries(symbol, type, timeframe);
+      if (isExitSignal) {
+        clearEntries(symbol, type, timeframe);
+
+        if (global.autoTradeEnabled) {
+          await handleTradeSignal({
+            side: direction,
+            symbol,
+            timeframe,
+            entryAvg: price,
+            amount: 0.001,
+            isExit: true,
+            orderType: 'market' // ✅ 모든 주문 시장가 처리
+          });
+        }
+      }
       
       // ✅ 로그 찍기
       console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
@@ -163,7 +181,6 @@ module.exports = async function webhookHandler(req, res) {
     if (!chatId) return;
     const lang = getUserLang(chatId);
     const timeStr = getTimeString();
-
 
     if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
       global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
