@@ -35,11 +35,19 @@ const axiosInstance = axios.create({
 });
 
 async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
-  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-    callback_query_id: callbackQueryId,
-    text,
-    cache_time: 1,
-  });
+  try {
+    return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+      callback_query_id: callbackQueryId,
+      text,
+      cache_time: 1,
+    });
+  } catch (err) {
+    const desc = err.response?.data?.description || err.message;
+    console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
+    if (!desc.includes('query is too old') && !desc.includes('query ID is invalid')) {
+      throw err;
+    }
+  }
 }
 
 async function handleAdminAction(data, ctx) {
@@ -257,16 +265,13 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 let statusInterval; // ✅ 전역변수로 인터벌 저장
 
 module.exports = {
-  sendBotStatus,
-  
+  sendBotStatus,  
   initAdminPanel: async () => {
     if (statusInterval) clearInterval(statusInterval); // ✅ 기존 인터벌 제거
     const sent = await sendBotStatus();
-
-    if (sent && sent.data?.result) {
-      statusInterval = setInterval(() => sendBotStatus(), 60 * 1000); // ✅ 1분마다 갱신
+    if (sent?.data?.result) {
+      statusInterval = setInterval(sendBotStatus, 60000); // ✅ 1분마다 갱신
     }
   },
-
   handleAdminAction
 };
