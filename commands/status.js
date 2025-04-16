@@ -35,22 +35,6 @@ const axiosInstance = axios.create({
   httpAgent: new (require('http').Agent)({ keepAlive: true }), // Keep-Alive 설정
 });
 
-async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
-  try {
-    return await axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: callbackQueryId,
-      text,
-      cache_time: 1,
-    });
-  } catch (err) {
-    const desc = err.response?.data?.description || err.message;
-    console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
-    if (!desc.includes('query is too old') && !desc.includes('query ID is invalid')) {
-      throw err;
-    }
-  }
-}
-
 async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
   const messageId = getAdminMessageId(); // 직접 불러오기 최적화
@@ -259,14 +243,16 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 // ✅ 전역 인터벌 관리
 let statusInterval; // ✅ 전역변수로 인터벌 저장
 
+async function initAdminPanel() {
+  if (statusInterval) clearInterval(statusInterval);
+  const sent = await sendBotStatus();
+  if (sent?.data?.result) {
+    statusInterval = setInterval(sendBotStatus, 60000);
+  }
+}
+
 module.exports = {
-  sendBotStatus,  
-  initAdminPanel: async () => {
-    if (statusInterval) clearInterval(statusInterval); // ✅ 기존 인터벌 제거
-    const sent = await sendBotStatus();
-    if (sent?.data?.result) {
-      statusInterval = setInterval(sendBotStatus, 60000); // ✅ 1분마다 갱신
-    }
-  },
+  sendBotStatus,
+  initAdminPanel,
   handleAdminAction
 };
