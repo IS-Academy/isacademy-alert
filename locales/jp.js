@@ -21,6 +21,8 @@ module.exports = {
     timeframeUnit: "分",
     price: "💲 価格",
     entryInfo: "📊 エントリー {entryCount}% / 平均価格 {entryAvg}",
+    noEntryInfo: "📊 進入比率情報なし / 平均価格計算不可",
+    pnlCalculationError: "📈収益率 +-% / 元本対比 +-%📉 計算不可",
     entrySummary: "⏱️ エントリー状況:",
     entryInfoByTF: "• {tf}分 → ✅ {percent}% / 平均価格 {avg}",
     expectedCloseLong: "想定決済価格: {price} ⬆️",
