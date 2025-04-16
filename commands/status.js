@@ -263,7 +263,7 @@ module.exports = {
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(), 60 * 1000);
       } else {
-        await sendToAdmin("⚠️ 초기 키보드 생성 실패! 관리자 키보드를 수동으로 초기화 해주세요.");
+        await sendToAdmin("⚠️ 초기 키보드 자동 생성에 실패했습니다. 잠시 후 자동 재시도를 진행합니다.");
       }
     } else {
       const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId);
@@ -272,11 +272,11 @@ module.exports = {
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, messageId), 60 * 1000);
       } else {
-        console.warn('⚠️ 관리자 패널 초기화 실패');
-        await sendToAdmin("⚠️ 관리자 패널 상태 갱신 실패! 수동 확인 필요합니다.");
+        console.warn('⚠️ 관리자 패널 상태 갱신 실패');
+        await sendToAdmin("⚠️ 관리자 패널 상태 갱신에 실패했습니다. 잠시 후 자동으로 재시도됩니다.");
       }
     }
   },
-  handleAdminAction // 기존 내용 유지
+  handleAdminAction
 };
 
