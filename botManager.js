@@ -7,6 +7,7 @@ const axiosInstance = axios.create({
   httpAgent: new (require('http').Agent)({ keepAlive: true }),
 });
 
+// ✅ 콜백 응답
 async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
   return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
     callback_query_id: callbackQueryId,
@@ -154,15 +155,6 @@ const sendToChoi = (text, replyMarkup = null, options = {}) => {
 const sendToMing = (text, replyMarkup = null, options = {}) => {
   return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
 };
-
-// ✅ 콜백 응답
-async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
-  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-    callback_query_id: callbackQueryId,
-    text,
-    cache_time: 1,
-  });
-}
 
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
