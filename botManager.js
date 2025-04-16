@@ -1,4 +1,4 @@
-//✅👇 botManager.js
+// ✅👇 botManager.js (최종 리팩토링 + 필수 기능 복원)
 
 const axios = require('axios');
 const config = require('./config');
@@ -142,33 +142,6 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
-async function sendToAdmin(text, replyMarkup = null, options = {}) {
-  const token = config.ADMIN_BOT_TOKEN;
-  const chatId = config.ADMIN_CHAT_ID;
-
-  try {
-    return await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id: chatId,
-      text,
-      parse_mode: options.parse_mode || 'HTML',
-      reply_markup: replyMarkup || undefined
-    });
-  } catch (err) {
-    console.error('❌ sendToAdmin 실패:', err.response?.data || err.message);
-    throw err;
-  }
-}
-
-// ✅ 최실장 메시지 전송 함수 추가
-async function sendToChoi(text, replyMarkup = null, options = {}) {
-  return sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, replyMarkup, options);
-}
-
-// ✅ 밍밍 메시지 전송 함수 추가
-async function sendToMing(text, replyMarkup = null, options = {}) {
-  return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
-}
-
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
@@ -209,15 +182,12 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
 // ✅ export 모듈
 module.exports = {
   editMessage,
-  sendTextToBot,
-  sendToChoi,
-  sendToMing,
-  sendToAdmin,
-  getSymbolToggleKeyboard,
-  getDynamicInlineKeyboard,
+  answerCallback,
   getLangKeyboard,
   getLangMenuKeyboard,
-  getTemplateTestKeyboard,
   getUserToggleKeyboard,
-  answerCallback
+  getSymbolToggleKeyboard,
+  getTemplateTestKeyboard,
+  getDynamicInlineKeyboard,
+  sendTextToBot
 };

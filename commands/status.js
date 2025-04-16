@@ -26,7 +26,6 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
-const testTemplate = require('../handlers/testTemplateHandler');
 
 const cache = new Map();
 
@@ -34,6 +33,14 @@ const axiosInstance = axios.create({
   timeout: 5000, // 요청 제한시간 5초
   httpAgent: new (require('http').Agent)({ keepAlive: true }), // Keep-Alive 설정
 });
+
+async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
+  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+    callback_query_id: callbackQueryId,
+    text,
+    cache_time: 1,
+  });
+}
 
 async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
@@ -108,15 +115,20 @@ async function handleAdminAction(data, ctx) {
 
       if (data.startsWith('test_template_')) {
         const type = data.replace('test_template_', '');
+        const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
+        const symbol = 'btcusdt.p';
+        const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
 
-        try {
-          await testTemplate(type); // ✅ 새로 만든 핸들러로 처리
-          await answerCallback(callbackQueryId, '✅ 웹훅 방식 테스트 완료');
-        } catch (err) {
-          console.error('❌ 템플릿 테스트 오류:', err.message);
-          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `❌ 템플릿 오류: ${err.message}`);
-          await answerCallback(callbackQueryId, '❌ 템플릿 테스트 실패');          
-        }
+        const msg = getTemplate({
+          type, symbol, timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
+          entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
+          direction: type.endsWith('Short') ? 'short' : 'long'
+        });
+
+        await Promise.all([
+          sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
+          answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
+        ]);
         return;
       }
 
@@ -163,42 +175,20 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const dummyKey = lastDummy || 'no-dummy';
   const key = `${chatId}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
 
-  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid()
-    ? moment.tz(lastDummy, tz)
-    : null;
+  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
-  const dummyTimeFormatted = dummyMoment
-    ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`)
-    : '기록 없음';
-  const elapsedText = elapsed !== null
-    ? elapsed < 1
-      ? '방금 전'
-      : `+${elapsed}분 전`
-    : '';
+  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
+  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
   if (options.callbackQueryId) {
-    try {
-      await axios.post(
-        `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`,
-        {
-          callback_query_id: options.callbackQueryId,
-          text: options.callbackResponse || '✅ 처리 완료!',
-          show_alert: false,
-          cache_time: 1, // 빠른 응답 속도 최적화
-        }
-      );
-    } catch (err) {
-      const desc = err.response?.data?.description || err.message;
-      console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
-      if (
-        !desc.includes('query is too old') &&
-        !desc.includes('query ID is invalid')
-      ) {
-        throw err; // 다른 오류라면 다시 throw
-      }
-    }
+    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+      callback_query_id: options.callbackQueryId,
+      text: options.callbackResponse || '✅ 처리 완료!',
+      show_alert: false,
+      cache_time: 1  // 빠른 응답 속도 최적화
+    });
   }
-
+  
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
@@ -221,38 +211,33 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
     `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
-    `──────────────────────`,
+    `──────────────────────`
   ].join('\n');
 
-  try {
+  try {    
     const sent = await editMessage(
       'admin',
       chatId,
       messageId || getAdminMessageId(),
       statusMsg,
-      getDynamicInlineKeyboard(),
-      { parse_mode: 'HTML' }
+      getDynamicInlineKeyboard(), // ✅ 실시간 상태가 반영된 키보드 적용
+      { parse_mode: 'HTML', ...options }
     );
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
+    return null;
   }
 }
-
-// ✅ 전역 인터벌 관리
-let statusInterval; // ✅ 전역변수로 인터벌 저장
-
-async function initAdminPanel() {
-  if (statusInterval) clearInterval(statusInterval);
-  const sent = await sendBotStatus();
-  if (sent?.data?.result) {
-    statusInterval = setInterval(sendBotStatus, 60000);
-  }
-}
-
+  
 module.exports = {
   sendBotStatus,
-  initAdminPanel,
+  initAdminPanel: async () => {
+    const sent = await sendBotStatus();
+    if (sent && sent.data?.result) {
+      setInterval(() => sendBotStatus(), 60 * 1000);
+    }
+  },
   handleAdminAction
 };

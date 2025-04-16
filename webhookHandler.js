@@ -8,13 +8,13 @@ const handleTableWebhook = require("./handlers/tableHandler");
 const { getTimeString, saveBotState, setAdminMessageId } = require("./utils");
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
 const { getTemplate } = require("./MessageTemplates");
-const { editMessage, sendToChoi, sendToMing, sendToAdmin, getSymbolToggleKeyboard, answerCallback } = require("./botManager");
+const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, getSymbolToggleKeyboard } = require("./botManager");
+const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
 const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 핸들러
 const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로드
 const fs = require('fs');
 const path = require('path');
-const processedCallbackQueries = new Set();
 
 // ✅ 전역 캐시 & 스위치 선언
 const entryCache = {};
@@ -52,16 +52,15 @@ module.exports = async function webhookHandler(req, res) {
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
-      const symbol = update.symbol?.toLowerCase() || "unknown"; // 처리용 (자동매매, 비교) // toLowerCase = 소문자
-      const displaySymbol = update.symbol?.toUpperCase() || "UNKNOWN"; // 표시용 (텔레그램 등) // toUpperCase = 대문자
+      const symbol = update.symbol?.toLowerCase() || "unknown";
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
       const leverage = update.leverage || config.DEFAULT_LEVERAGE;
 
       // ✅ 종목 사용 가능 여부 확인
-      if (!tradeSymbols[symbol]?.enabled && !update.isTest) {
-        console.warn(`⛔ [자동매매 비활성화된 종목] ${displaySymbol} → 무시됨`);
+      if (!tradeSymbols[symbol]?.enabled) {
+        console.warn(`⛔ [자동매매 비활성화된 종목] ${symbol} → 무시됨`);
         return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
       }
 
@@ -125,7 +124,7 @@ module.exports = async function webhookHandler(req, res) {
 
       // ✅ 메시지 템플릿 생성
       const msgChoi = getTemplate({ 
-        type, symbol: displaySymbol, timeframe, price, ts, 
+        type, symbol, timeframe, price, ts, 
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
@@ -134,7 +133,7 @@ module.exports = async function webhookHandler(req, res) {
       });
 
       const msgMing = getTemplate({ 
-        type, symbol: displaySymbol, timeframe, price, ts, 
+        type, symbol, timeframe, price, ts, 
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
@@ -143,26 +142,20 @@ module.exports = async function webhookHandler(req, res) {
       });
       
       // ✅ 텔레그램 전송
-      if (update.isTest) {
-        // 테스트일 경우 관리자 봇으로만 전송
-        if (msgChoi.trim()) await sendToAdmin(msgChoi);
-      } else {      
-        if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
-        if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
+      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
+      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
       // 📸 이미지 캡처 실행 추가 (여기 추가된 코드)
-        if (["exitLong", "exitShort"].includes(type)) {
-          const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
-          const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
-          exec(captureCommand, (error, stdout, stderr) => {
-            if (error) console.error(`❌ 캡처 실패: ${error.message}`);
-            else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
-            else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
-          });
-        }
+      if (["exitLong", "exitShort"].includes(type)) {
+        const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
+        const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
+        exec(captureCommand, (error, stdout, stderr) => {
+          if (error) console.error(`❌ 캡처 실패: ${error.message}`);
+          else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
+          else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
+        });
       }
 
-      // ✅ 정상적인 전송 완료 반환
       return res.status(200).send("✅ 텔레그램 및 자동매매 전송 성공");
     } catch (err) {
       console.error("❌ 텔레그램/자동매매 처리 오류:", err.stack || err.message);
@@ -172,19 +165,14 @@ module.exports = async function webhookHandler(req, res) {
 
   // ✅ 버튼 눌렀을 때 처리
   if (update.callback_query) {
-    const callbackId = update.callback_query.id;
-
-    if (processedCallbackQueries.has(callbackId)) {
-      console.log('⚠️ 중복 콜백 쿼리 요청 무시:', callbackId);
-      return res.sendStatus(200);
-    }
-
-    processedCallbackQueries.add(callbackId);    
-    
     const cmd = update.callback_query.data;
-    const chatId = update.callback_query.message.chat.id;
-    const messageId = update.callback_query.message.message_id;
-    const ctx = { chat: { id: chatId }, callbackQuery: update.callback_query };
+    const chatId = update.callback_query?.message?.chat?.id;
+    const messageId = update.callback_query?.message?.message_id;
+
+    const ctx = {
+      chat: { id: chatId },
+      callbackQuery: update.callback_query
+    };
 
     if (cmd.startsWith('toggle_symbol_')) {
       const symbolKey = cmd.replace('toggle_symbol_', '').toLowerCase();
@@ -200,15 +188,14 @@ module.exports = async function webhookHandler(req, res) {
 
         await Promise.all([
           editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
-          answerCallback(callbackId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
+          answerCallback(update.callback_query.id, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
         ]);
       }
       return res.sendStatus(200);
-    } else {
-      console.warn('⚠️ 정의되지 않은 명령:', cmd);
-      await answerCallback(callbackId, '⚠️ 정의되지 않은 명령입니다.');
-      return res.sendStatus(200);
     }
+
+    await handleAdminAction(cmd, ctx);
+    return res.sendStatus(200);
   }
 
   if (update.message?.text) {
