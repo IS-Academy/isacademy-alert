@@ -54,14 +54,20 @@ async function handleAdminAction(data, ctx) {
       global.choiEnabled = !global.choiEnabled;
       responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
-      await sendBotStatus(chatId, messageId, { callbackQueryId, callbackResponse: responseText });
+      await sendBotStatus(chatId, messageId, {
+      callbackQueryId, 
+      callbackResponse: responseText
+    });
       break;
 
     case 'ming_toggle':
       global.mingEnabled = !global.mingEnabled;
       responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
-      await sendBotStatus(chatId, messageId, { callbackQueryId, callbackResponse: responseText });
+      await sendBotStatus(chatId, messageId, {
+      callbackQueryId, 
+      callbackResponse: responseText
+    });
       break;
 
     case 'lang_menu':
@@ -224,7 +230,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   ].join('\n');
 
   try {
-    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, inlineKeyboard, { parse_mode: 'HTML', ...options });
+    const { getDynamicInlineKeyboard } = require('../botManager');
+    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
