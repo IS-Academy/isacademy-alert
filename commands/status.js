@@ -219,11 +219,11 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     `──────────────────────`
   ].join('\n');
 
-  try {    
+  try {
     if (!messageId) {  // ✅ 키보드 ID 없는 경우 (서버 재시작 직후)
-      clearInterval(intervalId); // ✅ 기존 더미 반복을 중지
+      if (intervalId) clearInterval(intervalId); // 기존 인터벌 중지
       await sendToAdmin("⚠️ 기존 키보드가 없어서 상태 갱신을 중지합니다.\n수동으로 상태 메시지를 생성해주세요.");
-      return null;  // ✅ 키보드 메시지 생성 안 함
+      return null;  // 키보드 메시지 생성 안 함
     }
 
     const sent = await editMessage(
@@ -231,7 +231,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       chatId,
       messageId,
       statusMsg,
-      getDynamicInlineKeyboard(), // ✅ 실시간 상태가 반영된 키보드 적용
+      getDynamicInlineKeyboard(), // 실시간 키보드 상태 적용
       { parse_mode: 'HTML', ...options }
     );
 
@@ -257,13 +257,11 @@ module.exports = {
     }
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId);
     if (sent && sent.data?.result) {
-      clearInterval(intervalId); // 기존 인터벌 정리 후 재시작
+      if (intervalId) clearInterval(intervalId); // 기존 인터벌 정리 후 재시작
       intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, messageId), 60 * 1000);
     } else {
       console.warn('⚠️ 관리자 패널 초기화 실패');
     }
   },
-  handleAdminAction: async (data, ctx) => {
-    // 기존 handleAdminAction 내용 유지 (여기서는 변동 없음)
-  }
+  handleAdminAction // 기존 handleAdminAction 내용 그대로 유지
 };
