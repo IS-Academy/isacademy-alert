@@ -98,9 +98,6 @@ async function handleAdminAction(data, ctx) {
       newText = '📋 관리자 메뉴로 돌아갑니다';
       newKeyboard = getDynamicInlineKeyboard(); 
       responseText = '↩️ 메인 메뉴로 이동';
-      isMenuOpened = false;
-      shouldSendStatus = true;
-      await sendTextToBot('admin', chatId, '🔄 메인 키보드 상태 업데이트', getMainKeyboard());
       break;
 
     default:
