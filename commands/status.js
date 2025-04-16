@@ -2,7 +2,6 @@
 
 const {
   editMessage,
-  inlineKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
@@ -54,7 +53,7 @@ async function handleAdminAction(data, ctx) {
       global.choiEnabled = !global.choiEnabled;
       responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
-      await sendBotStatus(chatId, messageId, {
+      await sendBotStatus(chatId, getAdminMessageId(), {
       callbackQueryId, 
       callbackResponse: responseText
     });
@@ -64,7 +63,7 @@ async function handleAdminAction(data, ctx) {
       global.mingEnabled = !global.mingEnabled;
       responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
-      await sendBotStatus(chatId, messageId, {
+      await sendBotStatus(chatId, getAdminMessageId(), {
       callbackQueryId, 
       callbackResponse: responseText
     });
@@ -97,7 +96,7 @@ async function handleAdminAction(data, ctx) {
 
     case 'back_main':
       newText = '📋 관리자 메뉴로 돌아갑니다';
-      newKeyboard = inlineKeyboard;
+      newKeyboard = getDynamicInlineKeyboard(); 
       responseText = '↩️ 메인 메뉴로 이동';
       isMenuOpened = false;
       shouldSendStatus = true;
