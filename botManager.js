@@ -159,6 +159,16 @@ async function sendToAdmin(text, replyMarkup = null, options = {}) {
   }
 }
 
+// ✅ 최실장 메시지 전송 함수 추가
+async function sendToChoi(text, replyMarkup = null, options = {}) {
+  return sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, replyMarkup, options);
+}
+
+// ✅ 밍밍 메시지 전송 함수 추가
+async function sendToMing(text, replyMarkup = null, options = {}) {
+  return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
+}
+
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
