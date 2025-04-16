@@ -3,21 +3,33 @@
 const axios = require('axios');
 const config = require('./config');
 
-// ✅ 관리자 인라인 키보드 패널
+// ✅ 관리자 인라인 키보드 패널 (기존 유지)
 const inlineKeyboard = {
   inline_keyboard: [
     [{ text: '👨‍💼 최실장', callback_data: 'choi_toggle' }, { text: '👩‍💼 밍밍', callback_data: 'ming_toggle' }],
     [{ text: '🌐 언어선택', callback_data: 'lang_menu' }],
     [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
-    [{ text: '🧪 템플릿 테스트 메뉴', callback_data: 'test_menu' }],
+    [{ text: '🧪 템플릿 테스트', callback_data: 'test_menu' }],
     [{ text: '📊 종목 ON/OFF 관리', callback_data: 'symbol_toggle_menu' }]
   ]
 };
 
-const mainKeyboard = {
-  keyboard: [['🌐 언어선택', '📊 종목 설정'], ['📡 상태 확인', '🔁 더미 상태']],
-  resize_keyboard: true
-};
+// ✅ 실시간 최실장/밍밍 상태를 반영하는 메인 키보드 생성
+function getMainKeyboard() {
+  const choiState = global.choiEnabled ? '✅' : '❌';
+  const mingState = global.mingEnabled ? '✅' : '❌';
+
+  return {
+    keyboard: [
+      [`👨‍💼 최실장 ${choiState}`, `👩‍💼 밍밍 ${mingState}`],
+      ['🌐 언어선택'],
+      ['📡 상태 확인', '🔁 더미 상태'],
+      ['🧪 템플릿 테스트'],
+      ['📊 종목 ON/OFF 관리']
+    ],
+    resize_keyboard: true
+  };
+}
 
 // ✅ 언어 선택 하위 메뉴
 function getLangMenuKeyboard() {
@@ -102,10 +114,8 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
                 config.ADMIN_BOT_TOKEN;
 
-  console.log(📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId});
-
   try {
-    const response = await axios.post(https://api.telegram.org/bot${token}/sendMessage, {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
       chat_id: chatId,
       text,
       parse_mode: options.parse_mode || 'HTML',
@@ -113,20 +123,16 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
     });
 
     if (options.callbackQueryId) {
-      await axios.post(https://api.telegram.org/bot${token}/answerCallbackQuery, {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
         text: options.callbackResponse || '',
         show_alert: false
       });
     }
 
-    if (options.logMessage) {
-      console.log(options.logMessage);
-    }
-
     return response;
   } catch (err) {
-    console.error(❌ sendTextToBot 실패 (${botType}):, err.response?.data || err.message);
+    console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
     throw err;
   }
 }
@@ -136,7 +142,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   const token = config.ADMIN_BOT_TOKEN;
 
   try {
-    const response = await axios.post(https://api.telegram.org/bot${token}/editMessageText, {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
       chat_id: chatId,
       message_id: messageId,
       text,
@@ -145,15 +151,11 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     });
 
     if (options.callbackQueryId) {
-      await axios.post(https://api.telegram.org/bot${token}/answerCallbackQuery, {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
         callback_query_id: options.callbackQueryId,
         text: options.callbackResponse || '',
         show_alert: false
       });
-    }
-
-    if (options.logMessage) {
-      console.log(options.logMessage);
     }
 
     return response;
@@ -161,10 +163,8 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     const errorMsg = err.response?.data?.description || err.message;
 
     if (errorMsg.includes('message is not modified')) {
-      console.log('🔹 editMessage: 변경 사항 없음');
       return { data: { result: true } };
     } else if (errorMsg.includes('message to edit not found')) {
-      console.warn('🔸 editMessage: 메시지 없음, 신규 메시지 전송');
       return await sendTextToBot(botType, chatId, text, replyMarkup, options);
     } else {
       console.error('❌ editMessage 실패:', errorMsg);
@@ -175,16 +175,16 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
 
 // ✅ export 모듈
 module.exports = {
-  sendToAdmin: (text, keyboard = mainKeyboard) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard),
+  sendToAdmin: (text, keyboard = getMainKeyboard()) => sendTextToBot('admin', config.ADMIN_CHAT_ID, text, keyboard),
   sendToChoi: (text) => sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text),
   sendToMing: (text) => sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text),
   editMessage,
   inlineKeyboard,
-  mainKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
-  sendTextToBot
+  sendTextToBot,
+  getMainKeyboard
 };
