@@ -68,8 +68,8 @@ function getSymbolToggleKeyboard() {
   const symbols = require('./trader-gate/symbols');
   const buttons = Object.entries(symbols).map(([symbol, info]) => {
     return [{
-      text: ${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()},
-      callback_data: toggle_symbol_${symbol}
+      text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
+      callback_data: `toggle_symbol_${symbol}`
     }];
   });
   buttons.push([{ text: '🔙 돌아가기', callback_data: 'back_main' }]);
