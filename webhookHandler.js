@@ -206,8 +206,9 @@ module.exports = async function webhookHandler(req, res) {
       }
       return res.sendStatus(200);
     } else {
-    await handleAdminAction(cmd, ctx);
-    return res.sendStatus(200);
+      await handleAdminAction(cmd, ctx);
+      return res.sendStatus(200);
+    }
   }
 
   if (update.message?.text) {
