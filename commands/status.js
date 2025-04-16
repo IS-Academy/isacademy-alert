@@ -125,6 +125,7 @@ async function handleAdminAction(data, ctx) {
           leverage: config.DEFAULT_LEVERAGE,
           entryAvg: 62000,
           entryRatio: 5,
+          isTest: true, // 👈 테스트 플래그 추가
         };
         try {
           const webhookHandler = require('../webhookHandler');
