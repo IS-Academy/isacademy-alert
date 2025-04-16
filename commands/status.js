@@ -29,6 +29,7 @@ const path = require('path');
 const axios = require('axios');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 
+let intervalId = null; // ✅ 인터벌 변수 선언 및 초기화
 const cache = new Map();
 
 const axiosInstance = axios.create({
@@ -251,18 +252,30 @@ module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
     const messageId = getAdminMessageId();
+
     if (!messageId) {
-      console.warn("⚠️ 초기 메시지 ID 없음. 상태 메시지 수동 초기화 필요.");
-      await sendToAdmin("⚠️ 초기 키보드가 없습니다.\n관리자 키보드를 수동으로 초기화 해주세요.");
-      return;
-    }
-    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId);
-    if (sent && sent.data?.result) {
-      if (intervalId) clearInterval(intervalId); // 기존 인터벌 정리 후 재시작
-      intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, messageId), 60 * 1000);
+      console.warn("⚠️ 초기 메시지 ID 없음. 새 관리자 키보드를 생성합니다.");
+      const sent = await sendBotStatus(); // 메시지 ID 없으면 자동 생성
+      if (sent && sent.data?.result) {
+        setAdminMessageId(sent.data.result.message_id); // 메시지 ID 설정
+        console.log('✅ 관리자 패널 최초 생성 완료');
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => sendBotStatus(), 60 * 1000);
+      } else {
+        await sendToAdmin("⚠️ 초기 키보드 생성 실패! 관리자 키보드를 수동으로 초기화 해주세요.");
+      }
     } else {
-      console.warn('⚠️ 관리자 패널 초기화 실패');
+      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId);
+      if (sent && sent.data?.result) {
+        console.log('✅ 관리자 패널 상태 갱신 시작');
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, messageId), 60 * 1000);
+      } else {
+        console.warn('⚠️ 관리자 패널 초기화 실패');
+        await sendToAdmin("⚠️ 관리자 패널 상태 갱신 실패! 수동 확인 필요합니다.");
+      }
     }
   },
-  handleAdminAction // 기존 handleAdminAction 내용 그대로 유지
+  handleAdminAction // 기존 내용 유지
 };
+
