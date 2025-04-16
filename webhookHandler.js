@@ -15,6 +15,7 @@ const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // �
 const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로드
 const fs = require('fs');
 const path = require('path');
+const processedCallbackQueries = new Set();
 
 // ✅ 전역 캐시 & 스위치 선언
 const entryCache = {};
@@ -172,6 +173,15 @@ module.exports = async function webhookHandler(req, res) {
 
   // ✅ 버튼 눌렀을 때 처리
   if (update.callback_query) {
+    const callbackId = update.callback_query.id;
+
+    if (processedCallbackQueries.has(callbackId)) {
+      console.log('⚠️ 중복 콜백 쿼리 요청 무시:', callbackId);
+      return res.sendStatus(200);
+    }
+
+    processedCallbackQueries.add(callbackId);    
+    
     const cmd = update.callback_query.data;
     const chatId = update.callback_query?.message?.chat?.id;
     const messageId = update.callback_query?.message?.message_id;
@@ -180,6 +190,10 @@ module.exports = async function webhookHandler(req, res) {
       chat: { id: chatId },
       callbackQuery: update.callback_query
     };
+
+    await handleAdminAction(cmd, ctx);
+    return res.sendStatus(200);
+  }
 
     if (cmd.startsWith('toggle_symbol_')) {
       const symbolKey = cmd.replace('toggle_symbol_', '').toLowerCase();
