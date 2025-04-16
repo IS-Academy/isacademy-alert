@@ -21,6 +21,8 @@ module.exports = {
     timeframeUnit: "min",
     price: "💲 Price",
     entryInfo: "📊 Entry {entryCount}% / Avg {entryAvg}",
+    noEntryInfo: "📊 No entry ratio info / Avg price N/A",
+    pnlCalculationError: "📈PnL +-% / Capital +-%📉 Calculation Error",
     entrySummary: "⏱️ Entry Summary:",
     entryInfoByTF: "• {tf}min → ✅ {percent}% / Avg {avg}",
     expectedCloseLong: "Expected close price: {price} ⬆️",
