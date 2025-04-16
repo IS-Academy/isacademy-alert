@@ -26,7 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
-const webhookHandler = require('../webhookHandler');
+const testTemplate = require('../handlers/testTemplateHandler');
 
 const cache = new Map();
 
@@ -124,28 +124,14 @@ async function handleAdminAction(data, ctx) {
 
       if (data.startsWith('test_template_')) {
         const type = data.replace('test_template_', '');
-        const symbol = 'BTCUSDT.P';
-        const testWebhookData = {
-          type,
-          symbol,
-          timeframe: '1',
-          price: 62500,
-          ts: Math.floor(Date.now() / 1000),
-          leverage: config.DEFAULT_LEVERAGE,
-          entryAvg: 62000,
-          entryRatio: 5,
-          isTest: true, // 👈 테스트 플래그 추가
-        };
+
         try {
-          await webhookHandler(
-            { body: testWebhookData },
-            { status: () => ({ send: () => {} }), sendStatus: () => {} }
-          );
+          await testTemplate(type); // ✅ 새로 만든 핸들러로 처리
           await answerCallback(callbackQueryId, '✅ 웹훅 방식 테스트 완료');
         } catch (err) {
           console.error('❌ 템플릿 테스트 오류:', err.message);
           await sendTextToBot('admin', config.ADMIN_CHAT_ID, `❌ 템플릿 오류: ${err.message}`);
-          await answerCallback(callbackQueryId, '❌ 템플릿 테스트 실패');
+          await answerCallback(callbackQueryId, '❌ 템플릿 테스트 실패');          
         }
         return;
       }
