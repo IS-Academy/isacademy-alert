@@ -142,20 +142,26 @@ module.exports = async function webhookHandler(req, res) {
       });
       
       // ✅ 텔레그램 전송
-      if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
-      if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
+      if (update.isTest) {
+        // 테스트일 경우 관리자 봇으로만 전송
+        if (msgChoi.trim()) await sendToAdmin(msgChoi);
+      } else {      
+        if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
+        if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
       // 📸 이미지 캡처 실행 추가 (여기 추가된 코드)
-      if (["exitLong", "exitShort"].includes(type)) {
-        const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
-        const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
-        exec(captureCommand, (error, stdout, stderr) => {
-          if (error) console.error(`❌ 캡처 실패: ${error.message}`);
-          else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
-          else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
-        });
+        if (["exitLong", "exitShort"].includes(type)) {
+          const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
+          const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
+          exec(captureCommand, (error, stdout, stderr) => {
+            if (error) console.error(`❌ 캡처 실패: ${error.message}`);
+            else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
+            else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
+          });
+        }
       }
 
+      // ✅ 정상적인 전송 완료 반환
       return res.status(200).send("✅ 텔레그램 및 자동매매 전송 성공");
     } catch (err) {
       console.error("❌ 텔레그램/자동매매 처리 오류:", err.stack || err.message);
