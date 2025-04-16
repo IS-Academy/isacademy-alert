@@ -21,10 +21,10 @@ module.exports = {
     timeframeUnit: "분",
     price: "💲 가격",
     entryInfo: "📊 진입 {entryCount}% / 평균단가 {entryAvg}",
-    noEntryInfo: "📊 진입 비율 정보 없음 / 평균가 계산 불가",
+    noEntryInfo: "📊 진입 비율 정보 없음 / 평균단가 계산 불가",
     pnlCalculationError: "📈수익률 +-% / 원금대비 +-%📉 계산 불가",    
     entrySummary: "⏱️ 진입 현황:",
-    entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균가 {avg}",
+    entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균단가 {avg}",
 
     // ✅ 청산 방향별 메시지
     expectedCloseLong: "예상 청산가: {price} ⬆️",
