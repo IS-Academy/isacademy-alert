@@ -201,9 +201,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       cache_time: 1  // 빠른 응답 속도 최적화
     });
   }
-    return;
-  }
-
+  
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
