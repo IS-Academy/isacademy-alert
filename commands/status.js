@@ -1,4 +1,4 @@
-// ✅👇 commands/status.js
+//✅👇 commands/status.js
 
 const {
   editMessage,
