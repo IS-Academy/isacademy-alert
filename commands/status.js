@@ -22,6 +22,7 @@ const { translations } = require('../lang');
 const moment = require('moment-timezone');
 const { getTemplate } = require('../MessageTemplates');
 const { getEntryInfo } = require('../entryManager');
+const { loadBotState, saveBotState } = require('../utils');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -53,8 +54,12 @@ async function handleAdminAction(data, ctx) {
     case 'choi_toggle':
     case 'ming_toggle':
       const isChoi = data === 'choi_toggle';
-      global[isChoi ? 'choiEnabled' : 'mingEnabled'] = !global[isChoi ? 'choiEnabled' : 'mingEnabled'];
-      responseText = `${isChoi ? '👨‍💼 최실장' : '👩‍💼 밍밍'} ${global[isChoi ? 'choiEnabled' : 'mingEnabled'] ? '✅ ON' : '❌ OFF'}`;
+      const botState = loadBotState();  // ✅ 파일 상태 로딩
+      botState[isChoi ? 'choiEnabled' : 'mingEnabled'] = !botState[isChoi ? 'choiEnabled' : 'mingEnabled'];
+      saveBotState(botState);  // ✅ 파일에 상태 저장
+      global.choiEnabled = botState.choiEnabled;  // ✅ global도 같이 동기화
+      global.mingEnabled = botState.mingEnabled;  // ✅ global도 같이 동기화      
+      responseText = `${isChoi ? '👨‍💼 최실장' : '👩‍💼 밍밍'} ${botState[isChoi ? 'choiEnabled' : 'mingEnabled'] ? '✅ ON' : '❌ OFF'}`;
       await Promise.all([
         sendBotStatus(chatId, messageId),
         answerCallback(callbackQueryId, responseText),
