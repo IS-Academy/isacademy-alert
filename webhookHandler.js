@@ -183,22 +183,6 @@ module.exports = async function webhookHandler(req, res) {
 
     await handleAdminAction(cmd, ctx);
     res.sendStatus(200);
-
-    if (!chatId) return;
-    const lang = getUserLang(chatId);
-    const timeStr = getTimeString();
-
-    if (["choi_on", "choi_off", "ming_on", "ming_off"].includes(cmd)) {
-      global.choiEnabled = cmd === "choi_on" ? true : cmd === "choi_off" ? false : global.choiEnabled;
-      global.mingEnabled = cmd === "ming_on" ? true : cmd === "ming_off" ? false : global.mingEnabled;
-      saveBotState({ choiEnabled: global.choiEnabled, mingEnabled: global.mingEnabled });
-    } else if (cmd.startsWith("lang_choi_") || cmd.startsWith("lang_ming_")) {
-      const [_, bot, langCode] = cmd.split("_");
-      const targetId = bot === "choi" ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
-      langManager.setUserLang(targetId, langCode);
-    }
-
-    await sendBotStatus(timeStr, cmd, chatId, messageId);
     return;
   }
 
