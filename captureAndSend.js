@@ -4,9 +4,9 @@ require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
-const path = require('path');
 const { loadBotState } = require('./utils');
-
+const fs = require('fs');
+const path = require('path');
 const STATE_FILE = path.join(__dirname, 'bot_state.json');
 
 function loadStableBotState() {
