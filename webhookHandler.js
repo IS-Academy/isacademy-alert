@@ -6,6 +6,7 @@ const langManager = require("./langConfigManager");
 const dummyHandler = require("./dummyHandler");
 const handleTableWebhook = require("./handlers/tableHandler");
 const { getTimeString, saveBotState } = require("./utils");
+const { setAdminMessageId } = require('./utils');
 
 // ✅ entryManager import
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
@@ -201,26 +202,27 @@ module.exports = async function webhookHandler(req, res) {
     return;
   }
 
-  if (update.message && update.message.text) {
-    const chatId = update.message.chat.id;
-    const messageText = update.message.text.trim();
-    const timeStr = getTimeString();
-    const lower = messageText.toLowerCase();
+if (update.message && update.message.text) {
+  const chatId = update.message.chat.id;
+  const messageText = update.message.text.trim();
+  const timeStr = getTimeString();
+  const lower = messageText.toLowerCase();
 
-    res.sendStatus(200);
+  res.sendStatus(200);
 
-    if (lower === '/test_menu') {
-      await sendBotStatus(timeStr, 'test_menu', chatId); // ✅ 템플릿 테스트 키보드 호출
-      return;
-    }
-
-    if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
-      await sendBotStatus(timeStr, '', chatId);
-    } else {
-      await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
-    }
+  if (lower === '/test_menu') {
+    await sendBotStatus(timeStr, 'test_menu', chatId);
     return;
   }
+
+  if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
+    const sent = await sendBotStatus(timeStr, '', chatId);
+    if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id); // 🔥 정확한 위치!
+  } else {
+    await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
+  }
+  return;
+}
 
   res.sendStatus(200);
 };
