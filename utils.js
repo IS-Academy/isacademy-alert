@@ -105,8 +105,7 @@ function getLastDummyTime() {
 }
 
 // ✅ 봇 상태 저장
-const path = require('path');
-const STATE_FILE = path.join(__dirname, 'bot_state.json');
+const STATE_FILE = './bot_state.json';
 
 function loadBotState() {
   try {
