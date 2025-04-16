@@ -9,7 +9,7 @@ const {
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
   sendTextToBot,
-  getMainKeyboard
+  getDynamicInlineKeyboard
 } = require('../botManager');
 
 const langManager = require('../langConfigManager');
@@ -172,6 +172,7 @@ async function handleAdminAction(data, ctx) {
 async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
+  const { getDynamicInlineKeyboard } = require('../botManager');
 
   const { choiEnabled, mingEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
@@ -229,8 +230,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     `──────────────────────`
   ].join('\n');
 
-  try {
-    const { getDynamicInlineKeyboard } = require('../botManager');
+  try {    
     const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
