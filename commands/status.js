@@ -107,7 +107,7 @@ async function handleAdminAction(data, ctx) {
         langManager.setUserLang(targetId, langCode);
         await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경되었습니다.`);
         newText = '📋 관리자 메뉴로 돌아갑니다';
-        newKeyboard = inlineKeyboard;
+        newKeyboard = getDynamicInlineKeyboard()
         responseText = '✅ 언어 변경 완료';
         isMenuOpened = false;
       }
@@ -127,7 +127,7 @@ async function handleAdminAction(data, ctx) {
           const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
           await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
           newText = '📋 관리자 메뉴로 돌아갑니다';
-          newKeyboard = inlineKeyboard;
+          newKeyboard = getDynamicInlineKeyboard()
           responseText = '✅ 테스트 완료';
           isMenuOpened = false;
         } catch (err) {
