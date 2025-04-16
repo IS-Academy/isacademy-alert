@@ -52,7 +52,7 @@ module.exports = async function webhookHandler(req, res) {
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
-      const symbol = update.symbol?.toLowerCase() || "unknown";
+      const symbol = update.symbol?.toUpperCase() || "UNKNOWN"; // toLowerCase = 소문자 / toUpperCase = 대문자
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
