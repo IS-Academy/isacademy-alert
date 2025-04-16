@@ -1,4 +1,4 @@
-// ✅👇 /trader-gate/positionManager.js
+//✅👇 /trader-gate/positionManager.js
 
 // 포지션 상태 저장소: 심볼 → 타임프레임 → 포지션 정보
 const positions = {}; // 예: positions['BTC_USDT']['1'] = { side: 'long', entryPrice: 60000 }
