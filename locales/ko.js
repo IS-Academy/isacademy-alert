@@ -1,4 +1,4 @@
-// ✅👇 locales/ko.js
+//✅👇 locales/ko.js
 
 module.exports = {
   symbols: {
