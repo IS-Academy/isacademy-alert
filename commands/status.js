@@ -144,7 +144,7 @@ async function handleAdminAction(data, ctx) {
       }
   }
 
-  if (newText && newKeyboard) {
+  if (typeof newText !== 'undefined' && typeof newKeyboard !== 'undefined') {
     await editMessage('admin', chatId, messageId, newText, newKeyboard, {
       callbackQueryId, 
       callbackResponse: responseText
