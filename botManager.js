@@ -57,8 +57,8 @@ function getLangKeyboard(bot) {
 function getUserToggleKeyboard(target) {
   return {
     inline_keyboard: [[
-      { text: '▶️ 켜기', callback_data: ${target}_on },
-      { text: '⏹️ 끄기', callback_data: ${target}_off }
+      { text: '▶️ 켜기', callback_data: `${target}_on` },
+      { text: '⏹️ 끄기', callback_data: `${target}_off` }
     ], [{ text: '🔙 돌아가기', callback_data: 'back_main' }]]
   };
 }
