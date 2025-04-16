@@ -1,4 +1,4 @@
-// ✅👇 botManager.js (최종 리팩토링 + 필수 기능 복원)
+//✅👇 botManager.js
 
 const axios = require('axios');
 const config = require('./config');
