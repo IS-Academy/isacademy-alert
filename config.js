@@ -1,4 +1,4 @@
-// ✅👇 config.js
+//✅👇 config.js
 
 require('dotenv').config();
 
