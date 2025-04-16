@@ -26,6 +26,7 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
+const webhookHandler = require('../webhookHandler');
 
 const cache = new Map();
 
