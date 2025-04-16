@@ -131,13 +131,22 @@ async function handleAdminAction(data, ctx) {
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
         try {
           const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
+
+          // ✅ 메시지만 전송하고, 키보드나 패널 상태는 절대 바꾸지 않음
           await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
-          newText = '📋 관리자 메뉴로 돌아갑니다';
-          newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
-          responseText = '✅ 테스트 완료';
+
+          // 🔑 추가: 콜백 응답 처리 (빠르게 깜빡임 종료)
+          await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+            callback_query_id: callbackQueryId,
+            text: '✅ 템플릿 테스트 완료',
+            show_alert: false,
+            cache_time: 1
+          });
+
         } catch (err) {
           await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
         }
+        return; // 🔥 필수 추가: 여기서 처리 종료하여 키보드 상태 변경을 차단
       }
 
       if (data.startsWith('toggle_symbol_')) {
