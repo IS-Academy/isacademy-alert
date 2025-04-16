@@ -2,7 +2,6 @@
 
 const {
   editMessage,
-  inlineKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
