@@ -125,7 +125,7 @@ async function handleAdminAction(data, ctx) {
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
 
         const msg = getTemplate({
-          type, symbol, timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
+          type, symbol: symbol.toUpperCase(), timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
           entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
           direction: type.endsWith('Short') ? 'short' : 'long'
         });
