@@ -9,7 +9,6 @@ const { getTimeString, saveBotState, setAdminMessageId } = require("./utils");
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
 const { getTemplate } = require("./MessageTemplates");
 const { editMessage, sendToChoi, sendToMing, sendToAdmin, getSymbolToggleKeyboard, answerCallback } = require("./botManager");
-const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
 const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 핸들러
 const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로드
@@ -206,7 +205,8 @@ module.exports = async function webhookHandler(req, res) {
       }
       return res.sendStatus(200);
     } else {
-      await handleAdminAction(cmd, ctx);
+      console.warn('⚠️ 정의되지 않은 명령:', cmd);
+      await answerCallback(callbackId, '⚠️ 정의되지 않은 명령입니다.');
       return res.sendStatus(200);
     }
   }
