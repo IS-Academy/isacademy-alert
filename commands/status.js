@@ -70,7 +70,21 @@ async function handleAdminAction(data, ctx) {
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
       newKeyboard = getLangKeyboard(data.split('_')[1]);
       responseText = '✅ 언어 선택 메뉴';
-      break;   
+      break;
+      
+    case 'status':
+      await sendBotStatus(chatId, getAdminMessageId(), {
+        callbackQueryId,
+        callbackResponse: '✅ 최신 상태로 업데이트 완료'
+      });
+      break;
+
+    case 'dummy_status':
+      await sendBotStatus(chatId, getAdminMessageId(), {
+        callbackQueryId,
+        callbackResponse: '♻️ 더미 상태 최신화 완료'
+      });
+      break;
 
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
@@ -179,14 +193,14 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
-  if (cache.get(key) === nowTime) {
-    if (options.callbackQueryId) {
-      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-        callback_query_id: options.callbackQueryId,
-        text: '⏱️ 최신 정보입니다.',
-        show_alert: false
-      });
-    }
+  if (options.callbackQueryId) {
+    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+      callback_query_id: options.callbackQueryId,
+      text: options.callbackResponse || '✅ 처리 완료!',
+      show_alert: false,
+      cache_time: 1  // 빠른 응답 속도 최적화
+    });
+  }
     return;
   }
 
