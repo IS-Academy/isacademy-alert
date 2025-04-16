@@ -222,31 +222,31 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   ].join('\n');
 
   try {
-    if (!messageId) {  // ✅ 키보드 ID 없는 경우 (서버 재시작 직후)
-      if (intervalId) clearInterval(intervalId); // 기존 인터벌 중지
-      await sendToAdmin("⚠️ 기존 키보드가 없어서 상태 갱신을 중지합니다.\n수동으로 상태 메시지를 생성해주세요.");
-      return null;  // 키보드 메시지 생성 안 함
-    }
+    let sent;
 
-    const sent = await editMessage(
-      'admin',
-      chatId,
-      messageId,
-      statusMsg,
-      getDynamicInlineKeyboard(), // 실시간 키보드 상태 적용
-      { parse_mode: 'HTML', ...options }
-    );
+    if (!messageId) {  
+      sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
 
-    if (sent?.data?.result?.message_id) {
-      setAdminMessageId(sent.data.result.message_id);
+      if (sent?.data?.result?.message_id) {
+        setAdminMessageId(sent.data.result.message_id);
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+      } else {
+        await sendToAdmin("⚠️ 초기 키보드 생성 실패! 관리자 키보드를 수동으로 초기화 해주세요.");
+      }
+    } else {
+      sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
+
+      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     }
 
     return sent;
+
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
+    await sendToAdmin(`⚠️ 관리자 패널 오류 발생: ${err.message}`);
     return null;
   }
-}
 
 module.exports = {
   sendBotStatus,
