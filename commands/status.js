@@ -99,11 +99,11 @@ async function handleAdminAction(data, ctx) {
       break;
 
     case 'back_main':
-      newText = '📋 관리자 메뉴로 돌아갑니다';
-      newKeyboard = getDynamicInlineKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
-      responseText = '↩️ 메인 메뉴로 이동';
-      shouldSendStatus = true;
-      break;
+      await sendBotStatus(chatId, getAdminMessageId(), {
+        callbackQueryId,
+        callbackResponse: '↩️ 메인 메뉴로 돌아갑니다'
+      });
+      return; // 🔑 여기서 종료 (필수!)
 
     default:
       if (data.startsWith('lang_') && data.split('_').length === 3) {
