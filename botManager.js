@@ -2,6 +2,18 @@
 
 const axios = require('axios');
 const config = require('./config');
+const axiosInstance = axios.create({
+  timeout: 5000,
+  httpAgent: new (require('http').Agent)({ keepAlive: true }),
+});
+
+async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
+  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+    callback_query_id: callbackQueryId,
+    text,
+    cache_time: 1,
+  });
+}
 
 // ✅ 최실장/밍밍 상태 반영된 동적 관리자 인라인 키보드 패널
 function getDynamicInlineKeyboard() {
