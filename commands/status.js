@@ -245,12 +245,15 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   }
 }
   
+let statusInterval; // ✅ 전역변수로 저장
+
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
+    if (statusInterval) clearInterval(statusInterval); // ✅ 기존 인터벌 제거 추가
     const sent = await sendBotStatus();
     if (sent && sent.data?.result) {
-      setInterval(() => sendBotStatus(), 60 * 1000);
+      statusInterval = setInterval(() => sendBotStatus(), 60 * 1000);
     }
   },
   handleAdminAction
