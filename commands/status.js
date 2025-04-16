@@ -96,10 +96,12 @@ async function handleAdminAction(data, ctx) {
         const [_, bot, langCode] = data.split('_');
         const targetId = bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A;
         langManager.setUserLang(targetId, langCode);
-        await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경되었습니다.`);
-        newText = '📋 관리자 메뉴로 돌아갑니다';
-        newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
-        responseText = '✅ 언어 변경 완료';
+
+        await sendBotStatus(chatId, getAdminMessageId(), {
+          callbackQueryId,
+          callbackResponse: `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`
+        });
+        return;
       }
 
       if (data.startsWith('test_template_')) {
