@@ -166,41 +166,55 @@ module.exports = async function webhookHandler(req, res) {
   }
 
   // ✅ 버튼 눌렀을 때 처리
-  if (update.callback_query) {
-    const cmd = update.callback_query.data;
-    const chatId = update.callback_query?.message?.chat?.id;
-    const messageId = update.callback_query?.message?.message_id;
+if (update.callback_query) {
+  const cmd = update.callback_query.data;
+  const chatId = update.callback_query?.message?.chat?.id;
+  const messageId = update.callback_query?.message?.message_id;
 
-    const ctx = {
-      chat: { id: chatId },
-      callbackQuery: update.callback_query
-    };
+  const ctx = {
+    chat: { id: chatId },
+    callbackQuery: update.callback_query
+  };
 
-    if (cmd === 'autotrade_on') global.autoTradeEnabled = true;
-    if (cmd === 'autotrade_off') global.autoTradeEnabled = false;
+  if (cmd === 'autotrade_on') {
+    global.autoTradeEnabled = true;
+    console.log(`[⚙️ 자동매매] 전체 자동매매 상태 → ✅ ON`);
+  } else if (cmd === 'autotrade_off') {
+    global.autoTradeEnabled = false;
+    console.log(`[⚙️ 자동매매] 전체 자동매매 상태 → ❌ OFF`);
+  } else if (cmd.startsWith('toggle_symbol_')) {
+    const symbolKey = cmd.replace('toggle_symbol_', '').toLowerCase();
+    const symbolsPath = path.join(__dirname, './trader-gate/symbols.js');
+    delete require.cache[require.resolve(symbolsPath)];
+    const symbols = require(symbolsPath);
+    
+    if (symbols[symbolKey]) {
+      symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
+      fs.writeFileSync(symbolsPath, `module.exports = ${JSON.stringify(symbols, null, 2)}`);
 
-    console.log(`[⚙️ 자동매매] 상태 변경됨 → ${global.autoTradeEnabled}`);
+      console.log(`[⚙️ 자동매매 종목 변경] ${symbolKey.toUpperCase()} 상태 → ${symbols[symbolKey].enabled ? '✅ ON' : '❌ OFF'}`);
 
-    await handleAdminAction(cmd, ctx);
-    res.sendStatus(200);
-    return;
+      await Promise.all([
+        editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
+        answerCallback(update.callback_query.id, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
+      ]);
+    }
+    return res.sendStatus(200); // 🔑 즉시 명확한 상태 코드 반환
   }
+
+  await handleAdminAction(cmd, ctx);
+  return res.sendStatus(200); // 🔑 여기도 추가
+}
 
 if (update.message && update.message.text) {
   const chatId = update.message.chat.id;
   const messageText = update.message.text.trim();
-  const timeStr = getTimeString();
   const lower = messageText.toLowerCase();
 
   res.sendStatus(200);
 
-  if (lower === '/test_menu') {
-    await sendBotStatus(timeStr, 'test_menu', chatId);
-    return;
-  }
-
-  if (["/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
-    const sent = await sendBotStatus(timeStr, '', chatId);
+  if (["/test_menu", "/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
+    const sent = await sendBotStatus(chatId);
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id); // 🔥 정확한 위치!
   } else {
     await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
