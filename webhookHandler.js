@@ -8,7 +8,7 @@ const handleTableWebhook = require("./handlers/tableHandler");
 const { getTimeString, saveBotState, setAdminMessageId } = require("./utils");
 const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
 const { getTemplate } = require("./MessageTemplates");
-const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, getSymbolToggleKeyboard } = require("./botManager");
+const { editMessage, sendToChoi, sendToMing, sendToAdmin, getSymbolToggleKeyboard } = require("./botManager");
 const { sendBotStatus, handleAdminAction } = require("./commands/status");
 const { exec } = require('child_process');
 const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 핸들러
@@ -205,8 +205,7 @@ module.exports = async function webhookHandler(req, res) {
         ]);
       }
       return res.sendStatus(200);
-    }
-
+    } else {
     await handleAdminAction(cmd, ctx);
     return res.sendStatus(200);
   }
