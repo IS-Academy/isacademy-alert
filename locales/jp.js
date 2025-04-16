@@ -1,4 +1,4 @@
-// ✅👇 locales/jp.js
+//✅👇 locales/jp.js
 
 module.exports = {
   symbols: {
