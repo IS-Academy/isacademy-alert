@@ -44,25 +44,19 @@ async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
-
-  let newText, newKeyboard, responseText, shouldSendStatus = false;
-  isMenuOpened = true;
+  let responseText;
 
   switch (data) {
     case 'choi_toggle':
       global.choiEnabled = !global.choiEnabled;
       responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
-      shouldSendStatus = true;
-      isMenuOpened = false;
-      await sendTextToBot('admin', chatId, `🔄 ${responseText}`, getMainKeyboard());
+      await sendBotStatus(chatId, messageId, { callbackQueryId, callbackResponse: responseText });
       break;
 
     case 'ming_toggle':
       global.mingEnabled = !global.mingEnabled;
       responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
-      shouldSendStatus = true;
-      isMenuOpened = false;
-      await sendTextToBot('admin', chatId, `🔄 ${responseText}`, getMainKeyboard());
+      await sendBotStatus(chatId, messageId, { callbackQueryId, callbackResponse: responseText });
       break;
 
     case 'lang_menu':
