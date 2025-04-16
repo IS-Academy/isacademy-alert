@@ -4,7 +4,19 @@ require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
+const path = require('path');
 const { loadBotState } = require('./utils');
+
+const STATE_FILE = path.join(__dirname, 'bot_state.json');
+
+function loadStableBotState() {
+  try {
+    const raw = fs.readFileSync(STATE_FILE);
+    return JSON.parse(raw);
+  } catch {
+    return { choiEnabled: true, mingEnabled: true };
+  }
+}
 
 // 기존 파일에서 글로벌 상태를 로드하기 위한 설정 추가
 const {
@@ -93,7 +105,7 @@ const sendTelegram = async (token, chatId, buffer) => {
     console.log("📷 스크린샷 캡처 완료");
 
     // ✅ 추가된 부분: 파일에서 최실장, 밍밍 상태 불러오기
-    const { choiEnabled, mingEnabled } = loadBotState();
+    const { choiEnabled, mingEnabled } = loadStableBotState();
 
     // 🔥 상태를 확인하여 이미지 전송 여부 결정
     if (choiEnabled !== false) { // undefined일 경우 기본값 true로 간주
