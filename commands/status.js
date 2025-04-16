@@ -224,13 +224,20 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   try {
     let sent;
 
-    if (!messageId) {  
+    // ✅ 키보드 자동 생성 조건 옵션 추가
+    if (!messageId) {
+      if (options.allowCreateKeyboard === false) { // 키보드 생성이 허용되지 않은 상황
+        console.warn('⚠️ 키보드가 없지만 생성이 허용되지 않았습니다. (더미 수신 등)');
+        return null; // 생성 중단하고 종료
+      }
+
+      // 아래는 키보드 생성 허용된 경우만 실행
       sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
 
       if (sent?.data?.result?.message_id) {
         setAdminMessageId(sent.data.result.message_id);
         if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);          
       } else {
         await sendToAdmin("⚠️ 초기 키보드 생성 실패! 관리자 키보드를 수동으로 초기화 해주세요.");
       }
