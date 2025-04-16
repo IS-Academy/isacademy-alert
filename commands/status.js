@@ -8,7 +8,8 @@ const {
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
   sendTextToBot,
-  getDynamicInlineKeyboard
+  getDynamicInlineKeyboard,
+  sendToAdmin  
 } = require('../botManager');
 
 const langManager = require('../langConfigManager');
