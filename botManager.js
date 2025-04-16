@@ -166,6 +166,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
 // ✅ export 모듈
 module.exports = {
   editMessage,
+  inlineKeyboard,
   getLangKeyboard,
   getLangMenuKeyboard,
   getUserToggleKeyboard,
