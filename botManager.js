@@ -97,25 +97,64 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
                 config.ADMIN_BOT_TOKEN;
 
-  return axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-    chat_id: chatId,
-    text,
-    parse_mode: options.parse_mode || 'HTML',
-    reply_markup: replyMarkup || undefined
-  });
+  try {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      parse_mode: options.parse_mode || 'HTML',
+      reply_markup: replyMarkup || undefined
+    });
+
+    if (options.callbackQueryId) {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        callback_query_id: options.callbackQueryId,
+        text: options.callbackResponse || '',
+        show_alert: false
+      });
+    }
+
+    return response;
+  } catch (err) {
+    console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
+    throw err;
+  }
 }
 
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
 
-  return axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
-    chat_id: chatId,
-    message_id: messageId,
-    text,
-    parse_mode: options.parse_mode || 'HTML',
-    reply_markup: replyMarkup || inlineKeyboard
-  });
+  try {
+    const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: options.parse_mode || 'HTML',
+      reply_markup: replyMarkup || inlineKeyboard
+    });
+
+    if (options.callbackQueryId) {
+      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+        callback_query_id: options.callbackQueryId,
+        text: options.callbackResponse || '',
+        show_alert: false
+      });
+    }
+
+    return response;
+  } catch (err) {
+    const errorMsg = err.response?.data?.description || err.message;
+
+    if (errorMsg.includes('message is not modified')) {
+      return { data: { result: true } };
+    } else if (errorMsg.includes('message to edit not found')) {
+      // 기존 메시지가 없으면 새 메시지 전송
+      return await sendTextToBot(botType, chatId, text, replyMarkup, options);
+    } else {
+      console.error('❌ editMessage 실패:', errorMsg);
+      throw err;
+    }
+  }
 }
 
 // ✅ export 모듈
