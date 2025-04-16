@@ -33,10 +33,10 @@ function getLangMenuKeyboard() {
 function getLangKeyboard(bot) {
   return {
     inline_keyboard: [[
-      { text: '🇰🇷 한국어', callback_data: `lang_${bot}_ko` },
-      { text: '🇺🇸 English', callback_data: `lang_${bot}_en` },
-      { text: '🇨🇳 中文', callback_data: `lang_${bot}_zh` },
-      { text: '🇯🇵 日本語', callback_data: `lang_${bot}_jp` }
+      { text: '🇰🇷 한국어', callback_data: lang_${bot}_ko },
+      { text: '🇺🇸 English', callback_data: lang_${bot}_en },
+      { text: '🇨🇳 中文', callback_data: lang_${bot}_zh },
+      { text: '🇯🇵 日本語', callback_data: lang_${bot}_jp }
     ], [{ text: '🔙 돌아가기', callback_data: 'lang_menu' }]]
   };
 }
@@ -45,8 +45,8 @@ function getLangKeyboard(bot) {
 function getUserToggleKeyboard(target) {
   return {
     inline_keyboard: [[
-      { text: '▶️ 켜기', callback_data: `${target}_on` },
-      { text: '⏹️ 끄기', callback_data: `${target}_off` }
+      { text: '▶️ 켜기', callback_data: ${target}_on },
+      { text: '⏹️ 끄기', callback_data: ${target}_off }
     ], [{ text: '🔙 돌아가기', callback_data: 'back_main' }]]
   };
 }
@@ -56,8 +56,8 @@ function getSymbolToggleKeyboard() {
   const symbols = require('./trader-gate/symbols');
   const buttons = Object.entries(symbols).map(([symbol, info]) => {
     return [{
-      text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
-      callback_data: `toggle_symbol_${symbol}`
+      text: ${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()},
+      callback_data: toggle_symbol_${symbol}
     }];
   });
   buttons.push([{ text: '🔙 돌아가기', callback_data: 'back_main' }]);
@@ -102,10 +102,10 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
                 config.ADMIN_BOT_TOKEN;
 
-  console.log(`📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId}`);
+  console.log(📤 [sendTextToBot 호출됨] botType=${botType}, chatId=${chatId});
 
   try {
-    const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const response = await axios.post(https://api.telegram.org/bot${token}/sendMessage, {
       chat_id: chatId,
       text,
       parse_mode: options.parse_mode || 'HTML',
@@ -113,7 +113,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
     });
 
     if (options.callbackQueryId) {
-      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+      await axios.post(https://api.telegram.org/bot${token}/answerCallbackQuery, {
         callback_query_id: options.callbackQueryId,
         text: options.callbackResponse || '',
         show_alert: false
@@ -126,7 +126,7 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 
     return response;
   } catch (err) {
-    console.error(`❌ sendTextToBot 실패 (${botType}):`, err.response?.data || err.message);
+    console.error(❌ sendTextToBot 실패 (${botType}):, err.response?.data || err.message);
     throw err;
   }
 }
@@ -136,7 +136,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   const token = config.ADMIN_BOT_TOKEN;
 
   try {
-    const response = await axios.post(`https://api.telegram.org/bot${token}/editMessageText`, {
+    const response = await axios.post(https://api.telegram.org/bot${token}/editMessageText, {
       chat_id: chatId,
       message_id: messageId,
       text,
@@ -145,7 +145,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     });
 
     if (options.callbackQueryId) {
-      await axios.post(`https://api.telegram.org/bot${token}/answerCallbackQuery`, {
+      await axios.post(https://api.telegram.org/bot${token}/answerCallbackQuery, {
         callback_query_id: options.callbackQueryId,
         text: options.callbackResponse || '',
         show_alert: false
