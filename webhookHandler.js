@@ -82,15 +82,7 @@ module.exports = async function webhookHandler(req, res) {
 
         // ✅ 자동매매 실행 (스위치 기반)
         if (global.autoTradeEnabled) {
-          await handleTradeSignal({
-            side: direction,
-            symbol,
-            timeframe,
-            entryAvg: price,
-            amount: 0.001,
-            isExit: false,
-            orderType: 'market' // ✅ 모든 주문 시장가 처리
-          });
+          await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: false, orderType: 'market' });      
         } else {
           console.log('⚠️ 자동매매 꺼짐 상태: 거래소 주문 실행 안됨');
         }
@@ -104,15 +96,7 @@ module.exports = async function webhookHandler(req, res) {
         clearEntries(symbol, type, timeframe);
 
         if (global.autoTradeEnabled) {
-          await handleTradeSignal({
-            side: direction,
-            symbol,
-            timeframe,
-            entryAvg: price,
-            amount: 0.001,
-            isExit: true,
-            orderType: 'market' // ✅ 모든 주문 시장가 처리
-          });
+          await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: true, orderType: 'market' });
         }
       }
       
@@ -123,23 +107,8 @@ module.exports = async function webhookHandler(req, res) {
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       // ✅ 메시지 템플릿 생성
-      const msgChoi = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
-        entryCount: typeof ratio === 'number' ? ratio : 0, 
-        entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE, 
-        lang: langChoi,
-        direction
-      });
-
-      const msgMing = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
-        entryCount: typeof ratio === 'number' ? ratio : 0, 
-        entryAvg: typeof avg === 'number' ? avg : 'N/A',
-        leverage: leverage || config.DEFAULT_LEVERAGE, 
-        lang: langMing,
-        direction
-      });
+      const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
+      const msgMing = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
       
       // ✅ 텔레그램 전송
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
@@ -200,16 +169,14 @@ module.exports = async function webhookHandler(req, res) {
 
   if (update.message?.text) {
     const chatId = update.message.chat.id;
-    const messageText = update.message.text.trim();
+    const messageText = update.message.text.trim().toLowerCase();
+    const timeStr = getTimeString();
     const lower = messageText.toLowerCase();
-
     res.sendStatus(200);
-
-    if (["/test_menu", "/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings", "/commands", "/refresh"].includes(lower)) {
-      const sent = await sendBotStatus(chatId);
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
+    if (["/test_menu", "/start", "/status", "/dummy_status", "/setlang", "/settz", "/help", "/settings"].includes(messageText)) {
+      await sendBotStatus(chatId);
     } else {
-      await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`, null);
+      await sendToAdmin(`📨 사용자 메시지 수신\n\n<code>${messageText}</code>`);
     }
     return;
   }
