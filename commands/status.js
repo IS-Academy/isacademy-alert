@@ -8,8 +8,10 @@ const {
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
-  sendTextToBot
+  sendTextToBot,
+  getMainKeyboard
 } = require('../botManager');
+
 const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
@@ -47,12 +49,12 @@ async function handleAdminAction(data, ctx) {
   isMenuOpened = true;
 
   switch (data) {
-    // ✅ 즉각적 ON/OFF 토글 방식 변경 (중요 수정)
     case 'choi_toggle':
       global.choiEnabled = !global.choiEnabled;
       responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
       isMenuOpened = false;
+      await sendTextToBot('admin', chatId, `🔄 ${responseText}`, getMainKeyboard());
       break;
 
     case 'ming_toggle':
@@ -60,6 +62,7 @@ async function handleAdminAction(data, ctx) {
       responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
       shouldSendStatus = true;
       isMenuOpened = false;
+      await sendTextToBot('admin', chatId, `🔄 ${responseText}`, getMainKeyboard());
       break;
 
     case 'lang_menu':
@@ -93,6 +96,7 @@ async function handleAdminAction(data, ctx) {
       responseText = '↩️ 메인 메뉴로 이동';
       isMenuOpened = false;
       shouldSendStatus = true;
+      await sendTextToBot('admin', chatId, '🔄 메인 키보드 상태 업데이트', getMainKeyboard());
       break;
 
     default:
