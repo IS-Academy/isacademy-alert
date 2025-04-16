@@ -183,17 +183,9 @@ module.exports = async function webhookHandler(req, res) {
     processedCallbackQueries.add(callbackId);    
     
     const cmd = update.callback_query.data;
-    const chatId = update.callback_query?.message?.chat?.id;
-    const messageId = update.callback_query?.message?.message_id;
-
-    const ctx = {
-      chat: { id: chatId },
-      callbackQuery: update.callback_query
-    };
-
-    await handleAdminAction(cmd, ctx);
-    return res.sendStatus(200);
-  }
+    const chatId = update.callback_query.message.chat.id;
+    const messageId = update.callback_query.message.message_id;
+    const ctx = { chat: { id: chatId }, callbackQuery: update.callback_query };
 
     if (cmd.startsWith('toggle_symbol_')) {
       const symbolKey = cmd.replace('toggle_symbol_', '').toLowerCase();
@@ -209,7 +201,7 @@ module.exports = async function webhookHandler(req, res) {
 
         await Promise.all([
           editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
-          answerCallback(update.callback_query.id, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
+          answerCallback(callbackId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
         ]);
       }
       return res.sendStatus(200);
