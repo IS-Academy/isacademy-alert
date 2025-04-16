@@ -115,20 +115,26 @@ async function handleAdminAction(data, ctx) {
 
       if (data.startsWith('test_template_')) {
         const type = data.replace('test_template_', '');
-        const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
-        const symbol = 'btcusdt.p';
-        const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
-
-        const msg = getTemplate({
-          type, symbol, timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
-          entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
-          direction: type.endsWith('Short') ? 'short' : 'long'
-        });
-
-        await Promise.all([
-          sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
-          answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
-        ]);
+        const symbol = 'BTCUSDT.P';
+        const testWebhookData = {
+          type,
+          symbol,
+          timeframe: '1',
+          price: 62500,
+          ts: Math.floor(Date.now() / 1000),
+          leverage: config.DEFAULT_LEVERAGE,
+          entryAvg: 62000,
+          entryRatio: 5,
+        };
+        try {
+          const webhookHandler = require('../webhookHandler');
+          await webhookHandler({ body: testWebhookData }, { status: () => ({ send: () => {} }), sendStatus: () => {} });
+          await answerCallback(callbackQueryId, '✅ 실제 웹훅 방식 테스트 완료');
+        } catch (err) {
+          console.error('❌ 템플릿 테스트 오류:', err.message);
+          await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
+          await answerCallback(callbackQueryId, '❌ 템플릿 테스트 실패');
+        }
         return;
       }
 
