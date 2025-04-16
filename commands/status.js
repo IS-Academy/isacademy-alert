@@ -244,17 +244,21 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     return null;
   }
 }
-  
-let statusInterval; // ✅ 전역변수로 저장
+
+// ✅ 전역 인터벌 관리
+let statusInterval; // ✅ 전역변수로 인터벌 저장
 
 module.exports = {
   sendBotStatus,
+  
   initAdminPanel: async () => {
-    if (statusInterval) clearInterval(statusInterval); // ✅ 기존 인터벌 제거 추가
+    if (statusInterval) clearInterval(statusInterval); // ✅ 기존 인터벌 제거
     const sent = await sendBotStatus();
+
     if (sent && sent.data?.result) {
-      statusInterval = setInterval(() => sendBotStatus(), 60 * 1000);
+      statusInterval = setInterval(() => sendBotStatus(), 60 * 1000); // ✅ 1분마다 갱신
     }
   },
+
   handleAdminAction
 };
