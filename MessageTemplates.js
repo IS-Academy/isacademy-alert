@@ -64,17 +64,32 @@ function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko'
   return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
 }
 
-// ✅ 진입 비중 / 평균단가 표시
+// ✅ 진입 비중 / 평균단가 표시 / 다국어 지원 generateEntryInfo
 function generateEntryInfo(entryCount, entryAvg, lang = 'ko') {
+  const labels = translations[lang]?.labels || translations['ko'].labels;
   const count = parseInt(entryCount, 10);
   const avgNum = parseFloat(entryAvg);
   const avg = Number.isFinite(avgNum) ? formatNumber(avgNum.toFixed(1)) : null;
   const valid = Number.isFinite(count) && avg !== null;
   if (!valid || count <= 0) {
-    return translations[lang]?.labels?.noEntryInfo || '📊 진입 비율 정보 없음 / 평균가 계산 불가';
+    return labels.noEntryInfo; // 다국어 메시지 반환
   }
+  return labels.entryInfo
+    .replace('{entryCount}', count)
+    .replace('{entryAvg}', avg);
+}
+
+// ✅ 다국어 지원 generatePnLLine
+function generatePnLLine(price, entryAvg, entryCount, leverage = 50, lang = 'ko', direction = 'long') {
   const labels = translations[lang]?.labels || translations['ko'].labels;
-  return labels.entryInfo.replace('{entryCount}', count).replace('{entryAvg}', avg);
+  const result = calculatePnL(price, entryAvg, entryCount, leverage, direction, lang);
+  if (!result) return labels.pnlCalculationError; // 다국어 메시지 반환
+
+  const { pnl, gross, isProfit } = result;
+  const pnlStr = (isProfit ? '+' : '') + pnl;
+  const grossStr = (isProfit ? '+' : '') + gross;
+  const line = isProfit ? labels.pnlLineProfit : labels.pnlLineLoss;
+  return line.replace('{pnl}', pnlStr).replace('{capital}', grossStr);
 }
 
 // ✅ Ready_용 메시지 줄 구성 포맷
