@@ -1,4 +1,4 @@
-// ✅👇 /trader-gate/symbols.js
+//✅👇 /trader-gate/symbols.js
 
 // ✅ 종목 리스트 (선물 전용)
 module.exports = {
