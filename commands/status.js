@@ -136,19 +136,14 @@ async function handleAdminAction(data, ctx) {
           isTest: true, // 👈 테스트 플래그 추가
         };
         try {
-          const webhookHandler = require('../webhookHandler');
-
-          // ✅ res 객체 명확히 정의하여 실제 텔레그램 메시지 전송 가능하게
-          const mockRes = {
-            status: () => ({ send: () => {} }),
-            sendStatus: () => {},
-          };
-          
-          await webhookHandler({ body: testWebhookData }, mockRes);
+          await webhookHandler(
+            { body: testWebhookData },
+            { status: () => ({ send: () => {} }), sendStatus: () => {} }
+          );
           await answerCallback(callbackQueryId, '✅ 웹훅 방식 테스트 완료');
         } catch (err) {
           console.error('❌ 템플릿 테스트 오류:', err.message);
-          await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
+          await sendTextToBot('admin', config.ADMIN_CHAT_ID, `❌ 템플릿 오류: ${err.message}`);
           await answerCallback(callbackQueryId, '❌ 템플릿 테스트 실패');
         }
         return;
