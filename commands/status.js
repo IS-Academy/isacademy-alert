@@ -192,28 +192,42 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const dummyKey = lastDummy || 'no-dummy';
   const key = `${chatId}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
 
-  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
+  const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid()
+    ? moment.tz(lastDummy, tz)
+    : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
-  const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
-  const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
+  const dummyTimeFormatted = dummyMoment
+    ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`)
+    : '기록 없음';
+  const elapsedText = elapsed !== null
+    ? elapsed < 1
+      ? '방금 전'
+      : `+${elapsed}분 전`
+    : '';
 
   if (options.callbackQueryId) {
-    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-      callback_query_id: options.callbackQueryId,
-      text: options.callbackResponse || '✅ 처리 완료!',
-      show_alert: false,
-      cache_time: 1  // 빠른 응답 속도 최적화
-    });
-  } catch (err) {
-    const desc = err.response?.data?.description || err.message;
-    console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
-    // 이미 처리된 콜백 쿼리 오류는 무시
-    if (!desc.includes('query is too old') && !desc.includes('query ID is invalid')) {
-      throw err; // 다른 오류라면 다시 throw
+    try {
+      await axios.post(
+        `https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`,
+        {
+          callback_query_id: options.callbackQueryId,
+          text: options.callbackResponse || '✅ 처리 완료!',
+          show_alert: false,
+          cache_time: 1, // 빠른 응답 속도 최적화
+        }
+      );
+    } catch (err) {
+      const desc = err.response?.data?.description || err.message;
+      console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
+      if (
+        !desc.includes('query is too old') &&
+        !desc.includes('query ID is invalid')
+      ) {
+        throw err; // 다른 오류라면 다시 throw
+      }
     }
   }
-}
-  
+
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
@@ -236,11 +250,18 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
     `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
-    `──────────────────────`
+    `──────────────────────`,
   ].join('\n');
 
   try {
-    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML' });
+    const sent = await editMessage(
+      'admin',
+      chatId,
+      messageId || getAdminMessageId(),
+      statusMsg,
+      getDynamicInlineKeyboard(),
+      { parse_mode: 'HTML' }
+    );
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
