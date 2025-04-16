@@ -189,5 +189,6 @@ module.exports = {
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
   getDynamicInlineKeyboard,
-  sendTextToBot
+  sendTextToBot,
+  sendToAdmin
 };
