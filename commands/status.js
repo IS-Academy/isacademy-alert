@@ -171,7 +171,6 @@ async function handleAdminAction(data, ctx) {
 async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
-  const { getDynamicInlineKeyboard } = require('../botManager');
 
   const { choiEnabled, mingEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
@@ -230,7 +229,14 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   ].join('\n');
 
   try {    
-    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
+    const sent = await editMessage(
+      'admin',
+      chatId,
+      messageId || getAdminMessageId(),
+      statusMsg,
+      getDynamicInlineKeyboard(), // ✅ 실시간 상태가 반영된 키보드 적용
+      { parse_mode: 'HTML', ...options }
+    );
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
