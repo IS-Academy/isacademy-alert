@@ -52,15 +52,16 @@ module.exports = async function webhookHandler(req, res) {
   if (update.symbol || update.type) {
     try {
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
-      const symbol = update.symbol?.toUpperCase() || "UNKNOWN"; // toLowerCase = 소문자 / toUpperCase = 대문자
+      const symbol = update.symbol?.toLowerCase() || "unknown"; // 처리용 (자동매매, 비교) // toLowerCase = 소문자
+      const displaySymbol = update.symbol?.toUpperCase() || "UNKNOWN"; // 표시용 (텔레그램 등) // toUpperCase = 대문자
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
       const type = update.type;
       const price = parseFloat(update.price) || "N/A";
       const leverage = update.leverage || config.DEFAULT_LEVERAGE;
 
       // ✅ 종목 사용 가능 여부 확인
-      if (!tradeSymbols[symbol]?.enabled) {
-        console.warn(`⛔ [자동매매 비활성화된 종목] ${symbol} → 무시됨`);
+      if (!tradeSymbols[symbol]?.enabled && !update.isTest) {
+        console.warn(`⛔ [자동매매 비활성화된 종목] ${displaySymbol} → 무시됨`);
         return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
       }
 
@@ -124,7 +125,7 @@ module.exports = async function webhookHandler(req, res) {
 
       // ✅ 메시지 템플릿 생성
       const msgChoi = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
+        type, symbol: displaySymbol, timeframe, price, ts, 
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
@@ -133,7 +134,7 @@ module.exports = async function webhookHandler(req, res) {
       });
 
       const msgMing = getTemplate({ 
-        type, symbol, timeframe, price, ts, 
+        type, symbol: displaySymbol, timeframe, price, ts, 
         entryCount: typeof ratio === 'number' ? ratio : 0, 
         entryAvg: typeof avg === 'number' ? avg : 'N/A',
         leverage: leverage || config.DEFAULT_LEVERAGE, 
