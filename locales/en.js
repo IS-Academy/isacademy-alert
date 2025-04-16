@@ -1,4 +1,4 @@
-// ✅👇 locales/en.js
+//✅👇 locales/en.js
 
 module.exports = {
   symbols: {
