@@ -3,16 +3,22 @@
 const axios = require('axios');
 const config = require('./config');
 
-// ✅ 관리자 인라인 키보드 패널 (기존 유지)
-const inlineKeyboard = {
-  inline_keyboard: [
-    [{ text: '👨‍💼 최실장', callback_data: 'choi_toggle' }, { text: '👩‍💼 밍밍', callback_data: 'ming_toggle' }],
-    [{ text: '🌐 언어선택', callback_data: 'lang_menu' }],
-    [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
-    [{ text: '🧪 템플릿 테스트', callback_data: 'test_menu' }],
-    [{ text: '📊 종목 ON/OFF 관리', callback_data: 'symbol_toggle_menu' }]
-  ]
-};
+// ✅ 최실장/밍밍 상태 반영된 동적 관리자 인라인 키보드 패널
+function getDynamicInlineKeyboard() {
+  const choiState = global.choiEnabled ? '✅' : '❌';
+  const mingState = global.mingEnabled ? '✅' : '❌';
+
+  return {
+    inline_keyboard: [
+      [{ text: `👨‍💼 최실장 ${choiState}`, callback_data: 'choi_toggle' },
+       { text: `👩‍💼 밍밍 ${mingState}`, callback_data: 'ming_toggle' }],
+      [{ text: '🌐 언어선택', callback_data: 'lang_menu' }],
+      [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
+      [{ text: '🧪 템플릿 테스트', callback_data: 'test_menu' }],
+      [{ text: '📊 종목 ON/OFF 관리', callback_data: 'symbol_toggle_menu' }]
+    ]
+  };
+}
 
 // ✅ 언어 선택 하위 메뉴
 function getLangMenuKeyboard() {
@@ -166,5 +172,6 @@ module.exports = {
   getUserToggleKeyboard,
   getSymbolToggleKeyboard,
   getTemplateTestKeyboard,
+  getDynamicInlineKeyboard,
   sendTextToBot
 };
