@@ -61,14 +61,14 @@ async function handleAdminAction(data, ctx) {
 
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
-      newKeyboard = getLangMenuKeyboard();
+      newKeyboard = getLangMenuKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 언어 메뉴 열림';
       break;
 
     case 'lang_choi':
     case 'lang_ming':
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
-      newKeyboard = getLangKeyboard(data.split('_')[1]);
+      newKeyboard = getLangKeyboard(data.split('_')[1]); // ⚠️ 관리자 키보드 바꾸는 동작 + data.split
       responseText = '✅ 언어 선택 메뉴';
       break;
       
@@ -88,19 +88,19 @@ async function handleAdminAction(data, ctx) {
 
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
-      newKeyboard = getTemplateTestKeyboard();
+      newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 테스트 메뉴 열림';
       break;      
 
     case 'symbol_toggle_menu':
       newText = '📊 자동매매 종목 설정 (ON/OFF)';
-      newKeyboard = getSymbolToggleKeyboard();
+      newKeyboard = getSymbolToggleKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 종목 설정 메뉴 열림';
       break;
 
     case 'back_main':
       newText = '📋 관리자 메뉴로 돌아갑니다';
-      newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
+      newKeyboard = getDynamicInlineKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '↩️ 메인 메뉴로 이동';
       shouldSendStatus = true;
       break;
@@ -156,7 +156,7 @@ async function handleAdminAction(data, ctx) {
           symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
           fs.writeFileSync(symbolsPath, `module.exports = ${JSON.stringify(symbols, null, 2)}`);
           newText = '📊 자동매매 종목 설정 (ON/OFF)';
-          newKeyboard = getSymbolToggleKeyboard();
+          newKeyboard = getSymbolToggleKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
           await editMessage('admin', config.ADMIN_CHAT_ID, messageId, newText, newKeyboard);
           await answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`);
         }
