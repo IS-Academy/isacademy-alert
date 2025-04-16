@@ -142,6 +142,23 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
+async function sendToAdmin(text, replyMarkup = null, options = {}) {
+  const token = config.ADMIN_BOT_TOKEN;
+  const chatId = config.ADMIN_CHAT_ID;
+
+  try {
+    return await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
+      chat_id: chatId,
+      text,
+      parse_mode: options.parse_mode || 'HTML',
+      reply_markup: replyMarkup || undefined
+    });
+  } catch (err) {
+    console.error('❌ sendToAdmin 실패:', err.response?.data || err.message);
+    throw err;
+  }
+}
+
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
