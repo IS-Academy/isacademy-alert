@@ -263,7 +263,7 @@ module.exports = {
 
     if (!messageId) {
       console.warn("⚠️ 초기 메시지 ID 없음. 새 관리자 키보드를 생성합니다.");
-      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true }); // 메시지 ID 없으면 자동 생성
+      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true }); // 명시적으로 키보드 생성 허용
       if (sent && sent.data?.result) {
         setAdminMessageId(sent.data.result.message_id); // 메시지 ID 설정
         console.log('✅ 관리자 패널 최초 생성 완료');
@@ -273,7 +273,7 @@ module.exports = {
         await sendToAdmin("⚠️ 초기 키보드 자동 생성에 실패했습니다. 잠시 후 자동 재시도를 진행합니다.");
       }
     } else {
-      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: true });
+      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false  });// 키보드 이미 존재할 땐 생성 불허
       if (sent && sent.data?.result) {
         console.log('✅ 관리자 패널 상태 갱신 시작');
         if (intervalId) clearInterval(intervalId);
