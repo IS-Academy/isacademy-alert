@@ -107,8 +107,8 @@ module.exports = async function webhookHandler(req, res) {
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
       // ✅ 메시지 템플릿 생성
-      const msgChoi = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
-      const msgMing = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
+      const msgChoi = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
+      const msgMing = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
       
       // ✅ 텔레그램 전송
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
