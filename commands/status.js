@@ -44,29 +44,19 @@ async function handleAdminAction(data, ctx) {
   const messageId = ctx.callbackQuery.message.message_id;
   const callbackQueryId = ctx.callbackQuery.id;
 
-  let responseText;
-  let newText, newKeyboard;
-  let shouldSendStatus = false;
+  let newText, newKeyboard, responseText, shouldSendStatus = false;
 
   switch (data) {
     case 'choi_toggle':
       global.choiEnabled = !global.choiEnabled;
       responseText = `👨‍💼 최실장 ${global.choiEnabled ? '✅ ON' : '❌ OFF'}`;
-      shouldSendStatus = true;
-      await sendBotStatus(chatId, getAdminMessageId(), {
-      callbackQueryId, 
-      callbackResponse: responseText
-    });
+      await sendBotStatus(chatId, getAdminMessageId(), { callbackQueryId, callbackResponse: responseText });
       break;
 
     case 'ming_toggle':
       global.mingEnabled = !global.mingEnabled;
       responseText = `👩‍💼 밍밍 ${global.mingEnabled ? '✅ ON' : '❌ OFF'}`;
-      shouldSendStatus = true;
-      await sendBotStatus(chatId, getAdminMessageId(), {
-      callbackQueryId, 
-      callbackResponse: responseText
-    });
+      await sendBotStatus(chatId, getAdminMessageId(), { callbackQueryId, callbackResponse: responseText });
       break;
 
     case 'lang_menu':
@@ -96,8 +86,9 @@ async function handleAdminAction(data, ctx) {
 
     case 'back_main':
       newText = '📋 관리자 메뉴로 돌아갑니다';
-      newKeyboard = getDynamicInlineKeyboard(); 
+      newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
       responseText = '↩️ 메인 메뉴로 이동';
+      shouldSendStatus = true;
       break;
 
     default:
@@ -107,9 +98,8 @@ async function handleAdminAction(data, ctx) {
         langManager.setUserLang(targetId, langCode);
         await sendTextToBot('admin', chatId, `✅ ${bot.toUpperCase()} 언어가 <b>${langCode}</b>로 변경되었습니다.`);
         newText = '📋 관리자 메뉴로 돌아갑니다';
-        newKeyboard = getDynamicInlineKeyboard()
+        newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
         responseText = '✅ 언어 변경 완료';
-        isMenuOpened = false;
       }
 
       if (data.startsWith('test_template_')) {
@@ -127,13 +117,11 @@ async function handleAdminAction(data, ctx) {
           const msg = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage, lang, direction });
           await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
           newText = '📋 관리자 메뉴로 돌아갑니다';
-          newKeyboard = getDynamicInlineKeyboard()
+          newKeyboard = getDynamicInlineKeyboard(); // ✅ 명확히 수정
           responseText = '✅ 테스트 완료';
-          isMenuOpened = false;
         } catch (err) {
           await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`);
         }
-        return;
       }
 
       if (data.startsWith('toggle_symbol_')) {
@@ -152,13 +140,13 @@ async function handleAdminAction(data, ctx) {
   }
 
   if (typeof newText !== 'undefined' && typeof newKeyboard !== 'undefined') {
-    await editMessage('admin', chatId, messageId, newText, newKeyboard, {
+    await editMessage('admin', chatId, getAdminMessageId(), newText, newKeyboard, { // ✅ 여기도 반드시 getAdminMessageId()
       callbackQueryId, 
       callbackResponse: responseText
     });
   }
 
-  if (shouldSendStatus) await sendBotStatus(undefined, data, chatId, messageId, {
+  if (shouldSendStatus) await sendBotStatus(undefined, data, chatId, getAdminMessageId(), { // ✅ 여기도 반드시 getAdminMessageId()
     callbackQueryId,
     callbackResponse: responseText
   });
