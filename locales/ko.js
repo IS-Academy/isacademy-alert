@@ -20,7 +20,9 @@ module.exports = {
     timeframe: "⏱️ 타임프레임",
     timeframeUnit: "분",
     price: "💲 가격",
-    entryInfo: "📊 진입 {entryCount}% / 평균가 {entryAvg}",
+    entryInfo: "📊 진입 {entryCount}% / 평균단가 {entryAvg}",
+    noEntryInfo: "📊 진입 비율 정보 없음 / 평균가 계산 불가",
+    pnlCalculationError: "📈수익률 +-% / 원금대비 +-%📉 계산 불가",    
     entrySummary: "⏱️ 진입 현황:",
     entryInfoByTF: "• {tf}분 → ✅ {percent}% / 평균가 {avg}",
 
