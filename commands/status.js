@@ -145,8 +145,10 @@ async function handleAdminAction(data, ctx) {
   }
 
   if (newText && newKeyboard) {
-    await editMessage('admin', chatId, messageId, newText, newKeyboard);
-    await answerCallback(callbackQueryId, responseText);
+    await editMessage('admin', chatId, messageId, newText, newKeyboard, {
+      callbackQueryId, 
+      callbackResponse: responseText
+    });
   }
 
   if (shouldSendStatus) await sendBotStatus(undefined, data, chatId, messageId, {
