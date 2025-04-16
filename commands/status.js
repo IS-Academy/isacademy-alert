@@ -36,7 +36,7 @@ const axiosInstance = axios.create({
 
 async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
   try {
-    return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+    return await axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
       callback_query_id: callbackQueryId,
       text,
       cache_time: 1,
@@ -244,20 +244,12 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     `──────────────────────`
   ].join('\n');
 
-  try {    
-    const sent = await editMessage(
-      'admin',
-      chatId,
-      messageId || getAdminMessageId(),
-      statusMsg,
-      getDynamicInlineKeyboard(), // ✅ 실시간 상태가 반영된 키보드 적용
-      { parse_mode: 'HTML', ...options }
-    );
+  try {
+    const sent = await editMessage('admin', chatId, messageId || getAdminMessageId(), statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML' });
     if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     return sent;
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
-    return null;
   }
 }
 
