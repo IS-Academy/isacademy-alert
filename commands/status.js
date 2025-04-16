@@ -201,7 +201,15 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       show_alert: false,
       cache_time: 1  // 빠른 응답 속도 최적화
     });
+  } catch (err) {
+    const desc = err.response?.data?.description || err.message;
+    console.warn('⚠️ answerCallbackQuery 무시됨:', desc);
+    // 이미 처리된 콜백 쿼리 오류는 무시
+    if (!desc.includes('query is too old') && !desc.includes('query ID is invalid')) {
+      throw err; // 다른 오류라면 다시 throw
+    }
   }
+}
   
   cache.set(key, nowTime);
 
