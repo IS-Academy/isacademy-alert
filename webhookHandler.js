@@ -41,6 +41,10 @@ module.exports = async function webhookHandler(req, res) {
 
   if (req.originalUrl === "/dummy") {
     await dummyHandler(req, res);
+
+    const messageId = getAdminMessageId();
+    await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false });
+
     return;
   }
 
