@@ -142,6 +142,28 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
+// ✅ 누락된 메시지 전송 함수 정의 추가
+const sendToAdmin = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('admin', config.ADMIN_CHAT_ID, text, replyMarkup, options);
+};
+
+const sendToChoi = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, replyMarkup, options);
+};
+
+const sendToMing = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
+};
+
+// ✅ 콜백 응답
+async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
+  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+    callback_query_id: callbackQueryId,
+    text,
+    cache_time: 1,
+  });
+}
+
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
@@ -179,7 +201,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
   }
 }
 
-// ✅ export 모듈
+//🧩 export 모듈
 module.exports = {
   editMessage,
   sendTextToBot,
