@@ -8,6 +8,8 @@ const { getEntryInfo } = require('../entryManager');
 const config = require('../../config');
 const moment = require('moment-timezone');
 
+console.log('✅ translations:', translations); // 🚨 언어팩 객체 로그로 확인
+
 // 📌 유저의 언어 설정을 얻는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -36,6 +38,8 @@ function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage,
 
 // 📌 기본 시그널 메시지 생성 (언어팩 활용, 푸시 알림용)
 function formatSignalMessage(type, data, language = "ko") {
+  console.log('📌 language:', language); //🚨 언어코드 로그로 확인
+  console.log('📌 labels:', translations[language]?.labels); // 🚨 labels 로그 확인
   const t = lang.get(language);
 
   // 🧩 [1] 메시지 헤더 (시그널 제목)
@@ -43,9 +47,9 @@ function formatSignalMessage(type, data, language = "ko") {
  
   // 🧩 [2] 공통 정보 (심볼, 타임프레임, 현재가)
   const common = `
-📌 ${t.symbol}: ${data.symbol}
-⏱️ ${t.timeframe}: ${data.timeframe}${t.timeframeUnit}
-💲 ${t.price}: ${data.price}`;
+📌 ${t.labels.symbol}: ${data.symbol}
+⏱️ ${t.labels.timeframe}: ${data.timeframe}${t.labels.timeframeUnit}
+💲 ${t.labels.price}: ${data.price}`;
 
   // 🧩 [3] 진입 정보 (진입률 및 평균가)
   const entryInfo = data.entryCount && data.entryAvg
