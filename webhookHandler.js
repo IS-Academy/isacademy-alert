@@ -98,9 +98,6 @@ module.exports = async function webhookHandler(req, res) {
         }
       }
 
-      // ✅ 평균진입가 및 진입비중 정보를 얻음
-      const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
-
       // ✅ 청산 신호일 경우, 기존 진입 정보(entry)를 삭제하고 자동매매 청산 주문 수행
       if (isExitSignal) {
         clearEntries(symbol, type, timeframe); // entry 정보 초기화
@@ -112,13 +109,9 @@ module.exports = async function webhookHandler(req, res) {
       // 📌 처리한 데이터를 로그로 출력 (디버깅 용)
       console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
       
-      // ✅ 언어별 메시지 생성 준비
-      const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-      const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-
-      // ✅ 언어별 메시지 템플릿 생성 (다국어 지원)
-      const msgChoi = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
-      const msgMing = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
+      // ✅ 메시지 템플릿 매니저에서 직접 메시지 생성
+      const { generateTelegramMessage } = require('./handlers/messageTemplateManager');
+      const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage });
       
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
