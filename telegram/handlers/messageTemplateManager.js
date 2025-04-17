@@ -94,8 +94,8 @@ ${header}${common}${entryInfo}${resultInfo}${time}${footer}
 // ✅📌 특정 시그널에 맞춘 상세 메시지 생성 (진입/청산 등 특화 템플릿)
 function createSignalTemplate({ type, symbol, timeframe, price, ts, entryCount = 0, entryAvg = 'N/A', weight = config.DEFAULT_WEIGHT, leverage = config.DEFAULT_LEVERAGE, lang = 'ko' }) {
   const { date, time } = formatDate(ts, config.DEFAULT_TIMEZONE, lang);
-  const labels = translations[lang]?.labels || translations['ko'].labels;
-  const symbols = translations[lang]?.symbols || translations['ko'].symbols;
+  const labels = lang.translations[lang]?.labels || lang.translations['ko'].labels;
+  const symbols = lang.translations[lang]?.symbols || lang.translations['ko'].symbols;
 
   // ✅ 신호 방향 판단
   const isExit = type.startsWith('exit') || type.startsWith('Ready_exit');
