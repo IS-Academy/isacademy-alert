@@ -121,6 +121,30 @@ function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
+// ✅ 키보드 메시지 ID 관리 (파일 저장 방식)
+const MSG_ID_FILE = path.join(__dirname, 'admin_message_id.json');
+
+let adminMessageId = null;
+
+function saveAdminMessageId(id) {
+  adminMessageId = id;
+  fs.writeFileSync(MSG_ID_FILE, JSON.stringify(id));
+}
+
+function loadAdminMessageId() {
+  try {
+    const loaded = JSON.parse(fs.readFileSync(MSG_ID_FILE, 'utf8'));
+    adminMessageId = loaded;
+    return loaded;
+  } catch {
+    return null;
+  }
+}
+
+function getAdminMessageId() {
+  return adminMessageId;
+}
+
 function getTimeString(tz = 'Asia/Seoul') {
   return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
 }
@@ -145,4 +169,6 @@ module.exports = {
   getTimeString,
   setAdminMessageId,
   getAdminMessageId,
+  saveAdminMessageId,
+  loadAdminMessageId
 };
