@@ -121,7 +121,7 @@ function createSignalTemplate({ type, symbol, timeframe, price, ts, entryCount =
   const capTime = `${labels.captured}:\n${date}\n${time}`;
   const disclaimer = labels.disclaimer_full;
 
-  // ✅ 각 신호 유형별 템플릿 정의
+  // 🚩 전체 12가지 신호유형 템플릿
   const templates = {
     showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
     showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
@@ -159,7 +159,7 @@ function createSignalTemplate({ type, symbol, timeframe, price, ts, entryCount =
   }
 }
 
-// 📌 모든 함수 외부 노출
+// 📌 외부 노출 함수
 module.exports = { 
   generateTelegramMessage,
   formatSignalMessage,
