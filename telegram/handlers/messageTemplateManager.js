@@ -83,8 +83,8 @@ ${t.labels.price}: ${data.price}`;
   // 🧩 [5] 시그널 포착 시간 (현지 시각 변환)
   const timeFormatted = moment.unix(data.ts).tz(t.timezone);
   const dayIndex = timeFormatted.day();
-  const dayStr = t.days[dayIndex.toString()] || timeFormatted.format('ddd');
-  const dateStr = timeFormatted.format(`YY.MM.DD (${dayStr})`);
+  const dayStr = t.days[dayIndex] || '';
+  const dateStr = `${timeFormatted.format('YY.MM.DD')} (${dayStr})`;
 
   let timeStr = timeFormatted.format('A hh:mm:ss');
   timeStr = timeStr.replace('AM', t.am).replace('PM', t.pm);
