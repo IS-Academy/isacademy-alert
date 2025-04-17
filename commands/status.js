@@ -225,15 +225,23 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       }
 
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
-      if (sent?.data?.result?.message_id) {
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        console.log('✅ 새 메시지 생성됨, ID 저장:', sent.data.result.message_id);
         saveAdminMessageId(sent.data.result.message_id);
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+      } else {
+        console.warn('⚠️ 메시지 ID 없음 → 저장 실패 가능성');
       }
       return sent;
     } else {
       const sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
-      if (sent?.data?.result?.message_id) saveAdminMessageId(sent.data.result.message_id);
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        console.log('✅ 기존 메시지 갱신됨, ID 재저장:', sent.data.result.message_id);
+        saveAdminMessageId(sent.data.result.message_id);
+      } else {
+        console.warn('⚠️ editMessage 성공했지만 message_id 없음 → 저장 생략');
+      }
       return sent;
     }
   } catch (err) {
@@ -241,10 +249,13 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     if (errorMsg.includes('message to edit not found') && options.allowCreateKeyboard !== false) {
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
-      if (sent?.data?.result?.message_id) {
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        console.log('✅ 새 메시지 재생성됨, ID 저장:', sent.data.result.message_id);
         saveAdminMessageId(sent.data.result.message_id);
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+      } else {
+        console.warn('⚠️ 재생성 메시지에서도 ID 없음 → 저장 실패 가능성');
       }
       return sent;
     }
