@@ -1,5 +1,6 @@
 //✅👇 webhookHandler.js
 
+// 📦 필요한 모듈들 불러오기
 const moment = require("moment-timezone");
 const config = require("./config");
 const langManager = require("./langConfigManager");
@@ -16,45 +17,52 @@ const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로�
 const fs = require('fs');
 const path = require('path');
 
-// ✅ 전역 캐시 & 스위치 선언
+// 🌍 전역변수 선언 및 초기화
 const entryCache = {};
 global.autoTradeEnabled = true; // 🪄 기본값: 자동매매 ON
 
+// 📌 진입 정보(entry)를 전역 캐시에 저장하는 함수
 function saveEntryData(symbol, type, avg, ratio) {
   global.entryCache = global.entryCache || {};
   const key = `${symbol}-${type}`;
   global.entryCache[key] = { avg, ratio, ts: Date.now() };
 }
 
+// 📌 진입 정보를 전역 캐시에서 가져오는 함수
 function getEntryData(symbol, type) {
   global.entryCache = global.entryCache || {};
   const key = `${symbol}-${type}`;
   return global.entryCache[key] || { avg: 'N/A', ratio: 0 };
 }
 
+// 📌 텔레그램 채팅 ID를 통해 언어 설정을 가져오는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
 }
 
+// 📦 웹훅 요청 처리 메인 함수
 module.exports = async function webhookHandler(req, res) {
-  const update = req.body;
+  const update = req.body; // 요청된 웹훅 데이터(JSON)
 
+  // ✅ 더미 웹훅 처리 (/dummy URL로 수신된 경우)
   if (req.originalUrl === "/dummy") {
-    await dummyHandler(req, res);
-
-    const messageId = getAdminMessageId();
+    await dummyHandler(req, res); // 더미 처리 로직 수행 후,
+    const messageId = getAdminMessageId(); // 현재 관리자 메시지 ID 획득
+    // 관리자 패널 상태 갱신 (키보드 신규 생성 방지 옵션 설정)
     await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false });
-
-    return;
+    return; // 이후 로직 종료
   }
 
+  // ✅ long_table, short_table 타입의 웹훅 데이터 처리
   if (["long_table", "short_table"].includes(update.type)) {
     await handleTableWebhook(update);
     return res.status(200).send("✅ 테이블 전송됨");
   }
 
+  // ✅ 일반 트레이딩 신호 처리 (symbol 또는 type이 있는 경우)
   if (update.symbol || update.type) {
     try {
+      // 🔖 신호 데이터 추출 및 기본값 설정
       const ts = Number(update.ts) || Math.floor(Date.now() / 1000);
       const symbol = update.symbol?.toLowerCase() || "unknown";
       const timeframe = update.timeframe?.replace(/<[^>]*>/g, '') || "⏳";
@@ -62,9 +70,9 @@ module.exports = async function webhookHandler(req, res) {
       const price = parseFloat(update.price) || "N/A";
       const leverage = update.leverage || config.DEFAULT_LEVERAGE;
 
-      // ✅ 종목 사용 가능 여부 확인
+      // ⛔ 자동매매 비활성화된 종목 처리
       if (!tradeSymbols[symbol]?.enabled) {
-        console.warn(`⛔ [자동매매 비활성화된 종목] ${symbol} → 무시됨`);
+        console.warn(`⛔ [자동매매 비활성화 종목] ${symbol} → 처리 중단됨`);
         return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
       }
 
@@ -72,54 +80,52 @@ module.exports = async function webhookHandler(req, res) {
 //      const entryAvg = update.entryAvg || 'N/A';
 //      const entryRatio = update.entryRatio || 0;
 
-      // ✅ 방향 판단 추가
+      // 📌 신호 타입으로부터 진입(롱/숏) 방향 결정
       const isShort = type.endsWith('Short');
       const direction = isShort ? 'short' : 'long';
       
-      // ✅ direction 결정 후 진입/청산 구분
+      // 📌 진입/청산 신호 여부 판별 (direction 결정 후)
       const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes"].includes(type);
       const isExitSignal = ["exitLong", "exitShort"].includes(type);
 
-      // ✅ 진입 신호일 경우 → 진입가 저장
+      // ✅ 진입 신호라면, 진입 정보(entry)를 저장하고 자동매매 주문 수행
       if (isEntrySignal) {
-        addEntry(symbol, type, price, timeframe);
-
-        // ✅ 자동매매 실행 (스위치 기반)
+        addEntry(symbol, type, price, timeframe); // entryManager에 진입 저장
         if (global.autoTradeEnabled) {
           await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: false, orderType: 'market' });      
         } else {
-          console.log('⚠️ 자동매매 꺼짐 상태: 거래소 주문 실행 안됨');
+          console.log('⚠️ 자동매매 OFF → 주문 생략됨');
         }
       }
 
-      // ✅ 평균 및 비중 계산 (🔥 핵심)
+      // ✅ 평균진입가 및 진입비중 정보를 얻음
       const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
 
-      // ✅ 청산 신호일 경우 → 리스트 초기화
+      // ✅ 청산 신호일 경우, 기존 진입 정보(entry)를 삭제하고 자동매매 청산 주문 수행
       if (isExitSignal) {
-        clearEntries(symbol, type, timeframe);
-
+        clearEntries(symbol, type, timeframe); // entry 정보 초기화
         if (global.autoTradeEnabled) {
           await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: true, orderType: 'market' });
         }
       }
+
+      // 📌 처리한 데이터를 로그로 출력 (디버깅 용)
+      console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
       
-      console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts }); // ✅ 로그 찍기
-      
-      // ✅ 다국어 설정
+      // ✅ 언어별 메시지 생성 준비
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-      // ✅ 메시지 템플릿 생성
+      // ✅ 언어별 메시지 템플릿 생성 (다국어 지원)
       const msgChoi = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
       const msgMing = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
       
-      // ✅ 텔레그램 전송
+      // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
-      // 📸 이미지 캡처 실행 추가 (여기 추가된 코드)
-      if (["exitLong", "exitShort"].includes(type)) {
+      // 📸 exit 신호 시 캡처 명령어 실행 (차트 이미지 자동 전송)
+      if (isExitSignal) {
         const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
         const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
         exec(captureCommand, (error, stdout, stderr) => {
@@ -136,29 +142,24 @@ module.exports = async function webhookHandler(req, res) {
     }
   }
 
-  // ✅ 버튼 눌렀을 때 처리
+  // ✅ 텔레그램 버튼 콜백 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
     const chatId = update.callback_query?.message?.chat?.id;
     const messageId = update.callback_query?.message?.message_id;
 
-    const ctx = {
-      chat: { id: chatId },
-      callbackQuery: update.callback_query
-    };
+    const ctx = { chat: { id: chatId }, callbackQuery: update.callback_query };
 
+    // 자동매매 종목 ON/OFF 처리
     if (cmd.startsWith('toggle_symbol_')) {
       const symbolKey = cmd.replace('toggle_symbol_', '').toLowerCase();
       const symbolsPath = path.join(__dirname, './trader-gate/symbols.js');
       delete require.cache[require.resolve(symbolsPath)];
       const symbols = require(symbolsPath);
-
       if (symbols[symbolKey]) {
         symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
         fs.writeFileSync(symbolsPath, `module.exports = ${JSON.stringify(symbols, null, 2)}`);
-
-        console.log(`[⚙️ 자동매매 종목 변경] ${symbolKey.toUpperCase()} 상태 → ${symbols[symbolKey].enabled ? '✅ ON' : '❌ OFF'}`);
-
+        console.log(`[⚙️ 자동매매 종목 변경] ${symbolKey.toUpperCase()} 상태 → ${symbols[symbolKey].enabled ? '✅ ON' : '❌ OFF'}`); // ✅ 자동매매 종목 변경내용 로그로 출력
         await Promise.all([
           editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
           answerCallback(update.callback_query.id, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
@@ -167,10 +168,12 @@ module.exports = async function webhookHandler(req, res) {
       return res.sendStatus(200);
     }
 
+    // 기타 버튼 액션 처리
     await handleAdminAction(cmd, ctx);
     return res.sendStatus(200);
   }
 
+  // 텍스트 메시지 처리(명령어 및 기타 메시지)
   if (update.message?.text) {
     const chatId = update.message.chat.id;
     const messageText = update.message.text.trim().toLowerCase();
