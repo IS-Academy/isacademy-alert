@@ -23,20 +23,6 @@ const path = require('path');                                                   
 const entryCache = {};
 global.autoTradeEnabled = true; // 🪄 기본값: 자동매매 ON
 
-// 📌 진입 정보(entry)를 전역 캐시에 저장하는 함수
-function saveEntryData(symbol, type, avg, ratio) {
-  global.entryCache = global.entryCache || {};
-  const key = `${symbol}-${type}`;
-  global.entryCache[key] = { avg, ratio, ts: Date.now() };
-}
-
-// 📌 진입 정보를 전역 캐시에서 가져오는 함수
-function getEntryData(symbol, type) {
-  global.entryCache = global.entryCache || {};
-  const key = `${symbol}-${type}`;
-  return global.entryCache[key] || { avg: 'N/A', ratio: 0 };
-}
-
 // 📌 텔레그램 채팅 ID를 통해 언어 설정을 가져오는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
@@ -78,36 +64,6 @@ module.exports = async function webhookHandler(req, res) {
         return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
       }
 
-      // ✅ entryAvg/entryRatio 받아와서 캐시에 저장 (`25.04.14 미사용)
-//      const entryAvg = update.entryAvg || 'N/A';
-//      const entryRatio = update.entryRatio || 0;
-
-      // 📌 신호 타입으로부터 진입(롱/숏) 방향 결정
-      const isShort = type.endsWith('Short');
-      const direction = isShort ? 'short' : 'long';
-      
-      // 📌 진입/청산 신호 여부 판별 (direction 결정 후)
-      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes"].includes(type);
-      const isExitSignal = ["exitLong", "exitShort"].includes(type);
-
-      // ✅ 진입 신호라면, 진입 정보(entry)를 저장하고 자동매매 주문 수행
-      if (isEntrySignal) {
-        addEntry(symbol, type, price, timeframe); // entryManager에 진입 저장
-        if (global.autoTradeEnabled) {
-          await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: false, orderType: 'market' });      
-        } else {
-          console.log('⚠️ 자동매매 OFF → 주문 생략됨');
-        }
-      }
-
-      // ✅ 청산 신호일 경우, 기존 진입 정보(entry)를 삭제하고 자동매매 청산 주문 수행
-      if (isExitSignal) {
-        clearEntries(symbol, type, timeframe); // entry 정보 초기화
-        if (global.autoTradeEnabled) {
-          await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: true, orderType: 'market' });
-        }
-      }
-      
       // 📌 텔레그램 메시지 생성 (내부에서 entryInfo 처리!)
       const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');
       const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId: config.TELEGRAM_CHAT_ID, mingChatId: config.TELEGRAM_CHAT_ID_A });
