@@ -2,7 +2,7 @@
 
 // 📦 모듈 및 템플릿 관련 함수 임포트
 const { getTemplate: getHeaderTemplate, formatDate, formatNumber, generateEntryInfo, calculatePnL, generatePnLLine, formatReadyLine } = require('../MessageTemplates');
-const { translations } = require('../../lang');
+const { translations } = require('../lang');
 const lang = require("../lang");
 const langManager = require('../langConfigManager');
 const { getEntryInfo } = require('../entryManager');
