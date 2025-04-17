@@ -9,7 +9,7 @@ const webhookHandler = require('./webhookHandler'); // 트레이딩뷰 신호 �
 
 // 🔹 telegram 폴더 내 파일에서 불러오는 모듈
 const { loadBotState } = require('./telegram/utils'); // 봇 상태 로딩
-const dummyHandler = require('./telegram/dummyHandler'); // 더미 신호 처리
+const dummyHandler = require('./telegram/handlers/dummyHandler'); // 더미 신호 처리
 const captureApi = require('./telegram/routes/captureApi'); // 차트 이미지 캡처 API
 const { initAdminPanel } = require('./telegram/commands/status'); // 관리자 패널 초기화
 
