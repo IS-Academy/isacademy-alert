@@ -1,4 +1,4 @@
-//✅👇 index.js (최종 수정본)
+//✅👇 index.js
 
 require('dotenv').config();
 const express = require('express');
