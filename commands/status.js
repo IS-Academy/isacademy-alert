@@ -233,6 +233,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         // ✅ 등록된 interval이 없을 때만 주기 등록!
         if (!intervalId) {
           intervalId = setInterval(() => {
+            const currentId = getAdminMessageId();
             sendBotStatus(chatId, sent.data.result.message_id, { allowCreateKeyboard: false });
           }, 60 * 1000);
         }
