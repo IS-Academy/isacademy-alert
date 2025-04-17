@@ -2,7 +2,7 @@
 
 const axios = require('axios');
 const FormData = require('form-data');
-const config = require('./config');
+const config = require('../config');
 
 // 실시간 차트 캡처 후 텔레그램 전송 (최실장용 테스트)
 async function sendChartWithSignal({ chartUrl, message, chatId = config.TELEGRAM_CHAT_ID }) {
