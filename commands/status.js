@@ -241,25 +241,23 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
       if (sent?.data?.result?.message_id) {
-        setAdminMessageId(sent.data.result.message_id);
+        saveAdminMessageId(sent.data.result.message_id);
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
       }
       return sent;
     } else {
       const sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
+      if (sent?.data?.result?.message_id) saveAdminMessageId(sent.data.result.message_id);
       return sent;
     }
   } catch (err) {
     const errorMsg = err.message || '';
-
-    // ⚠️ 메시지가 삭제된 경우 → 단 한 번만 새로 생성
     if (errorMsg.includes('message to edit not found') && options.allowCreateKeyboard !== false) {
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
       if (sent?.data?.result?.message_id) {
-        setAdminMessageId(sent.data.result.message_id);
+        saveAdminMessageId(sent.data.result.message_id);
         if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
       }
@@ -275,16 +273,14 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    const messageId = getAdminMessageId();
-    if (!messageId) {
-      console.warn("⚠️ 초기 메시지 ID 없음. 새 관리자 키보드를 생성합니다.");
+    const savedId = loadAdminMessageId();
+    if (!savedId) {
+      console.warn("⚠️ 저장된 메시지 ID 없음 → 최초 키보드 생성");
       await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
     } else {
-      await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false });
+      await sendBotStatus(config.ADMIN_CHAT_ID, savedId, { allowCreateKeyboard: false });
     }
   },
-  handleAdminAction: async (data, ctx) => {
-    // ✨ 기존 유지 (핸들러 내부는 변경 없음)
-  }
+  handleAdminAction
 };
 
