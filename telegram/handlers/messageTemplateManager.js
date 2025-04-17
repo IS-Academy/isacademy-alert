@@ -14,7 +14,7 @@ function getUserLang(chatId) {
 }
 
 // 📌 웹훅 핸들러 전용 텔레그램 메시지 생성 함수 (내부에서 진입 정보 직접 처리!)
-function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage }) {
+function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId, mingChatId }) {
   const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
   const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
