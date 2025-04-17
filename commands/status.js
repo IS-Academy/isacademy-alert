@@ -16,8 +16,9 @@ const langManager = require('../langConfigManager');
 const config = require('../config');
 const {
   getLastDummyTime,
-  setAdminMessageId,
-  getAdminMessageId
+  getAdminMessageId,
+  saveAdminMessageId,
+  loadAdminMessageId
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
