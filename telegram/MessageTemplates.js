@@ -1,7 +1,7 @@
 //✅👇 MessageTemplates.js
 
 const moment = require('moment-timezone');
-const config = require('./config');
+const config = require('../config');
 const { translations } = require('./lang');
 
 // ✅ 숫자 포맷 함수 (1,000 단위 쉼표)
