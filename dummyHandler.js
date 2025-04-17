@@ -2,6 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
+const config = require('./config');
 const { updateLastDummyTime, getAdminMessageId } = require('./utils');
 const { sendBotStatus } = require('./commands/status');
 
