@@ -1,13 +1,13 @@
 //✅👇 webhookHandler.js
 
 // 📦 필요한 모듈들 불러오기
-const moment = require("moment-timezone");                                                // 🕒 날짜 및 시간 관리
+const moment = require("moment-timezone"); // 🕒 날짜 및 시간 관리
 const config = require("./config");                                                       // ⚙️ 환경설정 관리
 const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, 
-        getSymbolToggleKeyboard } = require("./telegram/botManager");                     // 🤖 텔레그램 봇 메시지 관리
-const langManager = require("./telegram/langConfigManager");                              // 🌐 언어 설정 관리
-const dummyHandler = require("./telegram/handlers/dummyHandler");                         // 🔄 더미 신호 처리
-const handleTableWebhook = require("./telegram/handlers/tableHandler");                   // 📊 테이블 신호 처리
+        getSymbolToggleKeyboard } = require("./telegram/botManager"); // 🤖 텔레그램 봇 메시지 관리
+const langManager = require("./telegram/langConfigManager"); // 🌐 언어 설정 관리
+const dummyHandler = require("./telegram/handlers/dummyHandler"); // 🔄 더미 신호 처리
+const handleTableWebhook = require("./telegram/handlers/tableHandler"); // 📊 테이블 신호 처리
 const { getTimeString, saveBotState, setAdminMessageId, getAdminMessageId } = require("./telegram/utils");   // 🛠️ 유틸리티 함수
 const { sendBotStatus, handleAdminAction } = require("./telegram/commands/status");       // 📟 관리자 명령 및 상태 관리
 const tradeSymbols = require('./trader-gate/symbols');                                    // 📝 자동매매 종목 상태 로드
