@@ -21,7 +21,7 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const { createSignalTemplate } = require('../MessageTemplates');
+const { createSignalTemplate } = require('../handlers/messageTemplateManager');
 const { getEntryInfo } = require('../entryManager');
 const { loadBotState, saveBotState } = require('../utils');
 const fs = require('fs');
