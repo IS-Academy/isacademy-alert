@@ -48,9 +48,9 @@ function formatSignalMessage(type, data, language = "ko") {
  
   // 🧩 [2] 공통 정보 (심볼, 타임프레임, 현재가)
   const common = `
-📌 ${t.labels.symbol}: ${data.symbol}
-⏱️ ${t.labels.timeframe}: ${data.timeframe}${t.labels.timeframeUnit}
-💲 ${t.labels.price}: ${data.price}`;
+${t.labels.symbol}: ${data.symbol}
+${t.labels.timeframe}: ${data.timeframe}${t.labels.timeframeUnit}
+${t.labels.price}: ${data.price}`;
 
   // 🧩 [3] 진입 정보 (진입률 및 평균가)
   const entryInfo = data.entryCount && data.entryAvg
