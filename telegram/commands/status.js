@@ -21,7 +21,7 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const { getTemplate } = require('../MessageTemplates');
+const { createSignalTemplate } = require('../MessageTemplates');
 const { getEntryInfo } = require('../entryManager');
 const { loadBotState, saveBotState } = require('../utils');
 const fs = require('fs');
@@ -126,7 +126,7 @@ async function handleAdminAction(data, ctx) {
         const symbol = 'btcusdt.p';
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
 
-        const msg = getTemplate({
+        const msg = createSignalTemplate({
           type, symbol: symbol.toUpperCase(), timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
           entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
           direction: type.endsWith('Short') ? 'short' : 'long'
