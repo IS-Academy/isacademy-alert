@@ -68,6 +68,11 @@ module.exports = async function webhookHandler(req, res) {
       const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');
       const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId: config.TELEGRAM_CHAT_ID, mingChatId: config.TELEGRAM_CHAT_ID_A });
       
+      const { handleMessage } = require('./telegram/messageHandler');
+
+      // 텔레그램 메시지 생성 및 전송 코드 수정
+      const { msgChoi, msgMing } = await handleMessage({ symbol, type, timeframe, price, ts, leverage });
+            
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
