@@ -1,7 +1,7 @@
 //✅👇 botManager.js (최종 리팩토링 + 필수 기능 복원)
 
 const axios = require('axios');
-const config = require('../config');
+const config = require('./config');
 const axiosInstance = axios.create({
   timeout: 5000,
   httpAgent: new (require('http').Agent)({ keepAlive: true }),
@@ -67,7 +67,7 @@ function getUserToggleKeyboard(target) {
 
 // ✅ 종목 ON/OFF 전환용 인라인 키보드 생성
 function getSymbolToggleKeyboard() {
-  const symbols = require('../trader-gate/symbols');
+  const symbols = require('./trader-gate/symbols');
   const buttons = Object.entries(symbols).map(([symbol, info]) => {
     return [{
       text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,

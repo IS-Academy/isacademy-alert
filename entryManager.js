@@ -1,4 +1,4 @@
-//✅👇 entryManager.js ==> 📂 진입 정보 저장 및 관리 로직
+//✅👇 entryManager.js
 
 // 📦 내부 상태 저장 (롱/숏 → 심볼 → 타임프레임 → [가격배열])
 const entries = { long: {}, short: {} };

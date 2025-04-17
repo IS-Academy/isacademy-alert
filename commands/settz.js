@@ -4,7 +4,7 @@ const langManager = require('../langConfigManager');
 const { sendToAdmin } = require('../botManager');
 const { getTimeString } = require('../utils');
 const sendBotStatus = require('./status');
-const config = require('../../config');
+const config = require('../config');
 
 const VALID_TZ = [
   'Asia/Seoul', 'Asia/Tokyo', 'UTC', 'America/New_York'

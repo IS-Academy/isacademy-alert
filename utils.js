@@ -4,7 +4,7 @@ const fs = require('fs');
 const moment = require('moment-timezone');
 const { getTranslation } = require('./lang');
 const { sendToAdmin, sendToChoi, sendToMing } = require('./botManager');
-const config = require('../config');
+const config = require('./config');
 
 const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
 

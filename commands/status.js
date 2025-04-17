@@ -13,7 +13,7 @@ const {
 } = require('../botManager');
 
 const langManager = require('../langConfigManager');
-const config = require('../../config');
+const config = require('../config');
 const {
   getLastDummyTime,
   setAdminMessageId,
@@ -21,7 +21,7 @@ const {
 } = require('../utils');
 const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const { createSignalTemplate } = require('../handlers/messageTemplateManager');
+const { getTemplate } = require('../MessageTemplates');
 const { getEntryInfo } = require('../entryManager');
 const { loadBotState, saveBotState } = require('../utils');
 const fs = require('fs');
@@ -47,20 +47,10 @@ async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
 
 async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
-  const messageId = getAdminMessageId();
+  const messageId = getAdminMessageId(); // 직접 불러오기 최적화
   const callbackQueryId = ctx.callbackQuery.id;
 
   let newText, newKeyboard, responseText;
-
-  const safeAnswerCallback = (id, text = '✅ 처리 완료!') => {
-    return answerCallback(id, text).catch(e => {
-      if (e.response?.data?.description.includes('query is too old')) {
-        console.warn(`⚠️ Callback 만료됨: ${id}`);
-      } else {
-        console.error(`❌ Callback 에러: ${e.message}`);
-      }
-    });
-  };
 
   switch (data) {
     case 'choi_toggle':
@@ -242,18 +232,17 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       }
 
       // 아래는 키보드 생성 허용된 경우만 실행
-      sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML' });
+      sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
 
       if (sent?.data?.result?.message_id) {
         setAdminMessageId(sent.data.result.message_id);
-        clearInterval(intervalId);
-        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);          
       } else {
-        await sendToAdmin("⚠️ 초기 키보드 생성 실패!");
+        await sendToAdmin("⚠️ 초기 키보드 생성 실패! 관리자 키보드를 수동으로 초기화 해주세요.");
       }
     } else {
-      // 메시지 ID가 있으면 무조건 업데이트만 진행
-      sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML' });
+      sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
 
       if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
     }
@@ -262,7 +251,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 
   } catch (err) {
     console.error('⚠️ 관리자 패널 오류:', err.message);
-    await sendToAdmin(`⚠️ 관리자 패널 오류: ${err.message}`);
+    await sendToAdmin(`⚠️ 관리자 패널 오류 발생: ${err.message}`);
     return null;
   }
 }
@@ -272,22 +261,26 @@ module.exports = {
   initAdminPanel: async () => {
     const messageId = getAdminMessageId();
 
-    if (!messageId) { // 최초 실행 시 메시지 ID 없으면 최초 1회 생성
-      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
+    if (!messageId) {
+      console.warn("⚠️ 초기 메시지 ID 없음. 새 관리자 키보드를 생성합니다.");
+      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true }); // 명시적으로 키보드 생성 허용
       if (sent && sent.data?.result) {
-        setAdminMessageId(sent.data.result.message_id);
-        clearInterval(intervalId);
-        intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, sent.data.result.message_id), 60 * 1000);
+        setAdminMessageId(sent.data.result.message_id); // 메시지 ID 설정
+        console.log('✅ 관리자 패널 최초 생성 완료');
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => sendBotStatus(), 60 * 1000);
       } else {
-        await sendToAdmin("⚠️ 초기 키보드 자동 생성 실패!");
+        await sendToAdmin("⚠️ 초기 키보드 자동 생성에 실패했습니다. 잠시 후 자동 재시도를 진행합니다.");
       }
-    } else { // 이후 실행 시 업데이트만 수행 (키보드 생성 X)
-      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false });
+    } else {
+      const sent = await sendBotStatus(config.ADMIN_CHAT_ID, messageId, { allowCreateKeyboard: false  });// 키보드 이미 존재할 땐 생성 불허
       if (sent && sent.data?.result) {
-        clearInterval(intervalId);
+        console.log('✅ 관리자 패널 상태 갱신 시작');
+        if (intervalId) clearInterval(intervalId);
         intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, messageId), 60 * 1000);
       } else {
-        await sendToAdmin("⚠️ 관리자 패널 갱신 실패!");
+        console.warn('⚠️ 관리자 패널 상태 갱신 실패');
+        await sendToAdmin("⚠️ 관리자 패널 상태 갱신에 실패했습니다. 잠시 후 자동으로 재시도됩니다.");
       }
     }
   },

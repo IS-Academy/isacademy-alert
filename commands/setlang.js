@@ -4,7 +4,7 @@ const langManager = require('../langConfigManager');
 const { sendToAdmin } = require('../botManager');
 const { getTimeString } = require('../utils');
 const sendBotStatus = require('./status');
-const config = require('../../config');
+const config = require('../config');
 
 module.exports = async function handleSetLang(chatId, langCode, currentLang, timeStr) {
   if (!langCode || !['ko', 'en', 'zh', 'jp'].includes(langCode)) {
