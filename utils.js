@@ -149,8 +149,6 @@ function getTimeString(tz = 'Asia/Seoul') {
   return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
 }
 
-let adminMessageId = null;
-
 function setAdminMessageId(id) { adminMessageId = id; }
 function getAdminMessageId() { return adminMessageId; }
 
