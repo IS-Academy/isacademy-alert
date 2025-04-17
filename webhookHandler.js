@@ -9,7 +9,6 @@ const langManager = require("./telegram/langConfigManager");                    
 const dummyHandler = require("./telegram/dummyHandler");                                  // 🔄 더미 신호 처리 (텔레그램)
 const handleTableWebhook = require("./telegram/handlers/tableHandler");                   // 📊 테이블 신호 처리 (텔레그램)
 const { getTimeString, saveBotState, setAdminMessageId } = require("./telegram/utils");   // 🛠️ 유틸리티 함수 모음 (텔레그램)
-const { addEntry, clearEntries, getEntryInfo } = require('./telegram/entryManager');      // 📈 진입 정보 관리 (텔레그램)
 const { sendBotStatus, handleAdminAction } = require("./telegram/commands/status");       // 📟 관리자 명령 및 상태 관리 (텔레그램)
 const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');// 📧 텔레그램 메시지 생성 관리 (텔레그램)
 const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler');                // 📉 자동매매 신호 처리 (Gate.io)
@@ -65,12 +64,7 @@ module.exports = async function webhookHandler(req, res) {
       }
 
       // 📌 텔레그램 메시지 생성 (내부에서 entryInfo 처리!)
-      const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');
-      const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId: config.TELEGRAM_CHAT_ID, mingChatId: config.TELEGRAM_CHAT_ID_A });
-      
       const { handleMessage } = require('./telegram/messageHandler');
-
-      // 텔레그램 메시지 생성 및 전송 코드 수정
       const { msgChoi, msgMing } = await handleMessage({ symbol, type, timeframe, price, ts, leverage });
             
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
