@@ -86,8 +86,94 @@ ${common}${entryInfo}${resultInfo}${time}${footer}
 ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ`;
 }
 
-// 📌 두 함수를 모두 외부에서 사용할 수 있도록 export
+
+
+// ✅ 메시지 템플릿 생성기 (신호 타입에 따라 메시지 분기)
+function getTemplate({
+  type,
+  symbol,
+  timeframe,
+  price,
+  ts,
+  entryCount = 0,
+  entryAvg = 'N/A',
+  weight = config.DEFAULT_WEIGHT,
+  leverage = config.DEFAULT_LEVERAGE,
+  lang = 'ko'
+}) {
+  const { date, time } = formatDate(ts, config.DEFAULT_TIMEZONE, lang);
+  const labels = translations[lang]?.labels || translations['ko'].labels;
+  const symbols = translations[lang]?.symbols || translations['ko'].symbols;
+
+  // ✅ 신호 방향 판단
+  const isExit = type.startsWith('exit') || type.startsWith('Ready_exit');
+  const isShort = type.endsWith('Short');
+  const direction = isShort ? 'short' : 'long';
+
+  // ✅ 진입/평단 정보 블럭 생성
+  const entryInfo = generateEntryInfo(entryCount, entryAvg, lang);
+  const formattedPrice = formatNumber(price);
+
+  // ✅ 수익률만 계산 (Ready_계열 포함)
+  const pnlResult = calculatePnL(price, entryAvg, entryCount, leverage, direction);
+  const expectedPnlLine = (() => {
+    if (!pnlResult) return labels.noPnL || '📉수익률 계산 불가';
+    const { pnl, isProfit } = pnlResult;
+    const pnlStr = Math.abs(pnl);
+    return isProfit
+      ? labels.pnlOnlyProfit.replace('{pnl}', pnlStr)
+      : labels.pnlOnlyLoss.replace('{pnl}', pnlStr);
+  })();
+
+  // ✅ 청산 신호인 경우만 수익률 계산 포함
+  const pnlLine = (type === 'exitLong' || type === 'exitShort')
+    ? generatePnLLine(price, entryAvg, entryCount, leverage, lang, direction)
+    : '';
+  
+  const capTime = `${labels.captured}:\n${date}\n${time}`;
+  const disclaimer = labels.disclaimer_full;
+
+  // ✅ 각 신호 유형별 템플릿 정의
+  const templates = {
+    showSup: `${symbols.showSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    showRes: `${symbols.showRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigSup: `${symbols.isBigSup}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    isBigRes: `${symbols.isBigRes}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n\n${capTime}\n\n${disclaimer}`,
+    exitLong: `${symbols.exitLong}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
+    exitShort: `${symbols.exitShort}\n\n${labels.symbol}: ${symbol}\n${labels.timeframe}: ${timeframe}${labels.timeframeUnit}\n${labels.price}: ${formattedPrice}\n${entryInfo}\n${pnlLine}\n\n${capTime}\n\n${disclaimer}`,
+    
+    Ready_showSup: formatReadyLine(symbols.Ready_showSup, symbol, timeframe, weight, leverage, labels),
+    Ready_showRes: formatReadyLine(symbols.Ready_showRes, symbol, timeframe, weight, leverage, labels),
+    Ready_isBigSup: formatReadyLine(symbols.Ready_isBigSup, symbol, timeframe, weight, leverage, labels),
+    Ready_isBigRes: formatReadyLine(symbols.Ready_isBigRes, symbol, timeframe, weight, leverage, labels),
+    
+    // ✅ 수정된 Ready_exit 템플릿들
+    Ready_exitLong:
+      `${symbols.Ready_exitLong} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
+      `${labels.symbol}: ${symbol}\n\n` +
+//      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` + //✅ 진입&평균가
+      `${labels.expectedCloseLong.replace('{price}', formatNumber(price))}\n` +
+      `${expectedPnlLine}`,
+
+    Ready_exitShort:
+      `${symbols.Ready_exitShort} ${timeframe}${labels.timeframeUnit}⏱️\n\n` +
+      `${labels.symbol}: ${symbol}\n\n` +
+//      `${generateEntryInfo(entryCount, entryAvg, lang)}\n\n` + //✅ 진입&평균가
+      `${labels.expectedCloseShort.replace('{price}', formatNumber(price))}\n` +
+      `${expectedPnlLine}`
+  };
+
+  if (templates[type]) {
+    return templates[type];
+  } else {
+    console.warn(`⚠️ MessageTemplates: 알 수 없는 type='${type}'`);
+    return `⚠️ 알 수 없는 신호 타입입니다: ${type}`;
+  }
+}
+
+// 📌 세 함수를 모두 외부에서 사용할 수 있도록 export
 module.exports = { 
   generateTelegramMessage,
-  formatSignalMessage
+  formatSignalMessage,
+  getTemplate
 };
