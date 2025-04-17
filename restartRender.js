@@ -1,8 +1,5 @@
 // ✅ restartRender.js (Render 서버 강제 재시작 트리거)
 
-console.log("🔐 API:", process.env.RENDER_API_KEY);
-console.log("🆔 SVC:", process.env.RENDER_SERVICE_ID);
-
 require('dotenv').config();
 const axios = require('axios');
 
@@ -34,3 +31,5 @@ async function restartRenderService() {
 }
 
 restartRenderService();
+console.log("🔐 API:", process.env.RENDER_API_KEY);
+console.log("🆔 SVC:", process.env.RENDER_SERVICE_ID);
