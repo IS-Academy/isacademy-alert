@@ -107,12 +107,9 @@ module.exports = async function webhookHandler(req, res) {
           await handleTradeSignal({ side: direction, symbol, timeframe, entryAvg: price, amount: 0.001, isExit: true, orderType: 'market' });
         }
       }
-
-      // 📌 처리한 데이터를 로그로 출력 (디버깅 용)
-      console.log('📦 메시지 입력값:', { type, symbol, timeframe, price, avg, ratio, ts });
       
-      // ✅ 메시지 템플릿 매니저에서 직접 메시지 생성
-      const { generateTelegramMessage } = require('./handlers/messageTemplateManager');
+      // 📌 텔레그램 메시지 생성 (내부에서 entryInfo 처리!)
+      const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');
       const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage });
       
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
