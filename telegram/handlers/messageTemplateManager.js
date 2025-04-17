@@ -50,8 +50,10 @@ ${t.labels.price}: ${data.price}`;
 
   // 🧩 [3] 진입 정보 (진입률 및 평균가)
   const entryInfo = data.entryCount && data.entryAvg
-    ? `\n📊 ${t.entry} ${data.entryCount}% / ${t.avgPrice} ${data.entryAvg}`
-    : "";
+    ? `\n${t.labels.entryInfo
+        .replace('{entryCount}', data.entryCount)
+        .replace('{entryAvg}', data.entryAvg)}`
+    : `\n${t.labels.noEntryInfo}`;
 
   // 🧩 [4] 수익률 정보 (PnL / ROE)
   let resultInfo = "";
