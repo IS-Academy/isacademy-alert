@@ -269,12 +269,11 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    const savedId = loadAdminMessageId();
-    if (!savedId) {
-      console.warn("⚠️ 저장된 메시지 ID 없음 → 최초 키보드 생성");
-      await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
-    } else {
-      await sendBotStatus(config.ADMIN_CHAT_ID, savedId, { allowCreateKeyboard: false });
+    console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
+    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
+    if (sent?.data?.result?.message_id) {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, sent.data.result.message_id, { allowCreateKeyboard: false }), 60000);
     }
   },
   handleAdminAction
