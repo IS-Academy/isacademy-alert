@@ -110,7 +110,7 @@ module.exports = async function webhookHandler(req, res) {
       
       // 📌 텔레그램 메시지 생성 (내부에서 entryInfo 처리!)
       const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager');
-      const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage });
+      const { msgChoi, msgMing } = generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId: config.TELEGRAM_CHAT_ID, mingChatId: config.TELEGRAM_CHAT_ID_A });
       
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
