@@ -1,6 +1,6 @@
 {
-  "ko": "./ko.js",
-  "en": "./en.js",  
-  "zh": "./zh.js",
-  "jp": "./jp.js"
+  "ko": "./locales/ko.js",
+  "en": "./locales/en.js",
+  "zh": "./locales/zh.js",
+  "jp": "./locales/jp.js"
 }
