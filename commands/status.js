@@ -231,11 +231,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         adminMessageId = sent.data.result.message_id; // ✅ 즉시 메모리에도 반영
         
         // ✅ 등록된 interval이 없을 때만 주기 등록!
-        if (!intervalId) {
-          intervalId = setInterval(() => {
-            const currentId = getAdminMessageId();
-            sendBotStatus(chatId, sent.data.result.message_id, { allowCreateKeyboard: false });
-          }, 60 * 1000);
+        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);
         }
       } else {
         console.warn('⚠️ 메시지 ID 없음 → 저장 실패 가능성');
@@ -259,8 +255,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
         console.log('✅ 새 메시지 재생성됨, ID 저장:', sent.data.result.message_id);
         saveAdminMessageId(sent.data.result.message_id);
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(() => sendBotStatus(chatId, sent.data.result.message_id), 60 * 1000);
+        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);
       } else {
         console.warn('⚠️ 재생성 메시지에서도 ID 없음 → 저장 실패 가능성');
       }
