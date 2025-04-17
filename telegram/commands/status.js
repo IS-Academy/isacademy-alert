@@ -13,7 +13,7 @@ const {
 } = require('../botManager');
 
 const langManager = require('../langConfigManager');
-const config = require('../config');
+const config = require('../../config');
 const {
   getLastDummyTime,
   setAdminMessageId,
