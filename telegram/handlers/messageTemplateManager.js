@@ -4,7 +4,7 @@ const { getTemplate } = require('../MessageTemplates');
 const lang = require("../lang");
 const langManager = require('../langConfigManager');
 const { getEntryInfo } = require('../entryManager');
-const config = require('../config');
+const config = require('../../config');
 const moment = require('moment-timezone');
 
 // 📌 유저의 언어 설정을 얻는 함수
