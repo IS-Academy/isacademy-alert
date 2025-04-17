@@ -3,11 +3,12 @@
 require('dotenv').config();
 const express = require('express');
 
+const { loadBotState } = require('./utils');
+const webhookHandler = require('./webhookHandler');
+
 // 🔹 telegram 폴더에서 모듈 불러오기
 const dummyHandler = require('./telegram/dummyHandler');
-const webhookHandler = require('./telegram/webhookHandler');
 const captureApi = require('./telegram/routes/captureApi');
-const { loadBotState } = require('./telegram/utils');
 const { initAdminPanel } = require('./telegram/commands/status');
 
 const app = express();
