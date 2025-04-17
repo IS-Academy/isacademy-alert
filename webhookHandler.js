@@ -63,7 +63,6 @@ module.exports = async function webhookHandler(req, res) {
         clearEntries(symbol, type, timeframe);
       }
 
-      const { handleMessage } = require('./telegram/messageHandler');
       const { msgChoi, msgMing } = await handleMessage({ symbol, type, timeframe, price, ts, leverage });
 
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
