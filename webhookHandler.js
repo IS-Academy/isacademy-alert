@@ -1,4 +1,4 @@
-//✅👇 webhookHandler.js
+//✅👇 webhookHandler.js ==> 📂 웹훅 수신, 브릿지 역할 (처리 로직 없음)
 
 // 📦 필요한 모듈들 불러오기
 const moment = require("moment-timezone"); // 🕒 날짜 및 시간 관리
