@@ -1,5 +1,5 @@
 const webhookHandler = require('../webhookHandler');
-const config = require('../config');
+const config = require('../../config');
 
 module.exports = async function testTemplate(type) {
   const testWebhookData = {
