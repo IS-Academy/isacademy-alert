@@ -1,30 +1,14 @@
 //✅👇 commands/status.js
 
-const {
-  editMessage,
-  getLangKeyboard,
-  getLangMenuKeyboard,
-  getUserToggleKeyboard,
-  getSymbolToggleKeyboard,
-  getTemplateTestKeyboard,
-  sendTextToBot,
-  getDynamicInlineKeyboard,
-  sendToAdmin  
-} = require('../botManager');
-
-const langManager = require('../langConfigManager');
-const config = require('../config');
-const {
-  getLastDummyTime,
-  getAdminMessageId,
-  saveAdminMessageId,
-  loadAdminMessageId
-} = require('../utils');
-const { translations } = require('../lang');
 const moment = require('moment-timezone');
-const { getTemplate } = require('../MessageTemplates');
-const { getEntryInfo } = require('../entryManager');
+const config = require('../config');
+const { getLastDummyTime, getAdminMessageId, saveAdminMessageId, loadAdminMessageId } = require('../utils');
 const { loadBotState, saveBotState } = require('../utils');
+const langManager = require('../langConfigManager');
+const { translations } = require('../lang');
+const { getEntryInfo } = require('../entryManager');
+const { editMessage, getLangKeyboard, getLangMenuKeyboard, getUserToggleKeyboard, getSymbolToggleKeyboard, getTemplateTestKeyboard, sendTextToBot, getDynamicInlineKeyboard, sendToAdmin } = require('../botManager');
+const { getTemplate } = require('../MessageTemplates');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
