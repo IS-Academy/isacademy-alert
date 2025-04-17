@@ -1,4 +1,4 @@
-// 📊 tableHandler.js - 트레이딩뷰 테이블 웹훅 전용
+// 📊 telegram/handlers/tableHandler.js - 트레이딩뷰 테이블 웹훅 전용
 
 const { sendToChoi, sendToMing } = require('../botManager');
 const config = require('../../config');
