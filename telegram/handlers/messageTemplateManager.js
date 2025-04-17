@@ -54,8 +54,6 @@ ${t.labels.price}: ${data.price}`;
         .replace('{entryCount}', data.entryCount)
         .replace('{entryAvg}', data.entryAvg)}`
     : `\n${t.labels.noEntryInfo}`;
-  
-  console.log('⚠️ 데이터 확인:', data.entryCount, data.entryAvg);
 
   // 🧩 [4] 수익률 정보 (PnL / ROE)
   let resultInfo = "";
