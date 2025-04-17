@@ -1,4 +1,4 @@
-// ✅ messageHandler.js 신규 생성 (진입정보, 수익률 처리 후 메시지 생성)
+//✅👇 messageHandler.js ==> 📂 entry 정보 조회, 메시지 생성 로직
 
 // 모듈 로드
 const { getEntryInfo } = require('../entryManager');
