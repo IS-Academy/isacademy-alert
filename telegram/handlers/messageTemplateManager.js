@@ -9,8 +9,6 @@ const { getEntryInfo } = require('../entryManager');
 const config = require('../../config');
 const moment = require('moment-timezone');
 
-console.log('✅ translations:', translations); // 🚨 언어팩 객체 로그로 확인
-
 // 📌 유저의 언어 설정을 얻는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
