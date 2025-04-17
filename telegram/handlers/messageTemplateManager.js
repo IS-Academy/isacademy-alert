@@ -21,7 +21,6 @@ function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage 
 
   // 📌 진입가 및 진입 횟수 정보 계산
   const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
-  const direction = type.endsWith('Short') ? 'short' : 'long';
 
   // 📌 방향 판단 (롱/숏)
   const direction = type.endsWith('Short') ? 'short' : 'long';
