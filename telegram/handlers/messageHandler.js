@@ -2,7 +2,7 @@
 
 // 모듈 로드
 const { getEntryInfo } = require('../entryManager');
-const { generateTelegramMessage, calculatePnL } = require('./handlers/messageTemplateManager');
+const { generateTelegramMessage, calculatePnL } = require('./messageTemplateManager');
 const config = require('../config');
 
 // 메인 함수 (데이터를 조회해서 메시지 생성까지 담당)
