@@ -1,6 +1,6 @@
 //✅👇 handlers/messageTemplateManager.js
 
-const { getTemplate } = require('../MessageTemplates');
+const { getTemplate: getHeaderTemplate } = require('../../MessageTemplates');
 const lang = require("../lang");
 const langManager = require('../langConfigManager');
 const { getEntryInfo } = require('../entryManager');
@@ -33,8 +33,8 @@ function formatSignalMessage(type, data, language = "ko") {
   const t = lang.get(language);
 
   // 🧩 [1] 메시지 헤더 (시그널 제목)
-  const header = getTemplate({ type, lang: language }) || "#❓Unknown Signal";
-
+  const header = getHeaderTemplate(type, language) || "#❓Unknown Signal";
+ 
   // 🧩 [2] 공통 정보 (심볼, 타임프레임, 현재가)
   const common = `
 📌 ${t.symbol}: ${data.symbol}
@@ -89,18 +89,7 @@ ${common}${entryInfo}${resultInfo}${time}${footer}
 
 
 // ✅ 메시지 템플릿 생성기 (신호 타입에 따라 메시지 분기)
-function getTemplate({
-  type,
-  symbol,
-  timeframe,
-  price,
-  ts,
-  entryCount = 0,
-  entryAvg = 'N/A',
-  weight = config.DEFAULT_WEIGHT,
-  leverage = config.DEFAULT_LEVERAGE,
-  lang = 'ko'
-}) {
+function createSignalTemplate({ type, symbol, timeframe, price, ts, entryCount = 0, entryAvg = 'N/A', weight = config.DEFAULT_WEIGHT, leverage = config.DEFAULT_LEVERAGE, lang = 'ko' }) {
   const { date, time } = formatDate(ts, config.DEFAULT_TIMEZONE, lang);
   const labels = translations[lang]?.labels || translations['ko'].labels;
   const symbols = translations[lang]?.symbols || translations['ko'].symbols;
@@ -175,5 +164,5 @@ function getTemplate({
 module.exports = { 
   generateTelegramMessage,
   formatSignalMessage,
-  getTemplate
+  createSignalTemplate
 };
