@@ -1,7 +1,7 @@
 // ✅ messageHandler.js 신규 생성 (진입정보, 수익률 처리 후 메시지 생성)
 
 // 모듈 로드
-const { getEntryInfo } = require('./entryManager');
+const { getEntryInfo } = require('../entryManager');
 const { generateTelegramMessage, calculatePnL } = require('./handlers/messageTemplateManager');
 const config = require('../config');
 
