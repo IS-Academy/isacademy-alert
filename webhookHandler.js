@@ -72,24 +72,6 @@ module.exports = async function webhookHandler(req, res) {
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
 
-      // 📸 exit 신호 시 캡처 명령어 실행 (차트 이미지 자동 전송)
-      if (isExitSignal) {
-        const intervalNum = timeframe.replace(/[^0-9]/g, '') || "1";
-        const captureCommand = `node captureAndSend.js --interval=${intervalNum} --type=${type}`;
-        exec(captureCommand, (error, stdout, stderr) => {
-          if (error) console.error(`❌ 캡처 실패: ${error.message}`);
-          else if (stderr) console.error(`⚠️ 캡처 경고: ${stderr}`);
-          else if (stdout.trim()) console.log(`✅ 캡처 성공:\n${stdout.trim()}`);
-        });
-      }
-
-      return res.status(200).send("✅ 텔레그램 및 자동매매 전송 성공");
-    } catch (err) {
-      console.error("❌ 텔레그램/자동매매 처리 오류:", err.stack || err.message);
-      return res.status(500).send("서버 오류");
-    }
-  }
-
   // ✅ 텔레그램 버튼 콜백 처리
   if (update.callback_query) {
     const cmd = update.callback_query.data;
