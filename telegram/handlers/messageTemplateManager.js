@@ -7,6 +7,9 @@ const { getEntryInfo } = require('../entryManager');
 const config = require('../../config');
 const moment = require('moment-timezone');
 
+const { formatDate, formatNumber, generateEntryInfo, calculatePnL, generatePnLLine, formatReadyLine } = require('../../MessageTemplates');
+const { translations } = require('../../lang');
+
 // 📌 유저의 언어 설정을 얻는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
