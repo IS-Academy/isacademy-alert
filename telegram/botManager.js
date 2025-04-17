@@ -67,7 +67,7 @@ function getUserToggleKeyboard(target) {
 
 // ✅ 종목 ON/OFF 전환용 인라인 키보드 생성
 function getSymbolToggleKeyboard() {
-  const symbols = require('./trader-gate/symbols');
+  const symbols = require('../trader-gate/symbols');
   const buttons = Object.entries(symbols).map(([symbol, info]) => {
     return [{
       text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
