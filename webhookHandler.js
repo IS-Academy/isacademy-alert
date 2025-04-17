@@ -1,21 +1,23 @@
 //✅👇 webhookHandler.js
 
 // 📦 필요한 모듈들 불러오기
-const moment = require("moment-timezone");
-const config = require("./config");
-const langManager = require("./langConfigManager");
-const dummyHandler = require("./dummyHandler");
-const handleTableWebhook = require("./handlers/tableHandler");
-const { getTimeString, saveBotState, setAdminMessageId } = require("./utils");
-const { addEntry, clearEntries, getEntryInfo } = require('./entryManager');
-const { getTemplate } = require("./MessageTemplates");
-const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, getSymbolToggleKeyboard } = require("./botManager");
-const { sendBotStatus, handleAdminAction } = require("./commands/status");
-const { exec } = require('child_process');
-const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 핸들러
-const tradeSymbols = require('./trader-gate/symbols'); // ✅ 종목 상태 로드
-const fs = require('fs');
-const path = require('path');
+const moment = require("moment-timezone");                                                // 🕒 날짜 및 시간 관리
+const config = require("./config");                                                       // ⚙️ 환경설정 관리
+const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, 
+        getSymbolToggleKeyboard } = require("./telegram/botManager");                     // 🤖 텔레그램 봇 메시지 관리 (텔레그램)
+const langManager = require("./telegram/langConfigManager");                              // 🌐 언어 설정 관리 (텔레그램)
+const dummyHandler = require("./telegram/dummyHandler");                                  // 🔄 더미 신호 처리 (텔레그램)
+const handleTableWebhook = require("./telegram/handlers/tableHandler");                   // 📊 테이블 신호 처리 (텔레그램)
+const { getTimeString, saveBotState, setAdminMessageId } = require("./telegram/utils");   // 🛠️ 유틸리티 함수 모음 (텔레그램)
+const { addEntry, clearEntries, getEntryInfo } = require('./telegram/entryManager');      // 📈 진입 정보 관리 (텔레그램)
+const { sendBotStatus, handleAdminAction } = require("./telegram/commands/status");       // 📟 관리자 명령 및 상태 관리 (텔레그램)
+const { generateTelegramMessage } = require('./telegram/handlers/messageTemplateManager'); // 📧 텔레그램 메시지 생성 관리 (텔레그램)
+const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler');                // 📉 자동매매 신호 처리 (Gate.io)
+const tradeSymbols = require('./trader-gate/symbols');                                    // 📝 자동매매 종목 상태 로드 (Gate.io)
+const { exec } = require('child_process');                                                // ⚡ 시스템 명령어 실행
+const fs = require('fs');                                                                 // 💾 파일시스템 접근
+const path = require('path');                                                             // 📂 파일경로 관리
+
 
 // 🌍 전역변수 선언 및 초기화
 const entryCache = {};
