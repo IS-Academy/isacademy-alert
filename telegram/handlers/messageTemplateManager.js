@@ -1,4 +1,4 @@
-//✅👇 telegram/handlers/messageTemplateManager.js
+//✅👇 telegram/handlers/messageTemplateManager.js // 템플릿 기반 메시지 조합 및 생성
 
 // 📦 모듈 및 템플릿 관련 함수 임포트
 const { getHeaderTemplate, formatDate, formatNumber, generateEntryInfo, calculatePnL, generatePnLLine, formatReadyLine } = require('../MessageTemplates');
@@ -13,11 +13,7 @@ function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
 }
 
-// 📌 기본 시그널 메시지 생성 (언어팩 활용, 푸시 알림용)
-function formatSignalMessage(type, data, language = "ko") {
-  const t = lang.get(language);
-
-// 📌 텔레그램 메시지 생성 함수 (최종 데이터만 받아서 메시지 조합)
+//📌 텔레그램 메시지 생성 함수 (최종 데이터만 받아서 메시지 조합)
 function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, entryCount, entryAvg, direction, result }) {
   const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
   const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
@@ -29,7 +25,11 @@ function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage,
   const msgMing = formatSignalMessage(type, dataMing, langMing);
 
   return { msgChoi, msgMing };
-}  
+}
+
+// 📌 기본 시그널 메시지 생성 (언어팩 활용, 푸시 알림용)
+function formatSignalMessage(type, data, language = "ko") {
+  const t = lang.get(language);
 
   // 🧩 [1] 메시지 헤더 (시그널 제목)
   const header = getHeaderTemplate(type, language) || "#❓Unknown Signal";
