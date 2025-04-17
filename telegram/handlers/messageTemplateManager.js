@@ -37,8 +37,6 @@ function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage,
 
 // 📌 기본 시그널 메시지 생성 (언어팩 활용, 푸시 알림용)
 function formatSignalMessage(type, data, language = "ko") {
-  console.log('📌 language:', language); //🚨 언어코드 로그로 확인
-  console.log('📌 labels:', translations[language]?.labels); // 🚨 labels 로그 확인
   const t = lang.get(language);
 
   // 🧩 [1] 메시지 헤더 (시그널 제목)
@@ -83,10 +81,10 @@ ${t.labels.price}: ${data.price}`;
   const dateStr = timeFormatted.format('YY.MM.DD (ddd)');
   const timeStr = timeFormatted.format('A hh:mm:ss');
 
-  const time = `\n\n🕒 ${t.capturedAt}:\n${dateStr}\n${timeStr}\n`;
+  const time = `\n\n${t.labels.captured}:\n${dateStr}\n${timeStr}\n`;
 
   // 🧩 [6] 푸터 (면책 고지 및 안내문)
-  const footer = `\n${t.notice1}\n${t.notice2}`;
+  const footer = `\n${t.labels.disclaimer_full}`;
 
   // 🧩 [7] 전체 메시지 조합 후 반환
   return `ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
