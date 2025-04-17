@@ -17,6 +17,20 @@ function getUserLang(chatId) {
 function formatSignalMessage(type, data, language = "ko") {
   const t = lang.get(language);
 
+// 📌 텔레그램 메시지 생성 함수 (최종 데이터만 받아서 메시지 조합)
+function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, entryCount, entryAvg, direction, result }) {
+  const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
+  const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+
+  const dataChoi = { symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount, entryAvg, leverage, direction, result };
+  const dataMing = { ...dataChoi };
+
+  const msgChoi = formatSignalMessage(type, dataChoi, langChoi);
+  const msgMing = formatSignalMessage(type, dataMing, langMing);
+
+  return { msgChoi, msgMing };
+}  
+
   // 🧩 [1] 메시지 헤더 (시그널 제목)
   const header = getHeaderTemplate(type, language) || "#❓Unknown Signal";
  
