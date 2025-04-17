@@ -66,58 +66,67 @@ async function handleAdminAction(data, ctx) {
     case 'choi_toggle':
     case 'ming_toggle':
       const isChoi = data === 'choi_toggle';
-      const botState = loadBotState();
+      const botState = loadBotState();  // ✅ 파일 상태 로딩
       botState[isChoi ? 'choiEnabled' : 'mingEnabled'] = !botState[isChoi ? 'choiEnabled' : 'mingEnabled'];
-      saveBotState(botState);
-      global.choiEnabled = botState.choiEnabled;
-      global.mingEnabled = botState.mingEnabled;
+      saveBotState(botState);  // ✅ 파일에 상태 저장
+      global.choiEnabled = botState.choiEnabled;  // ✅ global도 같이 동기화
+      global.mingEnabled = botState.mingEnabled;  // ✅ global도 같이 동기화      
       responseText = `${isChoi ? '👨‍💼 최실장' : '👩‍💼 밍밍'} ${botState[isChoi ? 'choiEnabled' : 'mingEnabled'] ? '✅ ON' : '❌ OFF'}`;
-      await safeAnswerCallback(callbackQueryId, responseText);
-      await sendBotStatus(chatId, messageId);
+      await Promise.all([
+        sendBotStatus(chatId, messageId),
+        answerCallback(callbackQueryId, responseText),
+      ]);
       return;
 
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
-      newKeyboard = getLangMenuKeyboard();
+      newKeyboard = getLangMenuKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 언어 메뉴 열림';
       break;
 
     case 'lang_choi':
     case 'lang_ming':
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
-      newKeyboard = getLangKeyboard(data.split('_')[1]);
+      newKeyboard = getLangKeyboard(data.split('_')[1]); // ⚠️ 관리자 키보드 바꾸는 동작 + data.split
       responseText = '✅ 언어 선택 메뉴';
       break;
-
+      
     case 'status':
     case 'dummy_status':
-      await safeAnswerCallback(callbackQueryId, data === 'status' ? '✅ 최신 상태로 업데이트 완료' : '♻️ 더미 상태 최신화 완료');
-      await sendBotStatus(chatId, messageId);
+      await Promise.all([
+        sendBotStatus(chatId, messageId),
+        answerCallback(callbackQueryId, data === 'status' ? '✅ 최신 상태로 업데이트 완료' : '♻️ 더미 상태 최신화 완료')
+      ]);
       return;
 
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
-      newKeyboard = getTemplateTestKeyboard();
+      newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 테스트 메뉴 열림';
-      break;
+      break;      
 
     case 'symbol_toggle_menu':
       newText = '📊 자동매매 종목 설정 (ON/OFF)';
-      newKeyboard = getSymbolToggleKeyboard();
+      newKeyboard = getSymbolToggleKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 종목 설정 메뉴 열림';
       break;
 
     case 'back_main':
-      await safeAnswerCallback(callbackQueryId, '↩️ 메인 메뉴로 돌아갑니다');
-      await sendBotStatus(chatId, messageId);
+      await Promise.all([
+        sendBotStatus(chatId, messageId),
+        answerCallback(callbackQueryId, '↩️ 메인 메뉴로 돌아갑니다')
+      ]);
       return;
 
     default:
       if (data.startsWith('lang_') && data.split('_').length === 3) {
         const [_, bot, langCode] = data.split('_');
         langManager.setUserLang(bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A, langCode);
-        await safeAnswerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`);
-        await sendBotStatus(chatId, messageId);
+
+        await Promise.all([
+          sendBotStatus(chatId, messageId),
+          answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
+        ]);
         return;
       }
 
@@ -127,14 +136,16 @@ async function handleAdminAction(data, ctx) {
         const symbol = 'btcusdt.p';
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
 
-        const msg = createSignalTemplate({
+        const msg = getTemplate({
           type, symbol: symbol.toUpperCase(), timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
           entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
           direction: type.endsWith('Short') ? 'short' : 'long'
         });
 
-        await safeAnswerCallback(callbackQueryId, '✅ 템플릿 테스트 완료');
-        await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`);
+        await Promise.all([
+          sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
+          answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
+        ]);
         return;
       }
 
@@ -144,16 +155,20 @@ async function handleAdminAction(data, ctx) {
         if (symbols[symbolKey]) {
           symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
           fs.writeFileSync(symbolsPath, `module.exports=${JSON.stringify(symbols,null,2)}`);
-          await safeAnswerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`);
-          await editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard());
+          await Promise.all([
+            editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
+            answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
+          ]);
         }
         return;
       }
   }
 
   if (newText && newKeyboard) {
-    await safeAnswerCallback(callbackQueryId, responseText);
-    await editMessage('admin', chatId, messageId, newText, newKeyboard);
+    await Promise.all([
+      editMessage('admin', chatId, messageId, newText, newKeyboard),
+      answerCallback(callbackQueryId, responseText)
+    ]);
   }
 }
 
