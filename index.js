@@ -2,22 +2,26 @@
 
 require('dotenv').config();
 const express = require('express');
-const dummyHandler = require('./dummyHandler');
-const webhookHandler = require('./webhookHandler');
-const captureApi = require('./routes/captureApi');
-const { loadBotState } = require('./utils');
-const { initAdminPanel } = require('./commands/status');
+
+// 🔹 telegram 폴더에서 모듈 불러오기
+const dummyHandler = require('./telegram/dummyHandler');
+const webhookHandler = require('./telegram/webhookHandler');
+const captureApi = require('./telegram/routes/captureApi');
+const { loadBotState } = require('./telegram/utils');
+const { initAdminPanel } = require('./telegram/commands/status');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 🌍 글로벌 상태 로딩
 const { choiEnabled, mingEnabled } = loadBotState();
 global.choiEnabled = choiEnabled;
 global.mingEnabled = mingEnabled;
 
+// 📦 Middleware
 app.use(express.json()); // 🚨 이 부분을 express.json()으로 변경 (필수)
 
-// ✅ 라우트 등록
+// ✅ 라우트 등록 (변경된 파일 경로에 맞게)
 app.use('/dummy', dummyHandler);
 app.post('/webhook', webhookHandler);
 app.use('/capture', captureApi);
