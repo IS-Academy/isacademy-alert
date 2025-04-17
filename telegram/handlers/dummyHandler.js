@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { updateLastDummyTime, getAdminMessageId } = require('../utils');
-const { sendBotStatus } = require('./commands/status');
+const { sendBotStatus } = require('../commands/status');
 const config = require('../config');
 
 router.post('/', async (req, res) => {
