@@ -5,31 +5,12 @@ const { getHeaderTemplate, formatDate, formatNumber, generateEntryInfo, calculat
 const lang = require("../lang");
 const { translations } = require('../lang'); // 🌐 언어팩 객체 명시적 로드
 const langManager = require('../langConfigManager');
-const { getEntryInfo } = require('../entryManager');
 const config = require('../../config');
 const moment = require('moment-timezone');
 
 // 📌 유저의 언어 설정을 얻는 함수
 function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
-}
-
-// 📌 웹훅 핸들러 전용 텔레그램 메시지 생성 함수 (내부에서 진입 정보 직접 처리!)
-function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage, choiChatId, mingChatId }) {
-  const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
-  const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
-
-  // 📌 방향 판단 (롱/숏)
-  const direction = type.endsWith('Short') ? 'short' : 'long';
-
-  const dataChoi = { symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, direction };
-  const dataMing = { ...dataChoi };
-
-  // 📌 각각의 채널 언어로 메시지 생성
-  const msgChoi = formatSignalMessage(type, dataChoi, langChoi);
-  const msgMing = formatSignalMessage(type, dataMing, langMing);
-
-  return { msgChoi, msgMing };
 }
 
 // 📌 기본 시그널 메시지 생성 (언어팩 활용, 푸시 알림용)
