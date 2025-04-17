@@ -31,6 +31,3 @@ app.listen(PORT, async () => {
 });
 
 console.log("✅ index.js 실행 시작");
-
-// 🔁 Render 재시작 트리거용 의미 없는 변경
-console.log("♻️ 커밋 트리거용 로그 - 서버 재시작 유도");
