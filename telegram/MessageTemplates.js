@@ -1,4 +1,4 @@
-//✅👇 MessageTemplates.js
+//✅👇 MessageTemplates.js ==> 📂 기본 함수 제공 (포맷, 날짜, 언어팩)
 
 const moment = require('moment-timezone');
 const config = require('../config');
