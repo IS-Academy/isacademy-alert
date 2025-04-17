@@ -1,7 +1,7 @@
 //✅👇 botManager.js (최종 리팩토링 + 필수 기능 복원)
 
 const axios = require('axios');
-const config = require('./config');
+const config = require('../config');
 const axiosInstance = axios.create({
   timeout: 5000,
   httpAgent: new (require('http').Agent)({ keepAlive: true }),
