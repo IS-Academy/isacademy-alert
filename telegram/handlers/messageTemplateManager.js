@@ -49,11 +49,13 @@ ${t.labels.timeframe}: ${data.timeframe}${t.labels.timeframeUnit}
 ${t.labels.price}: ${data.price}`;
 
   // 🧩 [3] 진입 정보 (진입률 및 평균가)
-  const entryInfo = data.entryCount && data.entryAvg
+  const entryInfo = (data.entryCount > 0 && data.entryAvg && data.entryAvg !== 'N/A')
     ? `\n${t.labels.entryInfo
         .replace('{entryCount}', data.entryCount)
         .replace('{entryAvg}', data.entryAvg)}`
     : `\n${t.labels.noEntryInfo}`;
+  
+  console.log('⚠️ 데이터 확인:', data.entryCount, data.entryAvg);
 
   // 🧩 [4] 수익률 정보 (PnL / ROE)
   let resultInfo = "";
