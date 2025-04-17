@@ -6,7 +6,7 @@ const config = require("./config");                                             
 const { sendToChoi, sendToMing, sendToAdmin, editMessage, answerCallback, 
         getSymbolToggleKeyboard } = require("./telegram/botManager");                     // 🤖 텔레그램 봇 메시지 관리
 const langManager = require("./telegram/langConfigManager");                              // 🌐 언어 설정 관리
-const dummyHandler = require("./telegram/dummyHandler");                                  // 🔄 더미 신호 처리
+const dummyHandler = require("./telegram/handlers/dummyHandler");                         // 🔄 더미 신호 처리
 const handleTableWebhook = require("./telegram/handlers/tableHandler");                   // 📊 테이블 신호 처리
 const { getTimeString, saveBotState, setAdminMessageId, getAdminMessageId } = require("./telegram/utils");   // 🛠️ 유틸리티 함수
 const { sendBotStatus, handleAdminAction } = require("./telegram/commands/status");       // 📟 관리자 명령 및 상태 관리
