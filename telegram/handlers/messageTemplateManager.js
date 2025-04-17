@@ -81,11 +81,15 @@ ${t.labels.price}: ${data.price}`;
   }
 
   // 🧩 [5] 시그널 포착 시간 (현지 시각 변환)
-  const timeFormatted = moment.unix(data.ts).tz(config.DEFAULT_TIMEZONE);
-  const dateStr = timeFormatted.format('YY.MM.DD (ddd)');
-  const timeStr = timeFormatted.format('A hh:mm:ss');
+  const timeFormatted = moment.unix(data.ts).tz(t.timezone);
+  const dayIndex = timeFormatted.day();
+  const dayStr = t.days[dayIndex] || timeFormatted.format('ddd');
+  const dateStr = timeFormatted.format(`YY.MM.DD (${dayStr})`);
 
-  const time = `\n\n${t.labels.captured}:\n${dateStr}\n${timeStr}\n`;
+  let timeStr = timeFormatted.format('A hh:mm:ss');
+  timeStr = timeStr.replace('AM', t.am).replace('PM', t.pm);
+
+  const time = `\n\n🕒 ${t.labels.captured}:\n${dateStr}\n${timeStr}\n`;
 
   // 🧩 [6] 푸터 (면책 고지 및 안내문)
   const footer = `\n${t.labels.disclaimer_full}`;
