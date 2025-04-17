@@ -14,13 +14,14 @@ function getUserLang(chatId) {
   return langManager.getUserConfig(chatId)?.lang || 'ko';
 }
 
-// 📌 웹훅 핸들러 전용 텔레그램 메시지 생성 함수
+// 📌 웹훅 핸들러 전용 텔레그램 메시지 생성 함수 (내부에서 진입 정보 직접 처리!)
 function generateTelegramMessage({ symbol, type, timeframe, price, ts, leverage }) {
   const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
   const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
 
-  // 📌 진입가 및 진입 횟수 정보 불러오기
+  // 📌 진입가 및 진입 횟수 정보 계산
   const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, timeframe);
+  const direction = type.endsWith('Short') ? 'short' : 'long';
 
   // 📌 방향 판단 (롱/숏)
   const direction = type.endsWith('Short') ? 'short' : 'long';
