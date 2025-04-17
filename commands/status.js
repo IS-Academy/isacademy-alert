@@ -45,6 +45,17 @@ async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
   });
 }
 
+// ✅ 콜백 예외 안전 버전
+const safeAnswerCallback = (id, text = '✅ 처리 완료!') => {
+  return answerCallback(id, text).catch(e => {
+    if (e.response?.data?.description?.includes('query is too old')) {
+      console.warn(`⚠️ Callback 만료됨: ${id}`);
+    } else {
+      console.error(`❌ Callback 에러: ${e.message}`);
+    }
+  });
+};
+
 async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
   const messageId = getAdminMessageId(); // 직접 불러오기 최적화
