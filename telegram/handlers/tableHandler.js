@@ -1,7 +1,7 @@
 // 📊 tableHandler.js - 트레이딩뷰 테이블 웹훅 전용
 
 const { sendToChoi, sendToMing } = require('../botManager');
-const config = require('../config');
+const config = require('../../config');
 
 module.exports = async function handleTableWebhook(update) {
   const type = update.type;
