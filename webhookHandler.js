@@ -63,6 +63,20 @@ module.exports = async function webhookHandler(req, res) {
         return res.status(200).send('⛔ 해당 종목은 자동매매 꺼져있음');
       }
 
+      // 🔥 [추가 로직] entryManager 호출 로직 추가!
+      const { addEntry, clearEntries } = require('./telegram/entryManager');
+
+      const isEntrySignal = ["showSup", "isBigSup", "showRes", "isBigRes"].includes(type);
+      const isExitSignal = ["exitLong", "exitShort"].includes(type);
+
+      if (isEntrySignal) {
+        addEntry(symbol, type, price, timeframe);  // ✅ 진입 저장
+      }
+
+      if (isExitSignal) {
+        clearEntries(symbol, type, timeframe);     // ✅ 청산 시 초기화
+      }
+            
       // 📌 텔레그램 메시지 생성 (내부에서 entryInfo 처리!)
       const { handleMessage } = require('./telegram/messageHandler');
       const { msgChoi, msgMing } = await handleMessage({ symbol, type, timeframe, price, ts, leverage });
