@@ -210,6 +210,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
   
   const now = moment().tz(config.DEFAULT_TIMEZONE);
+  const nowTime = now.format('HH:mm:ss');
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
