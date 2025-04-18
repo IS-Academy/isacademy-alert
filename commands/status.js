@@ -231,8 +231,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         adminMessageId = sent.data.result.message_id; // ✅ 즉시 메모리에도 반영
         
         // ✅ 등록된 interval이 없을 때만 주기 등록!
-        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);
-        }
+        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);        
       } else {
         console.warn('⚠️ 메시지 ID 없음 → 저장 실패 가능성');
       }
