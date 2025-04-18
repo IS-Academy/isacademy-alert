@@ -223,6 +223,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         console.warn('⚠️ 키보드 생성 비허용 설정 → 중단');
         return null;
       }
+
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), {
         parse_mode: 'HTML',
         ...options
@@ -234,7 +235,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         saveAdminMessageId(newId);
         adminMessageId = newId;
 
-        if (!intervalId) {
+        if (!options.suppressInterval && !intervalId) {
           intervalId = setInterval(() => {
             const currentId = getAdminMessageId();
             sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
@@ -295,14 +296,22 @@ module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
     console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
-    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+
+    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, {
+      allowCreateKeyboard: true,
+      suppressInterval: true
+    });
 
     if (sent?.data?.result?.message_id) {
       const newId = sent.data.result.message_id;
       saveAdminMessageId(newId);
       adminMessageId = newId;
 
-      if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => {
         const currentId = getAdminMessageId();
         sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
