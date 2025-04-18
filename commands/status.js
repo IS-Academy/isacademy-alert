@@ -287,7 +287,13 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
+    console.log('🌀 서버 재시작 감지 → 새로운 키보드 생성');
+
+    if (intervalId) {
+      clearInterval(intervalId);     // ✅ 혹시 살아있던 interval 완전 제거
+      intervalId = null;
+    }
+    
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
 
     // ✅ 키보드가 성공적으로 생성된 경우
@@ -295,8 +301,7 @@ module.exports = {
       const newId = sent.data.result.message_id;              // 새 키보드 ID 추출
       saveAdminMessageId(newId);                              // 파일에 ID 저장
       adminMessageId = newId;                                 // 메모리에도 즉시 반영
-
-      if (intervalId) clearInterval(intervalId);
+      
       intervalId = setInterval(() => {
         const currentId = getAdminMessageId();                // 항상 최신 ID 사용
         sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
