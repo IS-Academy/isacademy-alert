@@ -151,6 +151,7 @@ function backupBotState() {
   }
 }
 
+// ✅ 기본값으로 상태 리셋
 function resetBotStateToDefault() {
   const defaultState = {
     choiEnabled: true,
