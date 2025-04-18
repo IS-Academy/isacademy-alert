@@ -248,7 +248,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       return sent;
     } else {
       if (messageId !== getAdminMessageId()) {
-        console.warn('⚠️ 오래된 메시지 갱신 시도 → 중단됨:', messageId);
+        console.warn('⚠️ 오래된 메시지 갱신 시도 → 중단됨:', messageId);  // 🧤 오래된 메시지 방지
         return null;
       }
 
