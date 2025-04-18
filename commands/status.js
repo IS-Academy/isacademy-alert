@@ -71,13 +71,14 @@ async function handleAdminAction(data, ctx) {
 
       responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
 
-      console.log(`📩 관리자 액션 요청: ${data}`);
-      console.log(`🌍 상태 → ${label}: ${botState[key] ? 'ON' : 'OFF'}`);
+      console.log(`📩 [${data}] ${label} → ${botState[key] ? 'ON' : 'OFF'} | fromButton: true`);
 
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, responseText)
       ]);
+      const source = true ? '🔘버튼' : '⏱자동';
+      console.log(`📡 sendBotStatus 호출 → ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
       return;
     }
 
@@ -100,6 +101,7 @@ async function handleAdminAction(data, ctx) {
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, data === 'status' ? '✅ 최신 상태로 업데이트 완료' : '♻️ 더미 상태 최신화 완료')
       ]);
+      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
       return;
 
     case 'backup_bot_state':
@@ -113,6 +115,7 @@ async function handleAdminAction(data, ctx) {
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, '♻️ 상태 기본값으로 리셋됨')
       ]);
+      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
       return;
 
     case 'test_menu':
@@ -132,6 +135,7 @@ async function handleAdminAction(data, ctx) {
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, '↩️ 메인 메뉴로 돌아갑니다')
       ]);
+      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
       return;
 
     default:
@@ -142,6 +146,7 @@ async function handleAdminAction(data, ctx) {
           sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
           answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
         ]);
+        console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
         return;
       }
 
@@ -159,6 +164,7 @@ async function handleAdminAction(data, ctx) {
           sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
           answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
         ]);
+        console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
         return;
       }
 
@@ -172,6 +178,7 @@ async function handleAdminAction(data, ctx) {
             editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
             answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
           ]);
+          console.log(`📡 sendBotStatus 호출 (fromButton: true)`);         
         }
         return;
       }
@@ -182,6 +189,7 @@ async function handleAdminAction(data, ctx) {
       editMessage('admin', chatId, messageId, newText, newKeyboard),
       answerCallback(callbackQueryId, responseText)
     ]);
+    console.log(`📡 sendBotStatus 호출 (fromButton: true)`);
   }
 }
 
