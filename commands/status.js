@@ -247,6 +247,11 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 
       return sent;
     } else {
+      if (messageId !== getAdminMessageId()) {
+        console.warn('⚠️ 오래된 메시지 갱신 시도 → 중단됨:', messageId);
+        return null;
+      }
+
       const sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), {
         parse_mode: 'HTML',
         ...options
@@ -320,4 +325,3 @@ module.exports = {
   },
   handleAdminAction
 };
-
