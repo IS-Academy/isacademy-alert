@@ -86,18 +86,21 @@ async function handleAdminAction(data, ctx) {
     case 'backup_bot_state':
     case 'reset_bot_state':
     case 'back_main': {
-      let label = '';      
+      let label = '';
+      const source = '🔘버튼';
       if (data === 'backup_bot_state') {
         const success = backupBotState(); // ✅ 함수 실행
         label = success ? '✅ 상태 백업 완료' : '❌ 백업 실패';
+      } else if (data === 'reset_bot_state') {
+        const defaultState = resetBotStateToDefault(); // ✅ 상태 파일 초기화
+        Object.assign(global, defaultState);           // ✅ 글로벌 변수에 동기화
+        label = '♻️ 상태 기본값으로 리셋됨';
       } else {
         label =
-        data === 'status' ? '✅ 최신 상태로 업데이트 완료' :
-        data === 'dummy_status' ? '♻️ 더미 상태 최신화 완료' :
-        data === 'reset_bot_state' ? '♻️ 상태 기본값으로 리셋됨' :
-        '↩️ 메인 메뉴로 돌아갑니다';
+          data === 'status' ? '✅ 최신 상태로 업데이트 완료' :
+          data === 'dummy_status' ? '♻️ 더미 상태 최신화 완료' :
+          '↩️ 메인 메뉴로 돌아갑니다';
       }      
-      const source = '🔘버튼';
       console.log(`${nowTime} | 📩 [${data}] | ${label} | ${source}`);
 
       await Promise.all([
