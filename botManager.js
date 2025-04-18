@@ -118,6 +118,9 @@ function getTemplateTestKeyboard() {
 async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
   const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
                 botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
+                botType === 'global' ? config.TELEGRAM_BOT_TOKEN_GLOBAL :
+                botType === 'china' ? config.TELEGRAM_BOT_TOKEN_CHINA :
+                botType === 'japan' ? config.TELEGRAM_BOT_TOKEN_JAPAN :
                 config.ADMIN_BOT_TOKEN;
 
   try {
@@ -147,13 +150,20 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
 const sendToAdmin = (text, replyMarkup = null, options = {}) => {
   return sendTextToBot('admin', config.ADMIN_CHAT_ID, text, replyMarkup, options);
 };
-
 const sendToChoi = (text, replyMarkup = null, options = {}) => {
   return sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, replyMarkup, options);
 };
-
 const sendToMing = (text, replyMarkup = null, options = {}) => {
   return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
+};
+const sendToEnglish = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('global', config.TELEGRAM_CHAT_ID_GLOBAL, text, replyMarkup, options);
+};
+const sendToChina = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('china', config.TELEGRAM_CHAT_ID_CHINA, text, replyMarkup, options);
+};
+const sendToJapan = (text, replyMarkup = null, options = {}) => {
+  return sendTextToBot('japan', config.TELEGRAM_CHAT_ID_JAPAN, text, replyMarkup, options);
 };
 
 // ✅ 메시지 수정
