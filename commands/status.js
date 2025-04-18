@@ -234,7 +234,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         saveAdminMessageId(newId);            // ✅ 파일 저장
         adminMessageId = newId;               // ✅ 메모리 반영까지!
 
-        if (!intervalId) {
+        if (!options.suppressInterval && !intervalId) {
           intervalId = setInterval(() => {
             const currentId = getAdminMessageId();
             sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
