@@ -115,14 +115,25 @@ module.exports = async function webhookHandler(req, res) {
       // ✅ 언어별 메시지 생성 준비
       const langChoi = getUserLang(config.TELEGRAM_CHAT_ID);
       const langMing = getUserLang(config.TELEGRAM_CHAT_ID_A);
+      const langGlobal = 'en';
+      const langChina = 'zh';
+      const langJapan = 'jp';
 
       // ✅ 언어별 메시지 템플릿 생성 (다국어 지원)
       const msgChoi = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChoi, direction });
       const msgMing = getTemplate({ type, symbol: symbol.toUpperCase(), timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langMing, direction });
+      const msgGlobal = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langGlobal });
+      const msgChina  = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langChina });
+      const msgJapan  = getTemplate({ type, symbol, timeframe, price, ts, entryCount: ratio, entryAvg: avg, leverage, lang: langJapan });
+
       
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       if (global.choiEnabled && msgChoi.trim()) await sendToChoi(msgChoi);
       if (global.mingEnabled && msgMing.trim()) await sendToMing(msgMing);
+      // ✅ 다국어 채널 전송
+      await sendToEnglish(msgGlobal);
+      await sendToChina(msgChina);
+      await sendToJapan(msgJapan);
 
       // 📸 exit 신호 시 캡처 명령어 실행 (차트 이미지 자동 전송)
       if (isExitSignal) {
