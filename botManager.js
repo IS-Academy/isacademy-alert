@@ -30,6 +30,7 @@ function getDynamicInlineKeyboard() {
       [{ text: `🌍 영어 ${engState}`, callback_data: 'english_toggle' }, { text: `🇨🇳 중국 ${cnState}`, callback_data: 'china_toggle' }, { text: `🇯🇵 일본 ${jpState}`, callback_data: 'japan_toggle' }],
       [{ text: '🌐 언어선택', callback_data: 'lang_menu' }],
       [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
+      [{ text: '🗂️ 백업', callback_data: 'backup_bot_state' }, { text: '♻️ 리셋', callback_data: 'reset_bot_state' }],
       [{ text: '🧪 템플릿 테스트', callback_data: 'test_menu' }],
       [{ text: '📊 종목 ON/OFF 관리', callback_data: 'symbol_toggle_menu' }]
     ]
