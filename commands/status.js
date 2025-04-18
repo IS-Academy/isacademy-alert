@@ -173,20 +173,26 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
-  const { choiEnabled, mingEnabled } = global;
+  const { choiEnabled, mingEnabled, englishEnabled, chinaEnabled, japanEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
   const configMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A) || {};
+  const configEnglish = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_GLOBAL) || {};
+  const configChina   = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_CHINA) || {};
+  const configJapan   = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_JAPAN) || {}; 
   const userConfig = langManager.getUserConfig(chatId) || {};
 
   const langChoi = configChoi.lang || 'ko';
   const langMing = configMing.lang || 'ko';
+  const langEnglish = configEnglish.lang || 'en';
+  const langChina   = configChina.lang   || 'zh';
+  const langJapan   = configJapan.lang   || 'jp';
   const userLang = userConfig.lang || 'ko';
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
 
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
-  const key = `${chatId}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
+  const key = `${chatId}_${choiEnabled}_${mingEnabled}_${englishEnabled}_${chinaEnabled}_${japanEnabled}_${langChoi}_${langMing}_${dummyKey}`;
 
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
   const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
@@ -205,9 +211,12 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
-  const langTzChoi = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
-  const langTzMing = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
-
+  const langTzChoi    = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzMing    = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzEnglish = translations[langEnglish]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzChina   = translations[langChina]?.timezone   || config.DEFAULT_TIMEZONE;
+  const langTzJapan   = translations[langJapan]?.timezone   || config.DEFAULT_TIMEZONE;
+  
   const langDisplay = (lang, tz) => {
     const emoji = langEmojiMap[lang] || '';
     return `<code>${lang}</code> ${emoji} | ${tz}`;
