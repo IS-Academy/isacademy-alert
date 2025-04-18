@@ -7,6 +7,7 @@ const { updateLastDummyTime, getAdminMessageId } = require('./utils');
 const { sendBotStatus } = require('./commands/status');
 
 router.post('/', async (req, res) => {
+  console.log('📦 Dummy 처리 완료 (/dummy)');
   const now = new Date().toISOString();
   updateLastDummyTime(now);  // 더미 시간 명확히 갱신
 
