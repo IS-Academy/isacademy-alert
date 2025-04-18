@@ -85,10 +85,7 @@ async function handleAdminAction(data, ctx) {
     case 'backup_bot_state':
     case 'reset_bot_state':
     case 'back_main': {
-      let label = '';
-      const now = moment().tz(config.DEFAULT_TIMEZONE);
-      const nowTime = now.format('HH:mm:ss');
-      const source = '🔘버튼';
+      let label = '';      
       if (data === 'backup_bot_state') {
         const success = backupBotState(); // ✅ 함수 실행
         label = success ? '✅ 상태 백업 완료' : '❌ 백업 실패';
@@ -99,6 +96,8 @@ async function handleAdminAction(data, ctx) {
         data === 'reset_bot_state' ? '♻️ 상태 기본값으로 리셋됨' :
         '↩️ 메인 메뉴로 돌아갑니다';
       }
+      const nowTime = moment().tz(config.DEFAULT_TIMEZONE).format('HH:mm:ss');
+      const source = '🔘버튼';
       console.log(`${nowTime} | 📩 [${data}] | ${label} | ${source}`);
 
       await Promise.all([
