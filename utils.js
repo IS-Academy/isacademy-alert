@@ -112,12 +112,12 @@ function getLastDummyTime() {
 
 // ✅ 상태 저장 및 불러오기
 const STATE_FILE = path.join(__dirname, 'bot_state.json');
+const BACKUP_FILE = path.join(__dirname, 'bot_state.backup.json');
 
 function loadBotState() {
   try {
     const raw = fs.readFileSync(STATE_FILE);
     const parsed = JSON.parse(raw);
-
     return {
       choiEnabled: parsed.choiEnabled ?? true,
       mingEnabled: parsed.mingEnabled ?? true,
@@ -138,6 +138,30 @@ function loadBotState() {
 
 function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function backupBotState() {
+  try {
+    fs.copyFileSync(STATE_FILE, BACKUP_FILE);
+    console.log('✅ 상태 백업 완료');
+    return true;
+  } catch (err) {
+    console.error('❌ 상태 백업 실패:', err.message);
+    return false;
+  }
+}
+
+function resetBotStateToDefault() {
+  const defaultState = {
+    choiEnabled: true,
+    mingEnabled: true,
+    englishEnabled: true,
+    chinaEnabled: true,
+    japanEnabled: true
+  };
+  saveBotState(defaultState);
+  console.log('✅ 상태 기본값으로 리셋됨');
+  return defaultState;
 }
 
 // ✅ 관리자 패널 메시지 ID 관리(파일 저장 방식)
@@ -180,5 +204,7 @@ module.exports = {
   setAdminMessageId,
   getAdminMessageId,
   saveAdminMessageId,
-  loadAdminMessageId
+  loadAdminMessageId,
+  backupBotState,
+  resetBotStateToDefault
 };
