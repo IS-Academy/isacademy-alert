@@ -71,6 +71,9 @@ async function handleAdminAction(data, ctx) {
 
       responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
 
+      console.log(`📩 관리자 액션 요청: ${data}`);
+      console.log(`🌍 상태 → ${label}: ${botState[key] ? 'ON' : 'OFF'}`);
+
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, responseText)
@@ -229,7 +232,10 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       cache_time: 1  // 빠른 응답 속도 최적화
     });
   }
-  
+
+  // ✅ 로그 추가: 호출 구분
+  console.log(`📡 sendBotStatus() 호출 (${options.fromButton ? 'fromButton: true' : 'fromButton: false'})`);
+
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
