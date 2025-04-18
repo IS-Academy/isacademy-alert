@@ -16,15 +16,18 @@ async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
   });
 }
 
-// ✅ 최실장/밍밍 상태 반영된 동적 관리자 인라인 키보드 패널
+// ✅ 동적 관리자 인라인 키보드 패널
 function getDynamicInlineKeyboard() {
   const choiState = global.choiEnabled ? '✅' : '❌';
   const mingState = global.mingEnabled ? '✅' : '❌';
+  const engState  = global.englishEnabled ? '✅' : '❌';
+  const cnState   = global.chinaEnabled ? '✅' : '❌';
+  const jpState   = global.japanEnabled ? '✅' : '❌';
 
   return {
     inline_keyboard: [
-      [{ text: `👨‍💼 최실장 ${choiState}`, callback_data: 'choi_toggle' },
-       { text: `👩‍💼 밍밍 ${mingState}`, callback_data: 'ming_toggle' }],
+      [{ text: `👨‍💼 최실장 ${choiState}`, callback_data: 'choi_toggle' }, { text: `👩‍💼 밍밍 ${mingState}`, callback_data: 'ming_toggle' }],
+      [{ text: `🌍 영어 ${engState}`, callback_data: 'english_toggle' }, { text: `🇨🇳 중국 ${cnState}`, callback_data: 'china_toggle' }, { text: `🇯🇵 일본 ${jpState}`, callback_data: 'japan_toggle' }],
       [{ text: '🌐 언어선택', callback_data: 'lang_menu' }],
       [{ text: '📡 상태 확인', callback_data: 'status' }, { text: '🔁 더미 상태', callback_data: 'dummy_status' }],
       [{ text: '🧪 템플릿 테스트', callback_data: 'test_menu' }],
