@@ -1,4 +1,4 @@
-//✅👇 locales/zh.js
+//✅👇 test/locales-test/zh.js
 
 module.exports = {
   symbols: {
