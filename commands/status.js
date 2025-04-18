@@ -98,6 +98,19 @@ async function handleAdminAction(data, ctx) {
       ]);
       return;
 
+    case 'backup_bot_state':
+      const backup = backupBotState();
+      await answerCallback(callbackQueryId, backup ? '✅ 상태 백업 완료' : '❌ 백업 실패');
+      return;
+
+    case 'reset_bot_state':
+      resetBotStateToDefault();
+      await Promise.all([
+        sendBotStatus(chatId, messageId),
+        answerCallback(callbackQueryId, '♻️ 상태 기본값으로 리셋됨')
+      ]);
+      return;
+
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
       newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
