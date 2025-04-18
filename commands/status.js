@@ -223,9 +223,11 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         console.warn('⚠️ 키보드 생성 비허용 설정 → 중단');
         return null;
       }
+      const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), {
+        parse_mode: 'HTML',
+        ...options
+      });
 
-      const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
-      
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
         const newId = sent.data.result.message_id;
         console.log('✅ 새 메시지 생성됨, ID 저장:', newId);
@@ -261,15 +263,12 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     }
   } catch (err) {
     const errorMsg = err.message || '';
-
-    // ✅ fallback 보호 장치: 이미 한번 fallback 됐으면 재생성 금지
     if (errorMsg.includes('message to edit not found') && options.allowCreateKeyboard !== false) {
       if (options._fromFallback) {
         console.warn('🛡️ fallback 중복 감지 → 키보드 생성 중단');
         return null;
       }
 
-      
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
       const sent = await sendBotStatus(chatId, null, {
         allowCreateKeyboard: true,
@@ -297,13 +296,11 @@ module.exports = {
       saveAdminMessageId(newId);                              // 파일에 ID 저장
       adminMessageId = newId;                                 // 메모리에도 즉시 반영
 
-      // ⏱️ 등록된 주기(interval)가 없다면 → 1분 간격으로 상태 갱신 시작
-      if (!intervalId) {
-        intervalId = setInterval(() => {
-          const currentId = getAdminMessageId();              // 항상 최신 ID 사용
-          sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false }); // ❌ 키보드 중복 생성 금지
-        }, 60000);
-      }
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(() => {
+        const currentId = getAdminMessageId();                // 항상 최신 ID 사용
+        sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
+      }, 60000);
     }
   },
   handleAdminAction
