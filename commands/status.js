@@ -308,4 +308,6 @@ module.exports = {
         }, 60000);
       }
     }
-  }
+  },
+  handleAdminAction
+}; // ✅ ← module.exports 닫는 중괄호 + 세미콜론
