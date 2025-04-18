@@ -273,8 +273,8 @@ module.exports = {
     console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
     if (sent?.data?.result?.message_id) {
-      saveAdminMessageId(sent.data.result.message_id); // ✅ 파일 저장
-      adminMessageId = sent.data.result.message_id; // ✅ 메모리 반영
+      saveAdminMessageId(newId);      // ✅ 파일 저장
+      adminMessageId = newId;         // ✅ 메모리 반영도 즉시!
       if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, sent.data.result.message_id, { allowCreateKeyboard: false }), 60000);
     }
