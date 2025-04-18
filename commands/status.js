@@ -241,9 +241,6 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     });
   }
 
-  // ✅ 로그 추가: 호출 구분
-  console.log(`📡 sendBotStatus() 호출 (${options.fromButton ? 'fromButton: true' : 'fromButton: false'})`);
-
   cache.set(key, nowTime);
 
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
