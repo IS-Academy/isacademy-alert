@@ -70,18 +70,42 @@ async function handleAdminAction(data, ctx) {
         '❓기타';
 
       responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
-
-      console.log(`📩 [${data}] ${label} → ${botState[key] ? 'ON' : 'OFF'} | fromButton: true`);
+      const source = '🔘버튼';
+      console.log(`📩 [${data}] ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
 
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, responseText)
       ]);
-      const source = true ? '🔘버튼' : '⏱자동';
-      console.log(`📡 sendBotStatus 호출 → ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
       return;
     }
 
+    case 'status':
+    case 'dummy_status':
+    case 'backup_bot_state':
+    case 'reset_bot_state':
+    case 'back_main': {
+      let label = '';
+      const source = '🔘버튼';
+      if (data === 'backup_bot_state') {
+        const success = backupBotState(); // ✅ 함수 실행
+        label = success ? '✅ 상태 백업 완료' : '❌ 백업 실패';
+      } else {
+        label =
+        data === 'status' ? '✅ 최신 상태로 업데이트 완료' :
+        data === 'dummy_status' ? '♻️ 더미 상태 최신화 완료' :
+        data === 'reset_bot_state' ? '♻️ 상태 기본값으로 리셋됨' :
+        '↩️ 메인 메뉴로 돌아갑니다';
+      }
+      console.log(`📩 [${data}] ${label} | ${source}`);
+
+      await Promise.all([
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
+        answerCallback(callbackQueryId, label)
+      ]);
+      return;
+    }
+      
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
       newKeyboard = getLangMenuKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
@@ -95,29 +119,6 @@ async function handleAdminAction(data, ctx) {
       responseText = '✅ 언어 선택 메뉴';
       break;
       
-    case 'status':
-    case 'dummy_status':
-      await Promise.all([
-        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
-        answerCallback(callbackQueryId, data === 'status' ? '✅ 최신 상태로 업데이트 완료' : '♻️ 더미 상태 최신화 완료')
-      ]);
-      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
-      return;
-
-    case 'backup_bot_state':
-      const backup = backupBotState();
-      await answerCallback(callbackQueryId, backup ? '✅ 상태 백업 완료' : '❌ 백업 실패');
-      return;
-
-    case 'reset_bot_state':
-      resetBotStateToDefault();
-      await Promise.all([
-        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
-        answerCallback(callbackQueryId, '♻️ 상태 기본값으로 리셋됨')
-      ]);
-      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
-      return;
-
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
       newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
@@ -130,14 +131,6 @@ async function handleAdminAction(data, ctx) {
       responseText = '✅ 종목 설정 메뉴 열림';
       break;
 
-    case 'back_main':
-      await Promise.all([
-        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
-        answerCallback(callbackQueryId, '↩️ 메인 메뉴로 돌아갑니다')
-      ]);
-      console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
-      return;
-
     default:
       if (data.startsWith('lang_') && data.split('_').length === 3) {
         const [_, bot, langCode] = data.split('_');
@@ -146,7 +139,6 @@ async function handleAdminAction(data, ctx) {
           sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
           answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
         ]);
-        console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
         return;
       }
 
@@ -164,7 +156,6 @@ async function handleAdminAction(data, ctx) {
           sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
           answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
         ]);
-        console.log(`📡 sendBotStatus 호출 (fromButton: true)`);     
         return;
       }
 
@@ -178,7 +169,6 @@ async function handleAdminAction(data, ctx) {
             editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
             answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
           ]);
-          console.log(`📡 sendBotStatus 호출 (fromButton: true)`);         
         }
         return;
       }
@@ -189,7 +179,6 @@ async function handleAdminAction(data, ctx) {
       editMessage('admin', chatId, messageId, newText, newKeyboard),
       answerCallback(callbackQueryId, responseText)
     ]);
-    console.log(`📡 sendBotStatus 호출 (fromButton: true)`);
   }
 }
 
@@ -205,6 +194,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
+  const source = options?.fromButton ? '🔘버튼' : '⏱자동';
+  console.log(`📡 [STATUS] sendBotStatus → ${nowTime} | ${source}`);
 
   const { choiEnabled, mingEnabled, englishEnabled, chinaEnabled, japanEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
