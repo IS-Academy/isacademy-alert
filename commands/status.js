@@ -72,7 +72,7 @@ async function handleAdminAction(data, ctx) {
       responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
 
       await Promise.all([
-        sendBotStatus(chatId, messageId),
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, responseText)
       ]);
       return;
@@ -94,7 +94,7 @@ async function handleAdminAction(data, ctx) {
     case 'status':
     case 'dummy_status':
       await Promise.all([
-        sendBotStatus(chatId, messageId),
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, data === 'status' ? '✅ 최신 상태로 업데이트 완료' : '♻️ 더미 상태 최신화 완료')
       ]);
       return;
@@ -107,7 +107,7 @@ async function handleAdminAction(data, ctx) {
     case 'reset_bot_state':
       resetBotStateToDefault();
       await Promise.all([
-        sendBotStatus(chatId, messageId),
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, '♻️ 상태 기본값으로 리셋됨')
       ]);
       return;
@@ -126,7 +126,7 @@ async function handleAdminAction(data, ctx) {
 
     case 'back_main':
       await Promise.all([
-        sendBotStatus(chatId, messageId),
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
         answerCallback(callbackQueryId, '↩️ 메인 메뉴로 돌아갑니다')
       ]);
       return;
@@ -136,7 +136,7 @@ async function handleAdminAction(data, ctx) {
         const [_, bot, langCode] = data.split('_');
         langManager.setUserLang(bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A, langCode);
         await Promise.all([
-          sendBotStatus(chatId, messageId),
+          sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
           answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
         ]);
         return;
@@ -300,7 +300,9 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       });
 
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
-        console.log('✅ 기존 메시지 갱신됨, ID 재저장:', sent.data.result.message_id);
+        if (!options?.fromButton) {
+          console.log('✅ 기존 메시지 갱신됨, ID 재저장:', sent.data.result.message_id);
+        }
         saveAdminMessageId(sent.data.result.message_id);
         adminMessageId = sent.data.result.message_id;
       } else {
