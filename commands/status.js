@@ -4,6 +4,7 @@ const moment = require('moment-timezone');
 const config = require('../config');
 const { getLastDummyTime, getAdminMessageId, saveAdminMessageId, loadAdminMessageId } = require('../utils');
 const { loadBotState, saveBotState } = require('../utils');
+const { resetBotStateToDefault } = require('../utils'); // ✅ 기본값으로 상태 리셋
 const langManager = require('../langConfigManager');
 const { translations } = require('../lang');
 const { getEntryInfo } = require('../entryManager');
