@@ -295,6 +295,8 @@ module.exports = {
     }
     
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
+      allowCreateKeyboard: true,
+      suppressInterval: true // ✅ 주기 등록 방지
 
     // ✅ 키보드가 성공적으로 생성된 경우
     if (sent?.data?.result?.message_id) {
