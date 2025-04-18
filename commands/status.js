@@ -86,6 +86,8 @@ async function handleAdminAction(data, ctx) {
     case 'reset_bot_state':
     case 'back_main': {
       let label = '';
+      const now = moment().tz(config.DEFAULT_TIMEZONE);
+      const nowTime = now.format('HH:mm:ss');
       const source = '🔘버튼';
       if (data === 'backup_bot_state') {
         const success = backupBotState(); // ✅ 함수 실행
@@ -97,7 +99,7 @@ async function handleAdminAction(data, ctx) {
         data === 'reset_bot_state' ? '♻️ 상태 기본값으로 리셋됨' :
         '↩️ 메인 메뉴로 돌아갑니다';
       }
-      console.log(`📩 [${data}] ${label} | ${source}`);
+      console.log(`${nowTime} | 📩 [${data}] | ${label} | ${source}`);
 
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
@@ -191,11 +193,6 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   global.englishEnabled = state.englishEnabled;
   global.chinaEnabled = state.chinaEnabled;
   global.japanEnabled = state.japanEnabled;
-
-  const now = moment().tz(config.DEFAULT_TIMEZONE);
-  const nowTime = now.format('HH:mm:ss');
-  const source = options?.fromButton ? '🔘버튼' : '⏱자동';
-  console.log(`📡 [STATUS] sendBotStatus → ${nowTime} | ${source}`);
 
   const { choiEnabled, mingEnabled, englishEnabled, chinaEnabled, japanEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
