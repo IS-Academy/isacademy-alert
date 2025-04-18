@@ -161,6 +161,7 @@ function resetBotStateToDefault() {
     japanEnabled: true
   };
   saveBotState(defaultState);
+  Object.assign(global, defaultState);
   console.log('✅ 상태 기본값으로 리셋됨');
   return defaultState;
 }
