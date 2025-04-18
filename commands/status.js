@@ -208,7 +208,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
   const langJapan   = configJapan.lang   || 'jp';
   const userLang = userConfig.lang || 'ko';
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
-
+  
+  const now = moment().tz(config.DEFAULT_TIMEZONE);
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
