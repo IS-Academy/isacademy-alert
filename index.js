@@ -34,6 +34,13 @@ console.log("✅ index.js 실행 시작");
 
 // ✅ 서버 재시작용 라우트 (관리자용)
 app.get('/restart', (req, res) => {
+  const token = req.query.token;
+
+  if (token !== process.env.RESTART_TOKEN) {
+    console.warn('🚫 재시작 토큰 불일치 → 요청 거부됨');
+    return res.status(403).send('❌ Unauthorized - Invalid token');
+  }
+
   res.send('♻️ 서버가 곧 재시작됩니다...');
   console.log('🌀 /restart 호출됨 → 서버 종료 후 재시작 예정');
   setTimeout(() => process.exit(0), 500); // 0.5초 뒤 안전하게 종료
