@@ -1,4 +1,4 @@
-//✅👇 botManager.js (최종 리팩토링 + 필수 기능 복원)
+//✅👇 botManager.js
 
 const axios = require('axios');
 const config = require('./config');
@@ -68,12 +68,10 @@ function getUserToggleKeyboard(target) {
 // ✅ 종목 ON/OFF 전환용 인라인 키보드 생성
 function getSymbolToggleKeyboard() {
   const symbols = require('./trader-gate/symbols');
-  const buttons = Object.entries(symbols).map(([symbol, info]) => {
-    return [{
-      text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
-      callback_data: `toggle_symbol_${symbol}`
-    }];
-  });
+  const buttons = Object.entries(symbols).map(([symbol, info]) => ([{
+    text: `${info.enabled ? '✅' : '❌'} ${symbol.toUpperCase()}`,
+    callback_data: `toggle_symbol_${symbol}`
+  }]));
   buttons.push([{ text: '🔙 돌아가기', callback_data: 'back_main' }]);
   return { inline_keyboard: buttons };
 }
@@ -114,14 +112,28 @@ function getTemplateTestKeyboard() {
   };
 }
 
-// ✅ 메시지 전송
-async function sendTextToBot(botType, chatId, text, replyMarkup = null, options = {}) {
-  const token = botType === 'choi' ? config.TELEGRAM_BOT_TOKEN :
-                botType === 'ming' ? config.TELEGRAM_BOT_TOKEN_A :
-                botType === 'global' ? config.TELEGRAM_BOT_TOKEN_GLOBAL :
-                botType === 'china' ? config.TELEGRAM_BOT_TOKEN_CHINA :
-                botType === 'japan' ? config.TELEGRAM_BOT_TOKEN_JAPAN :
-                config.ADMIN_BOT_TOKEN;
+// ✅ botType에 따라 토큰과 chatId 자동 분기
+function getTokenAndChatId(botType) {
+  return {
+    token: botType === 'choi'   ? config.TELEGRAM_BOT_TOKEN :
+           botType === 'ming'   ? config.TELEGRAM_BOT_TOKEN_A :
+           botType === 'global' ? config.TELEGRAM_BOT_TOKEN_GLOBAL :
+           botType === 'china'  ? config.TELEGRAM_BOT_TOKEN_CHINA :
+           botType === 'japan'  ? config.TELEGRAM_BOT_TOKEN_JAPAN :
+           config.ADMIN_BOT_TOKEN,
+
+    chatId: botType === 'choi'   ? config.TELEGRAM_CHAT_ID :
+            botType === 'ming'   ? config.TELEGRAM_CHAT_ID_A :
+            botType === 'global' ? config.TELEGRAM_CHAT_ID_GLOBAL :
+            botType === 'china'  ? config.TELEGRAM_CHAT_ID_CHINA :
+            botType === 'japan'  ? config.TELEGRAM_CHAT_ID_JAPAN :
+            config.ADMIN_CHAT_ID
+  };
+}
+
+// ✅ 텔레그램 메시지 전송
+async function sendTextToBot(botType, _, text, replyMarkup = null, options = {}) {
+  const { token, chatId } = getTokenAndChatId(botType);
 
   try {
     const response = await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -146,26 +158,6 @@ async function sendTextToBot(botType, chatId, text, replyMarkup = null, options 
   }
 }
 
-// ✅ 누락된 메시지 전송 함수 정의 추가
-const sendToAdmin = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('admin', config.ADMIN_CHAT_ID, text, replyMarkup, options);
-};
-const sendToChoi = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('choi', config.TELEGRAM_CHAT_ID, text, replyMarkup, options);
-};
-const sendToMing = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('ming', config.TELEGRAM_CHAT_ID_A, text, replyMarkup, options);
-};
-const sendToEnglish = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('global', config.TELEGRAM_CHAT_ID_GLOBAL, text, replyMarkup, options);
-};
-const sendToChina = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('china', config.TELEGRAM_CHAT_ID_CHINA, text, replyMarkup, options);
-};
-const sendToJapan = (text, replyMarkup = null, options = {}) => {
-  return sendTextToBot('japan', config.TELEGRAM_CHAT_ID_JAPAN, text, replyMarkup, options);
-};
-
 // ✅ 메시지 수정
 async function editMessage(botType, chatId, messageId, text, replyMarkup = null, options = {}) {
   const token = config.ADMIN_BOT_TOKEN;
@@ -176,7 +168,7 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
       message_id: messageId,
       text,
       parse_mode: options.parse_mode || 'HTML',
-      reply_markup: replyMarkup || inlineKeyboard
+      reply_markup: replyMarkup || undefined
     });
 
     if (options.callbackQueryId) {
@@ -190,18 +182,25 @@ async function editMessage(botType, chatId, messageId, text, replyMarkup = null,
     return response;
   } catch (err) {
     const errorMsg = err.response?.data?.description || err.message;
-
     if (errorMsg.includes('message is not modified')) {
       return { data: { result: true } };
     } else if (errorMsg.includes('message to edit not found')) {
-      // 기존 메시지가 없으면 새 메시지 전송
-      return await sendTextToBot(botType, chatId, text, replyMarkup, options);
+      const { chatId: fallbackChatId } = getTokenAndChatId(botType);
+      return await sendTextToBot(botType, fallbackChatId, text, replyMarkup, options);
     } else {
       console.error('❌ editMessage 실패:', errorMsg);
       throw err;
     }
   }
 }
+
+// ✅ 역할별 전송 함수
+const sendToAdmin   = (text, replyMarkup = null, options = {}) => sendTextToBot('admin', null, text, replyMarkup, options);
+const sendToChoi    = (text, replyMarkup = null, options = {}) => sendTextToBot('choi', null, text, replyMarkup, options);
+const sendToMing    = (text, replyMarkup = null, options = {}) => sendTextToBot('ming', null, text, replyMarkup, options);
+const sendToEnglish = (text, replyMarkup = null, options = {}) => sendTextToBot('global', null, text, replyMarkup, options);
+const sendToChina   = (text, replyMarkup = null, options = {}) => sendTextToBot('china', null, text, replyMarkup, options);
+const sendToJapan   = (text, replyMarkup = null, options = {}) => sendTextToBot('japan', null, text, replyMarkup, options);
 
 //🧩 export 모듈
 module.exports = {
