@@ -3,7 +3,7 @@
 const fs = require('fs');
 const moment = require('moment-timezone');
 const { getTranslation } = require('./lang');
-const { sendToAdmin, sendToChoi, sendToMing } = require('./botManager');
+const { sendToAdmin, sendToChoi, sendToMing, sendToEnglish, sendToChina, sendToJapan } = require('./botManager');
 const config = require('./config');
 
 const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
@@ -50,6 +50,9 @@ function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
     const warning = getTranslation(lang, 'labels', key);
     if (global.choiEnabled) sendToChoi(warning);
     if (global.mingEnabled) sendToMing(warning);
+    if (global.englishEnabled) sendToEnglish(warning);
+    if (global.chinaEnabled) sendToChina(warning);
+    if (global.japanEnabled) sendToJapan(warning);
     return; // 포화 상태이면 진입하지 않음
   }
 
@@ -95,11 +98,9 @@ function getAllEntryInfo(symbol, type) {
 
 // ✅ 더미 타임
 let lastDummyTime = null;
-
 function updateLastDummyTime(time = new Date().toISOString()) {
   lastDummyTime = time;
 }
-
 function getLastDummyTime() {
   return lastDummyTime || '❌ 기록 없음';
 }
@@ -107,30 +108,31 @@ function getLastDummyTime() {
 // ✅ 봇 상태 저장
 const path = require('path');
 const STATE_FILE = path.join(__dirname, 'bot_state.json');
-
 function loadBotState() {
   try {
     const raw = fs.readFileSync(STATE_FILE);
     return JSON.parse(raw);
   } catch {
-    return { choiEnabled: true, mingEnabled: true };
+    return {
+      choiEnabled: true,
+      mingEnabled: true,
+      englishEnabled: true,
+      chinaEnabled: true,
+      japanEnabled: true
+    };
   }
 }
-
 function saveBotState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
 // ✅ 키보드 메시지 ID 관리 (파일 저장 방식)
 const MSG_ID_FILE = path.join(__dirname, 'admin_message_id.json');
-
 let adminMessageId = null;
-
 function saveAdminMessageId(id) {
   adminMessageId = id;
   fs.writeFileSync(MSG_ID_FILE, JSON.stringify(id));
 }
-
 function loadAdminMessageId() {
   try {
     const loaded = JSON.parse(fs.readFileSync(MSG_ID_FILE, 'utf8'));
@@ -140,17 +142,11 @@ function loadAdminMessageId() {
     return null;
   }
 }
-
-function getAdminMessageId() {
-  return adminMessageId;
-}
-
+function getAdminMessageId() { return adminMessageId; }
+function setAdminMessageId(id) { adminMessageId = id; }
 function getTimeString(tz = 'Asia/Seoul') {
   return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
 }
-
-function setAdminMessageId(id) { adminMessageId = id; }
-function getAdminMessageId() { return adminMessageId; }
 
 module.exports = {
   replaceTemplate,
