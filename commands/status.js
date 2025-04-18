@@ -234,7 +234,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
         saveAdminMessageId(newId);            // ✅ 파일 저장
         adminMessageId = newId;               // ✅ 메모리 반영까지!
 
-        if (!options.suppressInterval && !intervalId) {
+        if (!intervalId) {
           intervalId = setInterval(() => {
             const currentId = getAdminMessageId();
             sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
@@ -287,13 +287,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    console.log('🌀 서버 재시작 감지 → 새로운 키보드 생성');
-
-    if (intervalId) {
-      clearInterval(intervalId);     // ✅ 혹시 살아있던 interval 완전 제거
-      intervalId = null;
-    }
-    
+    console.log('🌀 서버 재시작 감지 → 새로운 키보드 생성');    
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
       allowCreateKeyboard: true,
       suppressInterval: true // ✅ 주기 등록 방지
@@ -303,7 +297,8 @@ module.exports = {
       const newId = sent.data.result.message_id;              // 새 키보드 ID 추출
       saveAdminMessageId(newId);                              // 파일에 ID 저장
       adminMessageId = newId;                                 // 메모리에도 즉시 반영
-      
+
+      if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => {
         const currentId = getAdminMessageId();                // 항상 최신 ID 사용
         sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
