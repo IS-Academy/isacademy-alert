@@ -46,6 +46,7 @@ async function handleAdminAction(data, ctx) {
   const chatId = config.ADMIN_CHAT_ID;
   const messageId = getAdminMessageId(); // 직접 불러오기 최적화
   const callbackQueryId = ctx.callbackQuery.id;
+  const nowTime = moment().tz(config.DEFAULT_TIMEZONE).format('HH:mm:ss');
 
   let newText, newKeyboard, responseText;
 
@@ -71,7 +72,7 @@ async function handleAdminAction(data, ctx) {
 
       responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
       const source = '🔘버튼';
-      console.log(`📩 [${data}] ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
+      console.log(`${nowTime} | 📩 [${data}] | ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
 
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
@@ -95,8 +96,7 @@ async function handleAdminAction(data, ctx) {
         data === 'dummy_status' ? '♻️ 더미 상태 최신화 완료' :
         data === 'reset_bot_state' ? '♻️ 상태 기본값으로 리셋됨' :
         '↩️ 메인 메뉴로 돌아갑니다';
-      }
-      const nowTime = moment().tz(config.DEFAULT_TIMEZONE).format('HH:mm:ss');
+      }      
       const source = '🔘버튼';
       console.log(`${nowTime} | 📩 [${data}] | ${label} | ${source}`);
 
