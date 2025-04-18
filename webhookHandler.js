@@ -126,11 +126,11 @@ module.exports = async function webhookHandler(req, res) {
       
       // ✅ 텔레그램 메시지 전송 (최실장 및 밍밍봇 채널)
       await Promise.all([
-        global.choiEnabled && msgChoi.trim() ? sendToChoi(msgChoi) : null,
-        global.mingEnabled && msgMing.trim() ? sendToMing(msgMing) : null,
-        sendToEnglish(msgGlobal),
-        sendToChina(msgChina),
-        sendToJapan(msgJapan)
+        global.choiEnabled    && msgChoi.trim()   && sendToChoi(msgChoi),
+        global.mingEnabled    && msgMing.trim()   && sendToMing(msgMing),
+        global.englishEnabled && msgGlobal.trim() && sendToEnglish(msgGlobal),
+        global.chinaEnabled   && msgChina.trim()  && sendToChina(msgChina),
+        global.japanEnabled   && msgJapan.trim()  && sendToJapan(msgJapan)
       ].filter(Boolean));
 
       // 📸 exit 신호 시 캡처 명령어 실행 (차트 이미지 자동 전송)
