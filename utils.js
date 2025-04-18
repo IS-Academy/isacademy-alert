@@ -147,6 +147,7 @@ function backupBotState() {
     return true;
   } catch (err) {
     console.error('❌ 상태 백업 실패:', err.message);
+    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`);
     return false;
   }
 }
@@ -160,10 +161,16 @@ function resetBotStateToDefault() {
     chinaEnabled: true,
     japanEnabled: true
   };
-  saveBotState(defaultState);
-  Object.assign(global, defaultState);
-  console.log('✅ 상태 기본값으로 리셋됨');
-  return defaultState;
+  try {
+    saveBotState(defaultState);                   // 💾 저장 시도
+    Object.assign(global, defaultState);          // 🌍 전역 동기화
+    console.log('✅ 상태 기본값으로 리셋됨');
+    return defaultState;
+  } catch (err) {
+    console.error('❌ 상태 리셋 실패:', err.message);
+    sendToAdmin(`❌ 상태 리셋 실패: ${err.message}`); // 📢 관리자 알림 추가
+    return null;
+  }
 }
 
 // ✅ 관리자 패널 메시지 ID 관리(파일 저장 방식)
