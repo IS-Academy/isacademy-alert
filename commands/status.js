@@ -50,17 +50,29 @@ async function handleAdminAction(data, ctx) {
 
   switch (data) {
     case 'choi_toggle':
-    case 'ming_toggle': {
-      const isChoi = data === 'choi_toggle';
+    case 'ming_toggle':
+    case 'english_toggle':
+    case 'china_toggle':
+    case 'japan_toggle': {
       const botState = loadBotState();  // ✅ 파일 상태 로딩
-      botState[isChoi ? 'choiEnabled' : 'mingEnabled'] = !botState[isChoi ? 'choiEnabled' : 'mingEnabled'];
+      const key = data.replace('_toggle', '') + 'Enabled';
+      botState[key] = !botState[key];
       saveBotState(botState);  // ✅ 파일에 상태 저장
-      global.choiEnabled = botState.choiEnabled;  // ✅ global도 같이 동기화
-      global.mingEnabled = botState.mingEnabled;  // ✅ global도 같이 동기화      
-      responseText = `${isChoi ? '👨‍💼 최실장' : '👩‍💼 밍밍'} ${botState[isChoi ? 'choiEnabled' : 'mingEnabled'] ? '✅ ON' : '❌ OFF'}`;
+      global[key] = botState[key];
+
+      const label =
+        data === 'choi_toggle' ? '👨‍💼 최실장' :
+        data === 'ming_toggle' ? '👩‍💼 밍밍' :
+        data === 'english_toggle' ? '🌍 영어' :
+        data === 'china_toggle' ? '🇨🇳 중국' :
+        data === 'japan_toggle' ? '🇯🇵 일본' :
+        '❓기타';
+
+      responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
+
       await Promise.all([
         sendBotStatus(chatId, messageId),
-        answerCallback(callbackQueryId, responseText),
+        answerCallback(callbackQueryId, responseText)
       ]);
       return;
     }
