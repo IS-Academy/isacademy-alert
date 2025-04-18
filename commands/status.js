@@ -230,6 +230,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     ``,
     `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langChoi, langTzChoi)})`,
     `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)})`,
+    `🌍 영어: ${englishEnabled ? '✅' : '❌'}   🇨🇳 중국: ${chinaEnabled ? '✅' : '❌'}   🇯🇵 일본: ${japanEnabled ? '✅' : '❌'}`,
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
     `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
