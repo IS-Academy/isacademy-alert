@@ -1,6 +1,7 @@
 //✅👇 langConfigManager.js
 
 const fs = require('fs');
+const config = require('./config');
 const path = './langConfig.json';
 
 // ✅ 지원하는 언어 목록
