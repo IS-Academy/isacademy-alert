@@ -70,13 +70,13 @@ async function handleAdminAction(data, ctx) {
         data === 'japan_toggle' ? '🇯🇵 일본' :
         '❓기타';
 
-      responseText = `${label} ${botState[key] ? '✅ ON' : '❌ OFF'}`;
+      const status = botState[key] ? '✅ ON' : '❌ OFF';
       const source = '🔘버튼';
-      console.log(`${nowTime} | 📩 [${data}] | ${label}: ${botState[key] ? 'ON' : 'OFF'} | ${source}`);
+      console.log(`${nowTime} | 📩 [${data}] | ${label}: ${status} | ${source}`);
 
       await Promise.all([
         sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
-        answerCallback(callbackQueryId, responseText)
+        answerCallback(callbackQueryId, `${label} ${status}`)
       ]);
       return;
     }
@@ -142,10 +142,11 @@ async function handleAdminAction(data, ctx) {
     default:
       if (data.startsWith('lang_') && data.split('_').length === 3) {
         const [_, bot, langCode] = data.split('_');
-        langManager.setUserLang(bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A, langCode);
+        const result = `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`;
+        console.log(`${nowTime} | 📩 [${data}] | ${result} | 🔘버튼`);
         await Promise.all([
           sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
-          answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
+          answerCallback(callbackQueryId, result)
         ]);
         return;
       }
@@ -173,9 +174,11 @@ async function handleAdminAction(data, ctx) {
         if (symbols[symbolKey]) {
           symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
           fs.writeFileSync(symbolsPath, `module.exports=${JSON.stringify(symbols,null,2)}`);
+          const msg = `✅ ${symbolKey.toUpperCase()} 상태 변경됨`;
+          console.log(`${nowTime} | 📩 [${data}] | ${msg} | 🔘버튼`);
           await Promise.all([
             editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
-            answerCallback(callbackQueryId, `✅ ${symbolKey.toUpperCase()} 상태 변경됨`)
+            answerCallback(callbackQueryId, msg)
           ]);
         }
         return;
