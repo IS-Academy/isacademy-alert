@@ -270,12 +270,19 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       }
 
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
-      const sent = await sendBotStatus(chatId, null, {
-        allowCreateKeyboard: true,
-        _fromFallback: true
+      const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), {
+        parse_mode: 'HTML',
+        ...options
       });
 
-      return sent;
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        const newId = sent.data.result.message_id;
+        console.log('✅ fallback 메시지 생성됨, ID 저장:', newId);
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
+      }
+
+      return null;
     }
 
     console.error('❌ 관리자 패널 오류:', errorMsg);
