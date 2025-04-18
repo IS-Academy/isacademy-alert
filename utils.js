@@ -147,7 +147,7 @@ function backupBotState() {
     return true;
   } catch (err) {
     console.error('❌ 상태 백업 실패:', err.message);
-    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`);
+    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`); // 📢 관리자 알림 추가
     return false;
   }
 }
