@@ -217,8 +217,6 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     `──────────────────────`
   ].join('\n');
 
-// ✅ 관리자 패널 전송 함수
-async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   try {
     if (!messageId) {
       if (options.allowCreateKeyboard === false) {
@@ -286,10 +284,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    // 🚀 서버 재시작 시점 - 관리자 패널 키보드 새로 생성 시도
     console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
-
-    // 📩 키보드 생성 요청 (messageId 없이 호출 → 새 키보드 생성)
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
 
     // ✅ 키보드가 성공적으로 생성된 경우
@@ -302,12 +297,10 @@ module.exports = {
       if (!intervalId) {
         intervalId = setInterval(() => {
           const currentId = getAdminMessageId();              // 항상 최신 ID 사용
-          sendBotStatus(config.ADMIN_CHAT_ID, currentId, {
-            allowCreateKeyboard: false                        // ❌ 키보드 중복 생성 금지
-          });
+          sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false }); // ❌ 키보드 중복 생성 금지
         }, 60000);
       }
     }
   },
   handleAdminAction
-}; // ✅ ← module.exports 닫는 중괄호 + 세미콜론
+};
