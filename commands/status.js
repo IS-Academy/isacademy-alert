@@ -217,6 +217,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
     `──────────────────────`
   ].join('\n');
 
+// ✅ 관리자 패널 전송 함수
+async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
   try {
     if (!messageId) {
       if (options.allowCreateKeyboard === false) {
@@ -226,12 +228,17 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
-        console.log('✅ 새 메시지 생성됨, ID 저장:', sent.data.result.message_id);
-        saveAdminMessageId(sent.data.result.message_id);
-        adminMessageId = sent.data.result.message_id; // ✅ 즉시 메모리에도 반영
-        
-        // ✅ 등록된 interval이 없을 때만 주기 등록!
-        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);        
+        const newId = sent.data.result.message_id;
+        console.log('✅ 새 메시지 생성됨, ID 저장:', newId);
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
+
+        if (!intervalId) {
+          intervalId = setInterval(() => {
+            const currentId = getAdminMessageId();
+            sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
+          }, 60000);
+        }
       } else {
         console.warn('⚠️ 메시지 ID 없음 → 저장 실패 가능성');
       }
@@ -241,6 +248,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
         console.log('✅ 기존 메시지 갱신됨, ID 재저장:', sent.data.result.message_id);
         saveAdminMessageId(sent.data.result.message_id);
+        adminMessageId = sent.data.result.message_id;
       } else {
         console.warn('⚠️ editMessage 성공했지만 message_id 없음 → 저장 생략');
       }
@@ -252,9 +260,17 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
       const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), { parse_mode: 'HTML', ...options });
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
-        console.log('✅ 새 메시지 재생성됨, ID 저장:', sent.data.result.message_id);
-        saveAdminMessageId(sent.data.result.message_id);
-        if (!intervalId) intervalId = setInterval(() => sendBotStatus(chatId, getAdminMessageId(), { allowCreateKeyboard: false }), 60000);
+        const newId = sent.data.result.message_id;
+        console.log('✅ 새 메시지 재생성됨, ID 저장:', newId);
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
+
+        if (!intervalId) {
+          intervalId = setInterval(() => {
+            const currentId = getAdminMessageId();
+            sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
+          }, 60000);
+        }
       } else {
         console.warn('⚠️ 재생성 메시지에서도 ID 없음 → 저장 실패 가능성');
       }
@@ -270,16 +286,26 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
+    // 🚀 서버 재시작 시점 - 관리자 패널 키보드 새로 생성 시도
     console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
-    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
-    if (sent?.data?.result?.message_id) {
-      const newId = sent.data.result.message_id;
-      saveAdminMessageId(newId);      // ✅ 파일 저장
-      adminMessageId = newId;         // ✅ 메모리 반영도 즉시!
-      if (intervalId) clearInterval(intervalId);
-      intervalId = setInterval(() => sendBotStatus(config.ADMIN_CHAT_ID, sent.data.result.message_id, { allowCreateKeyboard: false }), 60000);
-    }
-  },
-  handleAdminAction
-};
 
+    // 📩 키보드 생성 요청 (messageId 없이 호출 → 새 키보드 생성)
+    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
+
+    // ✅ 키보드가 성공적으로 생성된 경우
+    if (sent?.data?.result?.message_id) {
+      const newId = sent.data.result.message_id;              // 새 키보드 ID 추출
+      saveAdminMessageId(newId);                              // 파일에 ID 저장
+      adminMessageId = newId;                                 // 메모리에도 즉시 반영
+
+      // ⏱️ 등록된 주기(interval)가 없다면 → 1분 간격으로 상태 갱신 시작
+      if (!intervalId) {
+        intervalId = setInterval(() => {
+          const currentId = getAdminMessageId();              // 항상 최신 ID 사용
+          sendBotStatus(config.ADMIN_CHAT_ID, currentId, {
+            allowCreateKeyboard: false                        // ❌ 키보드 중복 생성 금지
+          });
+        }, 60000);
+      }
+    }
+  }
