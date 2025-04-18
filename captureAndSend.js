@@ -18,11 +18,14 @@ function loadStableBotState() {
   }
 }
 
-// 기존 파일에서 글로벌 상태를 로드하기 위한 설정 추가
+// 📦 글로벌 상태 및 다국어 봇 토큰 로딩
 const {
   BROWSERLESS_TOKEN,
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
   TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A,
+  TELEGRAM_BOT_TOKEN_GLOBAL, TELEGRAM_CHAT_ID_GLOBAL,
+  TELEGRAM_BOT_TOKEN_CHINA, TELEGRAM_CHAT_ID_CHINA,
+  TELEGRAM_BOT_TOKEN_JAPAN, TELEGRAM_CHAT_ID_JAPAN,  
   TV_COOKIES
 } = process.env;
 
@@ -121,6 +124,16 @@ const sendTelegram = async (token, chatId, buffer) => {
     } else {
       console.log("⛔ 밍밍 비활성화 상태 (전송 스킵)");
     }
+
+    // ✅ 글로벌 다국어 봇 전송
+    await sendTelegram(TELEGRAM_BOT_TOKEN_GLOBAL, TELEGRAM_CHAT_ID_GLOBAL, buffer);
+    console.log("✅ English 채널 이미지 전송 완료");
+
+    await sendTelegram(TELEGRAM_BOT_TOKEN_CHINA, TELEGRAM_CHAT_ID_CHINA, buffer);
+    console.log("✅ China 채널 이미지 전송 완료");
+
+    await sendTelegram(TELEGRAM_BOT_TOKEN_JAPAN, TELEGRAM_CHAT_ID_JAPAN, buffer);
+    console.log("✅ Japan 채널 이미지 전송 완료");    
 
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);
