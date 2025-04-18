@@ -183,6 +183,14 @@ async function handleAdminAction(data, ctx) {
 
 // ✅ 상태 메시지 전송
 async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
+  // ✅ global 전역 동기화 보정 (초기 1회용)
+  const state = loadBotState();
+  global.choiEnabled = state.choiEnabled;
+  global.mingEnabled = state.mingEnabled;
+  global.englishEnabled = state.englishEnabled;
+  global.chinaEnabled = state.chinaEnabled;
+  global.japanEnabled = state.japanEnabled;
+
   const now = moment().tz(config.DEFAULT_TIMEZONE);
   const nowTime = now.format('HH:mm:ss');
 
