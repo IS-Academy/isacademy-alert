@@ -114,6 +114,7 @@ async function handleAdminAction(data, ctx) {
       newText = '🌐 언어 설정 대상 선택';
       newKeyboard = getLangMenuKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 언어 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
       break;
 
     case 'lang_choi':
@@ -121,18 +122,21 @@ async function handleAdminAction(data, ctx) {
       newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
       newKeyboard = getLangKeyboard(data.split('_')[1]); // ⚠️ 관리자 키보드 바꾸는 동작 + data.split
       responseText = '✅ 언어 선택 메뉴';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
       break;
       
     case 'test_menu':
       newText = '🧪 템플릿 테스트 메뉴입니다';
       newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 테스트 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
       break;      
 
     case 'symbol_toggle_menu':
       newText = '📊 자동매매 종목 설정 (ON/OFF)';
       newKeyboard = getSymbolToggleKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
       responseText = '✅ 종목 설정 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
       break;
 
     default:
