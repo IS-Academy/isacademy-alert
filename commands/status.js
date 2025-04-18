@@ -50,7 +50,7 @@ async function handleAdminAction(data, ctx) {
 
   switch (data) {
     case 'choi_toggle':
-    case 'ming_toggle':
+    case 'ming_toggle': {
       const isChoi = data === 'choi_toggle';
       const botState = loadBotState();  // ✅ 파일 상태 로딩
       botState[isChoi ? 'choiEnabled' : 'mingEnabled'] = !botState[isChoi ? 'choiEnabled' : 'mingEnabled'];
@@ -63,6 +63,7 @@ async function handleAdminAction(data, ctx) {
         answerCallback(callbackQueryId, responseText),
       ]);
       return;
+    }
 
     case 'lang_menu':
       newText = '🌐 언어 설정 대상 선택';
@@ -108,7 +109,6 @@ async function handleAdminAction(data, ctx) {
       if (data.startsWith('lang_') && data.split('_').length === 3) {
         const [_, bot, langCode] = data.split('_');
         langManager.setUserLang(bot === 'choi' ? config.TELEGRAM_CHAT_ID : config.TELEGRAM_CHAT_ID_A, langCode);
-
         await Promise.all([
           sendBotStatus(chatId, messageId),
           answerCallback(callbackQueryId, `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`)
@@ -121,13 +121,11 @@ async function handleAdminAction(data, ctx) {
         const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
         const symbol = 'btcusdt.p';
         const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
-
         const msg = getTemplate({
           type, symbol: symbol.toUpperCase(), timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
           entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
           direction: type.endsWith('Short') ? 'short' : 'long'
         });
-
         await Promise.all([
           sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
           answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
