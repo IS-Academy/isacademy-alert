@@ -231,8 +231,8 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
         const newId = sent.data.result.message_id;
         console.log('✅ 새 메시지 생성됨, ID 저장:', newId);
-        saveAdminMessageId(newId);            // ✅ 파일 저장
-        adminMessageId = newId;               // ✅ 메모리 반영까지!
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
 
         if (!intervalId) {
           intervalId = setInterval(() => {
@@ -272,7 +272,7 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
       console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
       const sent = await sendBotStatus(chatId, null, {
         allowCreateKeyboard: true,
-        _fromFallback: true // ✅ 플래그로 중복 방지
+        _fromFallback: true
       });
 
       return sent;
@@ -287,23 +287,21 @@ async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, op
 module.exports = {
   sendBotStatus,
   initAdminPanel: async () => {
-    console.log('🌀 서버 재시작 감지 → 새로운 키보드 생성');    
+    console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
     const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, { allowCreateKeyboard: true });
-      allowCreateKeyboard: true,
-      suppressInterval: true // ✅ 주기 등록 방지
 
-    // ✅ 키보드가 성공적으로 생성된 경우
     if (sent?.data?.result?.message_id) {
-      const newId = sent.data.result.message_id;              // 새 키보드 ID 추출
-      saveAdminMessageId(newId);                              // 파일에 ID 저장
-      adminMessageId = newId;                                 // 메모리에도 즉시 반영
+      const newId = sent.data.result.message_id;
+      saveAdminMessageId(newId);
+      adminMessageId = newId;
 
       if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => {
-        const currentId = getAdminMessageId();                // 항상 최신 ID 사용
+        const currentId = getAdminMessageId();
         sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
       }, 60000);
     }
   },
   handleAdminAction
 };
+
