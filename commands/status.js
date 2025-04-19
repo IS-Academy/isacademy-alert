@@ -15,6 +15,7 @@ const path = require('path');
 const axios = require('axios');
 const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 
+let adminMessageId = null;
 let intervalId = null; // ✅ 인터벌 변수 선언 및 초기화
 const cache = new Map();
 
