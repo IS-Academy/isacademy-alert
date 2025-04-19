@@ -1,4 +1,4 @@
-// ✅👇 handlers/messageTemplateManager.js
+//✅👇 handlers/messageTemplateManager.js
 
 const templates = require("../MessageTemplates");
 const lang = require("../lang");

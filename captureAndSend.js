@@ -1,16 +1,31 @@
-// ✅👇 captureAndSend.js
+//✅👇 captureAndSend.js
 
 require("dotenv").config();
 const puppeteer = require("puppeteer-core");
 const axios = require("axios");
 const FormData = require("form-data");
 const { loadBotState } = require('./utils');
+const fs = require('fs');
+const path = require('path');
+const STATE_FILE = path.join(__dirname, 'bot_state.json');
 
-// 기존 파일에서 글로벌 상태를 로드하기 위한 설정 추가
+function loadStableBotState() {
+  try {
+    const raw = fs.readFileSync(STATE_FILE);
+    return JSON.parse(raw);
+  } catch {
+    return { choiEnabled: true, mingEnabled: true };
+  }
+}
+
+// 📦 글로벌 상태 및 다국어 봇 토큰 로딩
 const {
   BROWSERLESS_TOKEN,
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
   TELEGRAM_BOT_TOKEN_A, TELEGRAM_CHAT_ID_A,
+  TELEGRAM_BOT_TOKEN_GLOBAL, TELEGRAM_CHAT_ID_GLOBAL,
+  TELEGRAM_BOT_TOKEN_CHINA, TELEGRAM_CHAT_ID_CHINA,
+  TELEGRAM_BOT_TOKEN_JAPAN, TELEGRAM_CHAT_ID_JAPAN,  
   TV_COOKIES
 } = process.env;
 
@@ -93,7 +108,7 @@ const sendTelegram = async (token, chatId, buffer) => {
     console.log("📷 스크린샷 캡처 완료");
 
     // ✅ 추가된 부분: 파일에서 최실장, 밍밍 상태 불러오기
-    const { choiEnabled, mingEnabled } = loadBotState();
+    const { choiEnabled, mingEnabled } = loadStableBotState();
 
     // 🔥 상태를 확인하여 이미지 전송 여부 결정
     if (choiEnabled !== false) { // undefined일 경우 기본값 true로 간주
@@ -109,6 +124,16 @@ const sendTelegram = async (token, chatId, buffer) => {
     } else {
       console.log("⛔ 밍밍 비활성화 상태 (전송 스킵)");
     }
+
+    // ✅ 글로벌 다국어 봇 전송
+    await sendTelegram(TELEGRAM_BOT_TOKEN_GLOBAL, TELEGRAM_CHAT_ID_GLOBAL, buffer);
+    console.log("✅ English 채널 이미지 전송 완료");
+
+    await sendTelegram(TELEGRAM_BOT_TOKEN_CHINA, TELEGRAM_CHAT_ID_CHINA, buffer);
+    console.log("✅ China 채널 이미지 전송 완료");
+
+    await sendTelegram(TELEGRAM_BOT_TOKEN_JAPAN, TELEGRAM_CHAT_ID_JAPAN, buffer);
+    console.log("✅ Japan 채널 이미지 전송 완료");    
 
   } catch (err) {
     console.error("❌ 실행 오류:", err.message);

@@ -1,8 +1,10 @@
-// ✅👇 langConfigManager.js
+//✅👇 langConfigManager.js
 
 const fs = require('fs');
+const config = require('./config');
 const path = './langConfig.json';
 
+// ✅ 지원하는 언어 목록
 const SUPPORTED_LANGS = ['ko', 'en', 'zh', 'jp'];
 
 function ensureLangConfigFile() {
@@ -37,10 +39,22 @@ function initUser(chatId) {
 }
 
 function getUserConfig(chatId) {
+  // ✅ 특정 채널은 언어 고정 (변경 불가)
+  if (chatId === config.TELEGRAM_CHAT_ID_GLOBAL) return { lang: 'en' };
+  if (chatId === config.TELEGRAM_CHAT_ID_CHINA)  return { lang: 'zh' };
+  if (chatId === config.TELEGRAM_CHAT_ID_JAPAN)  return { lang: 'jp' };
+
   return langConfig[chatId];
 }
 
 function setUserLang(chatId, lang) {
+  // ✅ 언어 고정된 채널은 변경 금지
+  if ([
+    config.TELEGRAM_CHAT_ID_GLOBAL,
+    config.TELEGRAM_CHAT_ID_CHINA,
+    config.TELEGRAM_CHAT_ID_JAPAN
+  ].includes(chatId)) return false;
+  
   if (!SUPPORTED_LANGS.includes(lang)) return false;
   initUser(chatId);
   if (langConfig[chatId].lang === lang) return true;
