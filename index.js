@@ -7,14 +7,17 @@ const webhookHandler = require('./webhookHandler');
 const captureApi = require('./routes/captureApi');
 const { loadBotState } = require('./utils');
 const { initAdminPanel } = require('./commands/status');
+const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // ✅ 자동매매 모듈 불러오기
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ✅ 봇 상태 불러오기 (글로벌 상태 저장용)
 const { choiEnabled, mingEnabled } = loadBotState();
 global.choiEnabled = choiEnabled;
 global.mingEnabled = mingEnabled;
 
+// ✅ JSON 요청 파싱
 app.use(express.json()); // 🚨 이 부분을 express.json()으로 변경 (필수)
 
 // ✅ 라우트 등록
@@ -25,6 +28,21 @@ app.use('/capture', captureApi);
 // ✅ 기본 루트
 app.get('/', (req, res) => res.send('✅ IS Academy Webhook 서버 작동 중입니다.'));
 
+// ✅ 신규 라우트: 수동 시그널 트리거
+app.post('/trigger-signal', async (req, res) => {
+  try {
+    const signal = req.body;
+    console.log('📥 수신된 시그널:', signal);
+
+    await handleTradeSignal(signal);
+    res.send('✅ 자동매매 시그널 처리 완료!');
+  } catch (error) {
+    console.error('❌ 시그널 처리 중 오류:', error.message);
+    res.status(500).send('❌ 처리 실패');
+  }
+});
+
+// ✅ 서버 실행
 app.listen(PORT, async () => {
   console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
   await initAdminPanel();
