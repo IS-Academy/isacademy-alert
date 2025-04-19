@@ -1,23 +1,31 @@
 //✅👇 utils.js
 
-const fs = require('fs');
-const path = require('path');
-const moment = require('moment-timezone');
-const { getTranslation } = require('./lang');
-const { sendToAdmin, sendToChoi, sendToMing, sendToEnglish, sendToChina, sendToJapan } = require('./botManager');
-const config = require('./config');
+const fs = require('fs');                                     // 📁 파일 시스템 접근
+const path = require('path');                                 // 📂 경로 유틸리티
+const moment = require('moment-timezone');                    // ⏰ 시간대 지원 날짜 포맷터
+const { getTranslation } = require('./lang');                 // 🌐 다국어 번역 함수
+const {
+  sendToAdmin,
+  sendToChoi,
+  sendToMing,
+  sendToEnglish,
+  sendToChina,
+  sendToJapan
+} = require('./botManager');                                  // 📤 텔레그램 봇별 메시지 전송 함수
+const config = require('./config');                           // ⚙️ 설정 파일 로드
 
 // ✅ 최대 진입 허용 퍼센트 (%)
-const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
+const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30;     // 🚨 진입 제한 퍼센트 (기본값: 30%)
 
-// ✅ 템플릿 치환 함수: 문자열 내 {key} 치환
+// ✅ 템플릿 치환 함수: 문자열 내 {key}를 values 객체의 값으로 바꿔주는 유틸 함수
+// 예: replaceTemplate("안녕하세요 {name}님", { name: '홍길동' }) → "안녕하세요 홍길동님"
 function replaceTemplate(str, values = {}) {
   return str.replace(/\{(.*?)\}/g, (_, key) => values[key] ?? `{${key}}`);
 }
 
-// ✅ 진입 캐시 (롱/숏 분리)
-const longEntries = {};
-const shortEntries = {};
+// ✨ 기존 유지 (진입 캐시 구조)
+const longEntries = {};     // 📊 롱 진입 기록
+const shortEntries = {};    // 📉 숏 진입 기록
 
 function isLongType(type) {
   return ['showSup', 'isBigSup', 'Ready_showSup', 'Ready_isBigSup'].includes(type);
@@ -33,7 +41,7 @@ function getEntryMapByType(type) {
   return null;
 }
 
-// ✅ 진입 추가
+// ✅ 진입을 추가하는 함수
 function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
   const entryMap = getEntryMapByType(type);
   if (!entryMap) return;
@@ -46,7 +54,7 @@ function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
 
   // ✅ 현재 진입 개수 확인
   const currentCount = entryMap[symbol][timeframe].length;
-  const currentPercent = currentCount + 1; // 1회 = 1%
+  const currentPercent = currentCount + 1;
 
   if (currentPercent > MAX_ENTRY_PERCENT) {
     const key = isLongType(type) ? 'entryLimitReachedLong' : 'entryLimitReachedShort';
@@ -56,7 +64,7 @@ function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
     if (global.englishEnabled) sendToEnglish(warning);
     if (global.chinaEnabled) sendToChina(warning);
     if (global.japanEnabled) sendToJapan(warning);
-    return; // 포화 상태이면 진입하지 않음
+    return;
   }
 
   entryMap[symbol][timeframe].push(parsed);
@@ -147,7 +155,7 @@ function backupBotState() {
     return true;
   } catch (err) {
     console.error('❌ 상태 백업 실패:', err.message);
-    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`); // 📢 관리자 알림 추가
+    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`);
     return false;
   }
 }
@@ -162,13 +170,13 @@ function resetBotStateToDefault() {
     japanEnabled: true
   };
   try {
-    saveBotState(defaultState);                   // 💾 저장 시도
-    Object.assign(global, defaultState);          // 🌍 전역 동기화
+    saveBotState(defaultState);
+    Object.assign(global, defaultState);
     console.log('✅ 상태 기본값으로 리셋됨');
     return defaultState;
   } catch (err) {
     console.error('❌ 상태 리셋 실패:', err.message);
-    sendToAdmin(`❌ 상태 리셋 실패: ${err.message}`); // 📢 관리자 알림 추가
+    sendToAdmin(`❌ 상태 리셋 실패: ${err.message}`);
     return null;
   }
 }
@@ -197,23 +205,24 @@ function getTimeString(tz = 'Asia/Seoul') {
   return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
 }
 
+// ✅ 내보내는 함수들과 각각의 역할 주석
 module.exports = {
-  replaceTemplate,
-  isLongType,
-  isShortType,
-  addEntry,
-  clearEntries,
-  getEntryInfo,
-  getAllEntryInfo,
-  updateLastDummyTime,
-  getLastDummyTime,
-  loadBotState,
-  saveBotState,
-  getTimeString,
-  setAdminMessageId,
-  getAdminMessageId,
-  saveAdminMessageId,
-  loadAdminMessageId,
-  backupBotState,
-  resetBotStateToDefault
+  replaceTemplate,          // 🧩 문자열 템플릿 치환
+  isLongType,               // 🟢 롱 신호 판단
+  isShortType,              // 🔴 숏 신호 판단
+  addEntry,                 // ➕ 진입 데이터 추가
+  clearEntries,             // ❌ 진입 데이터 초기화
+  getEntryInfo,             // 📊 진입 평균 및 개수 계산
+  getAllEntryInfo,          // 🧾 전체 타임프레임 진입 요약
+  updateLastDummyTime,      // 🕓 마지막 더미 시간 갱신
+  getLastDummyTime,         // 🕒 마지막 더미 시간 조회
+  loadBotState,             // 📥 봇 상태 불러오기
+  saveBotState,             // 💾 봇 상태 저장
+  getTimeString,            // ⏰ 현재 시간 문자열 반환
+  setAdminMessageId,        // 📝 관리자 메시지 ID 설정
+  getAdminMessageId,        // 🔍 관리자 메시지 ID 조회
+  saveAdminMessageId,       // 💾 메시지 ID 저장
+  loadAdminMessageId,       // 📂 메시지 ID 불러오기
+  backupBotState,           // 🛡️ 상태 파일 백업
+  resetBotStateToDefault    // 🔄 봇 상태 기본값으로 초기화
 };
