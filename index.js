@@ -45,7 +45,7 @@ app.post('/trigger-signal', async (req, res) => {   // 🛎️ /trigger-signal: 
 
 // ✅👇 서버 시작
 app.listen(PORT, async () => {                      // 📡 서버 실행
-  console.log(🚀 서버 실행 완료: http://localhost:${PORT});
+  console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
   await initAdminPanel();                           // 🛠️ 관리자 패널 초기화 실행
 });
 
