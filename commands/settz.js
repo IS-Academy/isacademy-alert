@@ -1,4 +1,4 @@
-// ✅👇 settz.js - 시간대 설정 후 상태 메시지 갱신
+//✅👇 settz.js - 시간대 설정 후 상태 메시지 갱신
 
 const langManager = require('../langConfigManager');
 const { sendToAdmin } = require('../botManager');

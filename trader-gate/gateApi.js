@@ -1,4 +1,4 @@
-// ✅👇 /trader-gate/gateApi.js
+//✅👇 /trader-gate/gateApi.js
 
 const axios = require('axios');
 const crypto = require('crypto');

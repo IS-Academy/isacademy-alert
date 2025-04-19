@@ -1,167 +1,258 @@
-// ✅👇 commands/status.js
+//✅👇 commands/status.js
 
-const { editMessage, inlineKeyboard, getLangKeyboard, getTemplateTestKeyboard, sendTextToBot, sendToAdmin } = require('../botManager');
-const langManager = require('../langConfigManager');
-const config = require('../config');
-const {
-  getLastDummyTime,
-  setAdminMessageId,
-  getAdminMessageId,
-  getTimeString
-} = require('../utils');
-const { translations } = require('../lang');
 const moment = require('moment-timezone');
+const config = require('../config');
+const { getLastDummyTime, getAdminMessageId, saveAdminMessageId, loadAdminMessageId } = require('../utils');
+const { loadBotState, saveBotState } = require('../utils');
+const { resetBotStateToDefault, backupBotState } = require('../utils');  // ✅ 기본값으로 상태 리셋 & 백업
+const langManager = require('../langConfigManager');
+const { translations } = require('../lang');
+const { getEntryInfo } = require('../entryManager');
+const { editMessage, getLangKeyboard, getLangMenuKeyboard, getUserToggleKeyboard, getSymbolToggleKeyboard, getTemplateTestKeyboard, sendTextToBot, getDynamicInlineKeyboard, sendToAdmin } = require('../botManager');
 const { getTemplate } = require('../MessageTemplates');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const symbolsPath = path.join(__dirname, '../trader-gate/symbols.js');
 
-// ✅ 캐시: 중복 메시지 생략을 위한 간단한 메모리 저장소
+let intervalId = null; // ✅ 인터벌 변수 선언 및 초기화
 const cache = new Map();
 
-// ✅ 버튼 로그 메시지용 키 매핑
-const logMap = {
-  'choi_on': '▶️ [상태 갱신: 최실장 ON]',
-  'choi_off': '⏹️ [상태 갱신: 최실장 OFF]',
-  'ming_on': '▶️ [상태 갱신: 밍밍 ON]',
-  'ming_off': '⏹️ [상태 갱신: 밍밍 OFF]',
-  'status': '📡 [상태 확인 요청]',
-  'dummy_status': '🔁 [더미 상태 확인 요청]'
-};
+const axiosInstance = axios.create({
+  timeout: 5000, // 요청 제한시간 5초
+  httpAgent: new (require('http').Agent)({ keepAlive: true }), // Keep-Alive 설정
+});
 
-// ✅ 텔레그램 버튼 클릭 처리 함수
-async function handleAdminAction(data, ctx) {
-  const chatId = ctx.chat.id;
-  const messageId = ctx.callbackQuery.message.message_id;
-  const callbackQueryId = ctx.callbackQuery.id;
-
-  // ✅ 템플릿 테스트 버튼 클릭 처리
-  if (data.startsWith("test_template_")) {
-    const type = data.replace("test_template_", "");
-    const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
-    const isShort = type.endsWith('Short');
-    const direction = isShort ? 'short' : 'long';
-    try {
-      const msg = getTemplate({
-        type,
-        symbol: 'BTCUSDT.P',
-        timeframe: '1',
-        price: 62500,
-        ts: Math.floor(Date.now() / 1000),
-        entryCount: 1,
-        entryAvg: '60000',
-        leverage: 50,
-        lang,
-        direction
-      });
-      await sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`, null);
-    } catch (err) {
-      await sendTextToBot('admin', chatId, `❌ 템플릿 오류: ${err.message}`, null);
-    }
-    return;
-  }
-  
-  // ✅ 상태 토글 처리용
-  let changed = false;
-
-  switch (data) {
-    case 'choi_on':
-      if (!global.choiEnabled) { global.choiEnabled = true; changed = true; }
-      break;
-    case 'choi_off':
-      if (global.choiEnabled) { global.choiEnabled = false; changed = true; }
-      break;
-    case 'ming_on':
-      if (!global.mingEnabled) { global.mingEnabled = true; changed = true; }
-      break;
-    case 'ming_off':
-      if (global.mingEnabled) { global.mingEnabled = false; changed = true; }
-      break;
-    default:
-      changed = true;
-      break;
-  }
-
-  // ✅ 변경 없음 → 메시지 생략
-  if (!changed) {
-    await editMessage('admin', chatId, messageId, '⏱️ 현재와 동일한 상태입니다.', null, {
-      callbackQueryId,
-      callbackResponse: '동일한 상태입니다.',
-      logMessage: `${logMap[data] || '🧩 버튼'}`
-    });
-    return;
-  }
-
-  // ✅ 상태 패널 갱신 호출
-  await sendBotStatus(undefined, data, chatId, messageId, {
-    callbackQueryId,
-    callbackResponse: '✅ 상태 갱신 완료',
-    logMessage: logMap[data]
+async function answerCallback(callbackQueryId, text = '✅ 처리 완료!') {
+  return axiosInstance.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+    callback_query_id: callbackQueryId,
+    text,
+    cache_time: 1,
   });
 }
 
-// ✅ 상태 패널 메시지 전송 함수
-async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
-  const now = moment().tz(config.DEFAULT_TIMEZONE);
-  const nowTime = now.format('HH:mm:ss');
+// ✅ 콜백 예외 안전 버전
+const safeAnswerCallback = (id, text = '✅ 처리 완료!') => {
+  return answerCallback(id, text).catch(e => {
+    if (e.response?.data?.description?.includes('query is too old')) {
+      console.warn(`⚠️ Callback 만료됨: ${id}`);
+    } else {
+      console.error(`❌ Callback 에러: ${e.message}`);
+    }
+  });
+};
 
-  const { choiEnabled, mingEnabled } = global;
+async function handleAdminAction(data, ctx) {
+  const chatId = config.ADMIN_CHAT_ID;
+  const messageId = getAdminMessageId(); // 직접 불러오기 최적화
+  const callbackQueryId = ctx.callbackQuery.id;
+  const nowTime = moment().tz(config.DEFAULT_TIMEZONE).format('HH:mm:ss');
+
+  let newText, newKeyboard, responseText;
+
+  switch (data) {
+    case 'choi_toggle':
+    case 'ming_toggle':
+    case 'english_toggle':
+    case 'china_toggle':
+    case 'japan_toggle': {
+      const botState = loadBotState();  // ✅ 파일 상태 로딩
+      const key = data.replace('_toggle', '') + 'Enabled';
+      botState[key] = !botState[key];
+      saveBotState(botState);  // ✅ 파일에 상태 저장
+      global[key] = botState[key];
+
+      const label =
+        data === 'choi_toggle' ? '👨‍💼 최실장' :
+        data === 'ming_toggle' ? '👩‍💼 밍밍' :
+        data === 'english_toggle' ? '🌍 영어' :
+        data === 'china_toggle' ? '🇨🇳 중국' :
+        data === 'japan_toggle' ? '🇯🇵 일본' :
+        '❓기타';
+
+      const status = botState[key] ? '✅ ON' : '❌ OFF';
+      const source = '🔘버튼';
+      console.log(`${nowTime} | 📩 [${data}] | ${label}: ${status} | ${source}`);
+
+      await Promise.all([
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
+        answerCallback(callbackQueryId, `${label} ${status}`)
+      ]);
+      return;
+    }
+
+    case 'status':
+    case 'dummy_status':
+    case 'backup_bot_state':
+    case 'reset_bot_state':
+    case 'back_main': {
+      let label = '';
+      const source = '🔘버튼';
+      if (data === 'backup_bot_state') {
+        const success = backupBotState(); // ✅ 함수 실행
+        label = success ? '✅ 상태 백업 완료' : '❌ 백업 실패';
+      } else if (data === 'reset_bot_state') {
+        const defaultState = resetBotStateToDefault(); // ✅ 상태 파일 초기화
+        Object.assign(global, defaultState);           // ✅ 글로벌 변수에 동기화
+        label = '♻️ 상태 기본값으로 리셋됨';
+      } else {
+        label =
+          data === 'status' ? '✅ 최신 상태로 업데이트 완료' :
+          data === 'dummy_status' ? '♻️ 더미 상태 최신화 완료' :
+          '↩️ 메인 메뉴로 돌아갑니다';
+      }      
+      console.log(`${nowTime} | 📩 [${data}] | ${label} | ${source}`);
+
+      await Promise.all([
+        sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
+        answerCallback(callbackQueryId, label)
+      ]);
+      return;
+    }
+      
+    case 'lang_menu':
+      newText = '🌐 언어 설정 대상 선택';
+      newKeyboard = getLangMenuKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
+      responseText = '✅ 언어 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
+      break;
+
+    case 'lang_choi':
+    case 'lang_ming':
+      newText = `🌐 ${data === 'lang_choi' ? '최실장' : '밍밍'} 언어 선택`;
+      newKeyboard = getLangKeyboard(data.split('_')[1]); // ⚠️ 관리자 키보드 바꾸는 동작 + data.split
+      responseText = '✅ 언어 선택 메뉴';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
+      break;
+      
+    case 'test_menu':
+      newText = '🧪 템플릿 테스트 메뉴입니다';
+      newKeyboard = getTemplateTestKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
+      responseText = '✅ 테스트 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
+      break;      
+
+    case 'symbol_toggle_menu':
+      newText = '📊 자동매매 종목 설정 (ON/OFF)';
+      newKeyboard = getSymbolToggleKeyboard(); // ⚠️ 관리자 키보드 바꾸는 동작
+      responseText = '✅ 종목 설정 메뉴 열림';
+      console.log(`${nowTime} | 📩 [${data}] | ${responseText} | 🔘버튼`);
+      break;
+
+    default:
+      if (data.startsWith('lang_') && data.split('_').length === 3) {
+        const [_, bot, langCode] = data.split('_');
+        const result = `✅ ${bot.toUpperCase()} 언어가 ${langCode.toUpperCase()}로 변경됨`;
+        console.log(`${nowTime} | 📩 [${data}] | ${result} | 🔘버튼`);
+        await Promise.all([
+          sendBotStatus(chatId, messageId, { allowCreateKeyboard: false, fromButton: true }),
+          answerCallback(callbackQueryId, result)
+        ]);
+        return;
+      }
+
+      if (data.startsWith('test_template_')) {
+        const type = data.replace('test_template_', '');
+        const lang = langManager.getUserConfig(chatId)?.lang || 'ko';
+        const symbol = 'btcusdt.p';
+        const { entryAvg: avg, entryCount: ratio } = getEntryInfo(symbol, type, '1');
+        const msg = getTemplate({
+          type, symbol: symbol.toUpperCase(), timeframe: '1', price: 62500, ts: Math.floor(Date.now() / 1000),
+          entryCount: ratio || 0, entryAvg: avg || 'N/A', leverage: 50, lang,
+          direction: type.endsWith('Short') ? 'short' : 'long'
+        });
+        await Promise.all([
+          sendTextToBot('admin', chatId, `📨 템플릿 테스트 결과 (${type})\n\n${msg}`),
+          answerCallback(callbackQueryId, '✅ 템플릿 테스트 완료')
+        ]);
+        return;
+      }
+
+      if (data.startsWith('toggle_symbol_')) {
+        const symbolKey = data.replace('toggle_symbol_', '').toLowerCase();
+        const symbols = require('../trader-gate/symbols');
+        if (symbols[symbolKey]) {
+          symbols[symbolKey].enabled = !symbols[symbolKey].enabled;
+          fs.writeFileSync(symbolsPath, `module.exports=${JSON.stringify(symbols,null,2)}`);
+          const msg = `✅ ${symbolKey.toUpperCase()} 상태 변경됨`;
+          console.log(`${nowTime} | 📩 [${data}] | ${msg} | 🔘버튼`);
+          await Promise.all([
+            editMessage('admin', chatId, messageId, '📊 자동매매 종목 설정 (ON/OFF)', getSymbolToggleKeyboard()),
+            answerCallback(callbackQueryId, msg)
+          ]);
+        }
+        return;
+      }
+  }
+
+  if (newText && newKeyboard) {
+    await Promise.all([
+      editMessage('admin', chatId, messageId, newText, newKeyboard),
+      answerCallback(callbackQueryId, responseText)
+    ]);
+  }
+}
+
+// ✅ 상태 메시지 전송
+async function sendBotStatus(chatId = config.ADMIN_CHAT_ID, messageId = null, options = {}) {
+  // ✅ global 전역 동기화 보정 (초기 1회용)
+  const state = loadBotState();
+  global.choiEnabled = state.choiEnabled;
+  global.mingEnabled = state.mingEnabled;
+  global.englishEnabled = state.englishEnabled;
+  global.chinaEnabled = state.chinaEnabled;
+  global.japanEnabled = state.japanEnabled;
+
+  const { choiEnabled, mingEnabled, englishEnabled, chinaEnabled, japanEnabled } = global;
   const configChoi = langManager.getUserConfig(config.TELEGRAM_CHAT_ID) || {};
   const configMing = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_A) || {};
+  const configEnglish = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_GLOBAL) || {};
+  const configChina   = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_CHINA) || {};
+  const configJapan   = langManager.getUserConfig(config.TELEGRAM_CHAT_ID_JAPAN) || {}; 
   const userConfig = langManager.getUserConfig(chatId) || {};
 
   const langChoi = configChoi.lang || 'ko';
   const langMing = configMing.lang || 'ko';
+  const langEnglish = configEnglish.lang || 'en';
+  const langChina   = configChina.lang   || 'zh';
+  const langJapan   = configJapan.lang   || 'jp';
   const userLang = userConfig.lang || 'ko';
   const tz = userConfig.tz || config.DEFAULT_TIMEZONE;
-
-  // ✅ 캐시 키에 더미 수신 시간도 포함하여 중복 출력 방지 개선
+  
+  const now = moment().tz(config.DEFAULT_TIMEZONE);
+  const nowTime = now.format('HH:mm:ss');
   const dayTranslated = translations[userLang]?.days[now.day()] || now.format('ddd');
   const lastDummy = getLastDummyTime();
   const dummyKey = lastDummy || 'no-dummy';
-  const key = `${chatId}_${suffix}_${choiEnabled}_${mingEnabled}_${langChoi}_${langMing}_${dummyKey}`;
-  
+  const key = `${chatId}_${choiEnabled}_${mingEnabled}_${englishEnabled}_${chinaEnabled}_${japanEnabled}_${langChoi}_${langMing}_${dummyKey}`;
+
   const dummyMoment = moment(lastDummy, moment.ISO_8601, true).isValid() ? moment.tz(lastDummy, tz) : null;
-  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;  
+  const elapsed = dummyMoment ? moment().diff(dummyMoment, 'minutes') : null;
   const dummyTimeFormatted = dummyMoment ? dummyMoment.format(`YY.MM.DD (${dayTranslated}) HH:mm:ss`) : '기록 없음';
   const elapsedText = elapsed !== null ? (elapsed < 1 ? '방금 전' : `+${elapsed}분 전`) : '';
 
-  if (cache.get(key) === nowTime) {
-    if (options.callbackQueryId) {
-      const axios = require('axios');
-      await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
-        callback_query_id: options.callbackQueryId,
-        text: '⏱️ 최신 정보입니다.',
-        show_alert: false
-      });
-    }
-
-    if (suffix.startsWith('lang_choi')) {
-      console.log('🌐 최실장 언어선택 패널 중복 생략');
-    } else if (suffix.startsWith('lang_ming')) {
-      console.log('🌐 밍밍 언어선택 패널 중복 생략');
-    } else if (options.logMessage) {
-      const cleaned = options.logMessage.replace(/^.*\[\s?|\s?\]$/g, '').trim();
-      console.log(`⚠️ ${cleaned} 중복 생략`);
-    } else {
-      console.log('⚠️ 상태 메시지 중복 생략');
-    }
-    return;
+  if (options.callbackQueryId) {
+    await axios.post(`https://api.telegram.org/bot${config.ADMIN_BOT_TOKEN}/answerCallbackQuery`, {
+      callback_query_id: options.callbackQueryId,
+      text: options.callbackResponse || '✅ 처리 완료!',
+      show_alert: false,
+      cache_time: 1  // 빠른 응답 속도 최적화
+    });
   }
 
   cache.set(key, nowTime);
 
-  // ✅ 언어별 타임존 + 이모지 매핑
   const langEmojiMap = { ko: '🇰🇷', en: '🇺🇸', jp: '🇯🇵', zh: '🇨🇳' };
-  const langTzChoi = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
-  const langTzMing = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
-
+  const langTzChoi    = translations[langChoi]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzMing    = translations[langMing]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzEnglish = translations[langEnglish]?.timezone || config.DEFAULT_TIMEZONE;
+  const langTzChina   = translations[langChina]?.timezone   || config.DEFAULT_TIMEZONE;
+  const langTzJapan   = translations[langJapan]?.timezone   || config.DEFAULT_TIMEZONE;
+  
   const langDisplay = (lang, tz) => {
     const emoji = langEmojiMap[lang] || '';
     return `<code>${lang}</code> ${emoji} | ${tz}`;
   };
-
-  const keyboard = suffix === 'lang_choi' ? getLangKeyboard('choi') :
-                   suffix === 'lang_ming' ? getLangKeyboard('ming') :
-                   suffix === 'test_menu' ? getTemplateTestKeyboard() :
-                   inlineKeyboard;
 
   // ✅ 패널 메시지 조립
   const statusMsg = [
@@ -171,6 +262,7 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
     ``,
     `👨‍💼 최실장: ${choiEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langChoi, langTzChoi)})`,
     `👩‍💼 밍밍: ${mingEnabled ? '✅ ON' : '❌ OFF'} (${langDisplay(langMing, langTzMing)})`,
+    `🌍 영어: ${englishEnabled ? '✅' : '❌'}   🇨🇳 중국: ${chinaEnabled ? '✅' : '❌'}   🇯🇵 일본: ${japanEnabled ? '✅' : '❌'}`,
     ``,
     `📅 <b>${now.format(`YY.MM.DD (${dayTranslated})`)}</b>`,
     `🛰 <b>더미 수신:</b> ${dummyMoment ? '♻️' : '❌'} <code>${dummyTimeFormatted}</code> ${elapsedText}`,
@@ -178,45 +270,112 @@ async function sendBotStatus(timeStr = getTimeString(), suffix = '', chatId = co
   ].join('\n');
 
   try {
-    const existingMessageId = messageId || getAdminMessageId();
-    let sent;
+    if (!messageId) {
+      if (options.allowCreateKeyboard === false) {
+        console.warn('⚠️ 키보드 생성 비허용 설정 → 중단');
+        return null;
+      }
 
-    if (existingMessageId) {
-      sent = await editMessage('admin', chatId, existingMessageId, statusMsg, keyboard, {
-        ...options, parse_mode: 'HTML'
+      const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), {
+        parse_mode: 'HTML',
+        ...options
       });
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
+
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        const newId = sent.data.result.message_id;
+        console.log('✅ 새 메시지 생성됨, ID 저장:', newId);
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
+
+        if (!options.suppressInterval && !intervalId) {
+          intervalId = setInterval(() => {
+            const currentId = getAdminMessageId();
+            sendBotStatus(chatId, currentId, { allowCreateKeyboard: false });
+          }, 60000);
+        }
+      } else {
+        console.warn('⚠️ 메시지 ID 없음 → 저장 실패 가능성');
+      }
+
+      return sent;
     } else {
-      sent = await sendTextToBot('admin', chatId, statusMsg, keyboard, {
-        ...options, parse_mode: 'HTML'
+      if (messageId !== getAdminMessageId()) {
+        console.warn('⚠️ 오래된 메시지 갱신 시도 → 중단됨:', messageId);  // 🧤 오래된 메시지 방지
+        return null;
+      }
+
+      const sent = await editMessage('admin', chatId, messageId, statusMsg, getDynamicInlineKeyboard(), {
+        parse_mode: 'HTML',
+        ...options
       });
-      if (sent?.data?.result?.message_id) setAdminMessageId(sent.data.result.message_id);
+
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        if (!options?.fromButton) {
+          console.log('✅ 기존 메시지 갱신됨, ID 재저장:', sent.data.result.message_id);
+        }
+        saveAdminMessageId(sent.data.result.message_id);
+        adminMessageId = sent.data.result.message_id;
+      } else {
+        console.warn('⚠️ editMessage 성공했지만 message_id 없음 → 저장 생략');
+      }
+
+      return sent;
+    }
+  } catch (err) {
+    const errorMsg = err.message || '';
+    if (errorMsg.includes('message to edit not found') && options.allowCreateKeyboard !== false) {
+      if (options._fromFallback) {
+        console.warn('🛡️ fallback 중복 감지 → 키보드 생성 중단');
+        return null;
+      }
+
+      console.warn('⚠️ 기존 메시지 없음 → 새 키보드 생성 시도');
+      const sent = await sendTextToBot('admin', chatId, statusMsg, getDynamicInlineKeyboard(), {
+        parse_mode: 'HTML',
+        ...options
+      });
+
+      if (sent?.data?.result?.message_id || sent?.data?.result?.message_id === 0) {
+        const newId = sent.data.result.message_id;
+        console.log('✅ fallback 메시지 생성됨, ID 저장:', newId);
+        saveAdminMessageId(newId);
+        adminMessageId = newId;
+      }
+
+      return null;
     }
 
-    return sent;
-  } catch (err) {
-    console.error('⚠️ 관리자 패널 오류:', err.message);
+    console.error('❌ 관리자 패널 오류:', errorMsg);
+    await sendToAdmin(`⚠️ 관리자 패널 오류 발생: ${errorMsg}`);
     return null;
-  }
-}
-
-// ✅ 봇 실행 시 관리자 패널 초기화 및 자동 갱신 시작
-async function initAdminPanel() {
-  const sent = await sendBotStatus();
-  if (sent && sent.data?.result) {
-    console.log('✅ 관리자 패널 초기화 성공');
-
-    // ✅ 1분마다 자동 갱신
-    setInterval(() => {
-      sendBotStatus(undefined, '', config.ADMIN_CHAT_ID);
-    }, 60 * 1000);
-  } else {
-    console.warn('⚠️ 관리자 패널 초기화 시 메시지 결과 없음');
   }
 }
 
 module.exports = {
   sendBotStatus,
-  initAdminPanel,
+  initAdminPanel: async () => {
+    console.log('🌀 서버 재시작 감지 → 새로운 키보드 강제 생성');
+
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+
+    const sent = await sendBotStatus(config.ADMIN_CHAT_ID, null, {
+      allowCreateKeyboard: true,
+      suppressInterval: true
+    });
+
+    if (sent?.data?.result?.message_id) {
+      const newId = sent.data.result.message_id;
+      saveAdminMessageId(newId);
+      adminMessageId = newId;
+
+      intervalId = setInterval(() => {
+        const currentId = getAdminMessageId();
+        sendBotStatus(config.ADMIN_CHAT_ID, currentId, { allowCreateKeyboard: false });
+      }, 60000);
+    }
+  },
   handleAdminAction
 };

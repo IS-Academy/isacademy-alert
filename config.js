@@ -1,4 +1,4 @@
-// ✅👇 config.js
+//✅👇 config.js
 
 require('dotenv').config();
 
@@ -10,6 +10,18 @@ module.exports = {
   // 밍밍 봇
   TELEGRAM_BOT_TOKEN_A: process.env.TELEGRAM_BOT_TOKEN_A,
   TELEGRAM_CHAT_ID_A: process.env.TELEGRAM_CHAT_ID_A,
+
+  // 영어 봇
+  TELEGRAM_BOT_TOKEN_GLOBAL: process.env.TELEGRAM_BOT_TOKEN_GLOBAL,
+  TELEGRAM_CHAT_ID_GLOBAL: process.env.TELEGRAM_CHAT_ID_GLOBAL,
+  
+  // 중국어 봇
+  TELEGRAM_BOT_TOKEN_CHINA: process.env.TELEGRAM_BOT_TOKEN_CHINA,
+  TELEGRAM_CHAT_ID_CHINA: process.env.TELEGRAM_CHAT_ID_CHINA,
+  
+  // 일본어 봇
+  TELEGRAM_BOT_TOKEN_JAPAN: process.env.TELEGRAM_BOT_TOKEN_JAPAN,
+  TELEGRAM_CHAT_ID_JAPAN: process.env.TELEGRAM_CHAT_ID_JAPAN,
 
   // 관리자 봇
   ADMIN_BOT_TOKEN: process.env.ADMIN_BOT_TOKEN,

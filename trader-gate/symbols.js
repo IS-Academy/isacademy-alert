@@ -1,8 +1,8 @@
-// ✅👇 /trader-gate/symbols.js
+//✅👇 /trader-gate/symbols.js
 
 // ✅ 종목 리스트 (선물 전용)
 module.exports = {
-  btcusdt: { enabled: true },
-  ethusdt: { enabled: true },
-  solusdt: { enabled: false }  // 🚫 꺼진 상태
+  'btcusdt.p': { enabled: true },
+  'ethusdt.p': { enabled: true },
+  'solusdt.p': { enabled: false }  // 🚫 꺼진 상태
 };

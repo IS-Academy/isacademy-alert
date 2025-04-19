@@ -1,4 +1,4 @@
-// ✅👇 /trader-gate/tradeSignalHandler.js
+//✅👇 /trader-gate/tradeSignalHandler.js
 
 const { placeLongOrder, placeShortOrder } = require('./gateExecutor');
 const {

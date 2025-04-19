@@ -1,4 +1,4 @@
-// ✅ 최초 1회 수동 로그인 쿠키 저장 코드 (saveCookie.js)
+//✅👇 saveCookie.js / 최초 1회 수동 로그인 쿠키 저장 코드 
 require("dotenv").config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');

@@ -1,4 +1,4 @@
-// ✅👇 locales/zh.js
+//✅👇 locales/zh.js
 
 module.exports = {
   symbols: {
@@ -21,6 +21,8 @@ module.exports = {
     timeframeUnit: "分钟",
     price: "💲 价格",
     entryInfo: "📊 已进场 {entryCount}% / 均价 {entryAvg}",
+    noEntryInfo: "📊 无进场比例信息 / 平均价格无法计算",
+    pnlCalculationError: "📈收益率 +-% / 本金对比 +-%📉 无法计算",
     entrySummary: "⏱️ 入场概况:",
     entryInfoByTF: "• {tf}分钟 → ✅ {percent}% / 均价 {avg}",
     expectedCloseLong: "预计平仓价格: {price} ⬆️",
