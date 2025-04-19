@@ -65,7 +65,15 @@ const sendTelegram = async (token, chatId, buffer) => {
 
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720 });
-  await page.setCookie(...JSON.parse(TV_COOKIES));
+    if (!TV_COOKIES || TV_COOKIES.trim() === '') {
+      console.warn("⚠️ TV_COOKIES 비어있음 → 쿠키 설정 생략");
+    } else {
+      try {
+        await page.setCookie(...JSON.parse(TV_COOKIES));
+      } catch (err) {
+        console.error("❌ 쿠키 파싱 실패 → 쿠키 설정 건너뜀:", err.message);
+      }
+    }
 
   const maxRetries = 2;
   let loaded = false;
