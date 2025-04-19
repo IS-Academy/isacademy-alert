@@ -1,66 +1,219 @@
-//✅👇 index.js = 환경 설정 및 주요 모듈 불러오기
+//✅👇 utils.js
 
-require('dotenv').config();                         // 📦 .env 환경 변수 로드
-const express = require('express');                 // 🌐 웹서버 프레임워크
-const dummyHandler = require('./dummyHandler');     // 🧪 테스트용 더미 라우터
-const webhookHandler = require('./webhookHandler'); // 📩 트레이딩뷰 웹훅 시그널 처리
-const captureApi = require('./routes/captureApi');  // 📸 스크린샷 캡처 요청 라우터
-const { loadBotState } = require('./utils');        // ⚙️ 저장된 봇 상태 불러오기
-const { initAdminPanel } = require('./commands/status'); // 🛠️ 관리자 패널 초기화
-const { handleTradeSignal } = require('./trader-gate/tradeSignalHandler'); // 🚀 자동매매 시그널 처리 함수
+const fs = require('fs');
+const path = require('path');
+const moment = require('moment-timezone');
+const { getTranslation } = require('./lang');
+const { sendToAdmin, sendToChoi, sendToMing, sendToEnglish, sendToChina, sendToJapan } = require('./botManager');
+const config = require('./config');
 
-// ✅👇 Express 앱 및 포트 설정
-const app = express();                              // 🚀 Express 앱 생성
-const PORT = process.env.PORT || 3000;              // 📡 기본 포트 설정 (.env에서 지정 가능)
+// ✅ 최대 진입 허용 퍼센트 (%)
+const MAX_ENTRY_PERCENT = config.MAX_ENTRY_PERCENT || 30; // 최대 진입 허용 %
 
-// ✅👇 글로벌 상태 세팅 (봇 ON/OFF 상태 로드 및 전역 등록)
-Object.assign(global, loadBotState());              // 🌍 모든 봇 상태를 전역(global)에 자동 등록
+// ✅ 템플릿 치환 함수: 문자열 내 {key} 치환
+function replaceTemplate(str, values = {}) {
+  return str.replace(/\{(.*?)\}/g, (_, key) => values[key] ?? `{${key}}`);
+}
 
-// ✅👇 요청 바디(JSON)를 파싱할 수 있도록 설정
-app.use(express.json());                            // 📥 JSON 형식 요청 본문 파싱
+// ✅ 진입 캐시 (롱/숏 분리)
+const longEntries = {};
+const shortEntries = {};
 
-// ✅👇 API 라우트 등록
-app.use('/dummy', dummyHandler);                    // 🧪 /dummy 테스트용 라우터
-app.post('/webhook', webhookHandler);               // 📩 /webhook: 시그널 수신 엔드포인트
-app.use('/capture', captureApi);                    // 📸 /capture: 차트 스크린샷 캡처 API
+function isLongType(type) {
+  return ['showSup', 'isBigSup', 'Ready_showSup', 'Ready_isBigSup'].includes(type);
+}
 
-// ✅👇 루트 엔드포인트
-app.get('/', (req, res) =>                          // 🏠 /: 기본 서버 확인용 라우터
-  res.send('✅ IS Academy Webhook 서버 작동 중입니다.')
-);
+function isShortType(type) {
+  return ['showRes', 'isBigRes', 'Ready_showRes', 'Ready_isBigRes'].includes(type);
+}
 
-// ✅👇 시그널 수동 트리거 (예: Postman으로 테스트 가능)
-app.post('/trigger-signal', async (req, res) => {   // 🛎️ /trigger-signal: 수동 시그널 실행
+function getEntryMapByType(type) {
+  if (isLongType(type)) return longEntries;
+  if (isShortType(type)) return shortEntries;
+  return null;
+}
+
+// ✅ 진입 추가
+function addEntry(symbol, type, price, timeframe = 'default', lang = 'ko') {
+  const entryMap = getEntryMapByType(type);
+  if (!entryMap) return;
+
+  if (!entryMap[symbol]) entryMap[symbol] = {};
+  if (!entryMap[symbol][timeframe]) entryMap[symbol][timeframe] = [];
+
+  const parsed = parseFloat(price);
+  if (!Number.isFinite(parsed)) return;
+
+  // ✅ 현재 진입 개수 확인
+  const currentCount = entryMap[symbol][timeframe].length;
+  const currentPercent = currentCount + 1; // 1회 = 1%
+
+  if (currentPercent > MAX_ENTRY_PERCENT) {
+    const key = isLongType(type) ? 'entryLimitReachedLong' : 'entryLimitReachedShort';
+    const warning = getTranslation(lang, 'labels', key);
+    if (global.choiEnabled) sendToChoi(warning);
+    if (global.mingEnabled) sendToMing(warning);
+    if (global.englishEnabled) sendToEnglish(warning);
+    if (global.chinaEnabled) sendToChina(warning);
+    if (global.japanEnabled) sendToJapan(warning);
+    return; // 포화 상태이면 진입하지 않음
+  }
+
+  entryMap[symbol][timeframe].push(parsed);
+}
+
+// ✅ 진입 초기화
+function clearEntries(symbol, type, timeframe = 'default') {
+  const entryMap = getEntryMapByType(type);
+  if (entryMap && entryMap[symbol]) {
+    entryMap[symbol][timeframe] = [];
+  }
+}
+
+// ✅ 특정 심볼의 평균 및 카운트 가져오기
+function getEntryInfo(symbol, type, timeframe = 'default') {
+  const entryMap = getEntryMapByType(type);
+  if (!entryMap) return { entryCount: 0, entryAvg: 'N/A' };
+
+  const entries = entryMap[symbol]?.[timeframe] || [];
+  const entryCount = entries.length;
+  const entryAvg = entryCount > 0
+    ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
+    : 'N/A';
+
+  return { entryCount, entryAvg };
+}
+
+// ✅ 전체 타임프레임 진입 요약 (for 메시지)
+function getAllEntryInfo(symbol, type) {
+  const entryMap = getEntryMapByType(type);
+  if (!entryMap || !entryMap[symbol]) return [];
+
+  return Object.entries(entryMap[symbol])
+    .map(([tf, entries]) => {
+      const entryCount = entries.length;
+      const entryAvg = entryCount > 0
+        ? (entries.reduce((sum, val) => sum + val, 0) / entryCount).toFixed(2)
+        : 'N/A';
+      return { timeframe: tf, entryCount, entryAvg };
+    })
+    .filter(e => e.entryCount > 0)
+    .sort((a, b) => parseInt(a.timeframe) - parseInt(b.timeframe));
+}
+
+// ✅ 더미 시각 처리
+let lastDummyTime = null;
+function updateLastDummyTime(time = new Date().toISOString()) {
+  lastDummyTime = time;
+}
+function getLastDummyTime() {
+  return lastDummyTime || '❌ 기록 없음';
+}
+
+// ✅ 상태 저장 및 불러오기
+const STATE_FILE = path.join(__dirname, 'bot_state.json');
+const BACKUP_FILE = path.join(__dirname, 'bot_state.backup.json');
+
+function loadBotState() {
   try {
-    const signal = req.body;                        // 📨 요청으로부터 시그널 데이터 받기
-    console.log('📥 수신된 시그널:', signal);
-
-    await handleTradeSignal(signal);                // 🚀 자동매매 실행
-    res.send('✅ 자동매매 시그널 처리 완료!');
-  } catch (error) {
-    console.error('❌ 시그널 처리 중 오류:', error.message);
-    res.status(500).send('❌ 처리 실패');
+    const raw = fs.readFileSync(STATE_FILE);
+    const parsed = JSON.parse(raw);
+    return {
+      choiEnabled: parsed.choiEnabled ?? true,
+      mingEnabled: parsed.mingEnabled ?? true,
+      englishEnabled: parsed.englishEnabled ?? true,
+      chinaEnabled: parsed.chinaEnabled ?? true,
+      japanEnabled: parsed.japanEnabled ?? true
+    };
+  } catch {
+    return {
+      choiEnabled: true,
+      mingEnabled: true,
+      englishEnabled: true,
+      chinaEnabled: true,
+      japanEnabled: true
+    };
   }
-});
+}
 
-// ✅👇 서버 시작
-app.listen(PORT, async () => {                      // 📡 서버 실행
-  console.log(`🚀 서버 실행 완료: http://localhost:${PORT}`);
-  await initAdminPanel();                           // 🛠️ 관리자 패널 초기화 실행
-});
+function saveBotState(state) {
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
 
-console.log("✅ index.js 실행 시작");
-
-// ✅👇 관리자 전용 재시작 라우트
-app.get('/restart', (req, res) => {                 // ♻️ /restart: 서버 재시작 요청
-  const token = req.query.token;                    // 🔒 토큰 확인
-
-  if (token !== process.env.RESTART_TOKEN) {        // ❌ 잘못된 토큰 거부
-    console.warn('🚫 재시작 토큰 불일치 → 요청 거부됨');
-    return res.status(403).send('❌ Unauthorized - Invalid token');
+function backupBotState() {
+  try {
+    fs.copyFileSync(STATE_FILE, BACKUP_FILE);
+    console.log('✅ 상태 백업 완료');
+    return true;
+  } catch (err) {
+    console.error('❌ 상태 백업 실패:', err.message);
+    sendToAdmin(`❌ 상태 백업 실패: ${err.message}`); // 📢 관리자 알림 추가
+    return false;
   }
+}
 
-  res.send('♻️ 서버가 곧 재시작됩니다...');
-  console.log('🌀 /restart 호출됨 → 서버 종료 후 재시작 예정');
-  setTimeout(() => process.exit(0), 500);           // ⏱️ 0.5초 후 서버 종료
-});
+// ✅ 기본값으로 상태 리셋
+function resetBotStateToDefault() {
+  const defaultState = {
+    choiEnabled: true,
+    mingEnabled: true,
+    englishEnabled: true,
+    chinaEnabled: true,
+    japanEnabled: true
+  };
+  try {
+    saveBotState(defaultState);                   // 💾 저장 시도
+    Object.assign(global, defaultState);          // 🌍 전역 동기화
+    console.log('✅ 상태 기본값으로 리셋됨');
+    return defaultState;
+  } catch (err) {
+    console.error('❌ 상태 리셋 실패:', err.message);
+    sendToAdmin(`❌ 상태 리셋 실패: ${err.message}`); // 📢 관리자 알림 추가
+    return null;
+  }
+}
+
+// ✅ 관리자 패널 메시지 ID 관리(파일 저장 방식)
+const MSG_ID_FILE = path.join(__dirname, 'admin_message_id.json');
+let adminMessageId = null;
+function saveAdminMessageId(id) {
+  adminMessageId = id;
+  fs.writeFileSync(MSG_ID_FILE, JSON.stringify(id));
+}
+function loadAdminMessageId() {
+  try {
+    const loaded = JSON.parse(fs.readFileSync(MSG_ID_FILE, 'utf8'));
+    adminMessageId = loaded;
+    return loaded;
+  } catch {
+    return null;
+  }
+}
+function getAdminMessageId() { return adminMessageId; }
+function setAdminMessageId(id) { adminMessageId = id; }
+
+// ✅ 현재시간 문자열 반환
+function getTimeString(tz = 'Asia/Seoul') {
+  return moment().tz(tz).format('YYYY.MM.DD (ddd) HH:mm:ss');
+}
+
+module.exports = {
+  replaceTemplate,
+  isLongType,
+  isShortType,
+  addEntry,
+  clearEntries,
+  getEntryInfo,
+  getAllEntryInfo,
+  updateLastDummyTime,
+  getLastDummyTime,
+  loadBotState,
+  saveBotState,
+  getTimeString,
+  setAdminMessageId,
+  getAdminMessageId,
+  saveAdminMessageId,
+  loadAdminMessageId,
+  backupBotState,
+  resetBotStateToDefault
+};
